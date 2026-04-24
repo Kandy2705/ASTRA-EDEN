@@ -2,24 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using System;
 using System.IO;
-using System.Reflection;
 
 [CustomEditor(typeof(Readme))]
-[InitializeOnLoad]
 public class ReadmeEditor : Editor
 {
-    static string s_ShowedReadmeSessionStateName = "ReadmeEditor.showedReadme";
-    
     static string s_ReadmeSourceDirectory = "Assets/TutorialInfo";
 
     const float k_Space = 16f;
-
-    static ReadmeEditor()
-    {
-        EditorApplication.delayCall += SelectReadmeAutomatically;
-    }
 
     static void RemoveTutorial()
     {
@@ -49,29 +39,6 @@ public class ReadmeEditor : Editor
 
             AssetDatabase.Refresh();
         }
-    }
-
-    static void SelectReadmeAutomatically()
-    {
-        if (!SessionState.GetBool(s_ShowedReadmeSessionStateName, false))
-        {
-            var readme = SelectReadme();
-            SessionState.SetBool(s_ShowedReadmeSessionStateName, true);
-
-            if (readme && !readme.loadedLayout)
-            {
-                LoadLayout();
-                readme.loadedLayout = true;
-            }
-        }
-    }
-
-    static void LoadLayout()
-    {
-        var assembly = typeof(EditorApplication).Assembly;
-        var windowLayoutType = assembly.GetType("UnityEditor.WindowLayout", true);
-        var method = windowLayoutType.GetMethod("LoadWindowLayout", BindingFlags.Public | BindingFlags.Static);
-        method.Invoke(null, new object[] { Path.Combine(Application.dataPath, "TutorialInfo/Layout.wlt"), false });
     }
 
     static Readme SelectReadme()

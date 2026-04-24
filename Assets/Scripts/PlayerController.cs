@@ -1,31 +1,78 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
     private static readonly int BlendHash = Animator.StringToHash("Blend");
     private static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
     private static readonly int VerticalHash = Animator.StringToHash("Vertical");
+    private static readonly int JumpHash = Animator.StringToHash("Jump");
+    private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
 
     [SerializeField] private Animator animator;
+    [SerializeField] private CharacterController controller;
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private float acceleration = 5f;
     [SerializeField] private float walkSpeed = 3f;
     [SerializeField] private float runSpeed = 6f;
     [SerializeField] private float turnSpeed = 10f;
     [SerializeField] private float animatorDampTime = 0.1f;
+    [SerializeField] private float gravity = -20f;
+    [SerializeField] private float groundedStickForce = -2f;
+    [SerializeField] private float jumpHeight = 1.2f;
+    [SerializeField] private Key jumpKey = Key.Space;
+
+    [Header("Dash")]
+    [SerializeField] private Key dashKey = Key.LeftCtrl;
+    [SerializeField] private float dashDistance = 5f;
+    [SerializeField] private float dashDuration = 0.18f;
+    [SerializeField] private float dashCooldown = 3f;
+    [SerializeField] private float dashAnimationSpeed = 1.8f;
 
     [SerializeField] private float currentSpeedFactor = 0f;
 
-    void Update()
+    private Vector3 verticalVelocity;
+    private Vector3 dashDirection;
+    private Vector2 dashAnimationInput;
+    private float dashTimer;
+    private float nextDashTime;
+    private float normalAnimatorSpeed = 1f;
+    private bool isDashing;
+    private bool isGrounded;
+
+    public bool IsDashing => isDashing;
+
+    private void Reset()
     {
+        controller = GetComponent<CharacterController>();
+        animator = GetComponentInChildren<Animator>();
+        cameraTransform = Camera.main != null ? Camera.main.transform : null;
+    }
+
+    private void Awake()
+    {
+        if (controller == null)
+        {
+            controller = GetComponent<CharacterController>();
+        }
+    }
+
+    private void Update()
+    {
+        isGrounded = controller.isGrounded;
+
         Vector2 movementInput = ReadMovementInput();
         Vector3 moveDir = GetMoveDirection(movementInput);
-        bool isMoving = moveDir.sqrMagnitude > 0.001f;
+        bool isMoving = !isDashing && moveDir.sqrMagnitude > 0.001f;
         bool isRunning = isMoving && Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
 
         float targetSpeed = 0f;
-        if (isMoving)
+        if (isDashing)
+        {
+            targetSpeed = 2f;
+        }
+        else if (isMoving)
         {
             targetSpeed = isRunning ? 2f : 1f;
         }
@@ -36,12 +83,88 @@ public class PlayerController : MonoBehaviour
             acceleration * Time.deltaTime
         );
 
-        UpdateAnimator(movementInput);
+        UpdateAnimator(isDashing ? dashAnimationInput : movementInput);
 
+        HandleDashInput(moveDir, movementInput, moveDir.sqrMagnitude > 0.001f);
+
+        if (isDashing)
+        {
+            MoveDash();
+        }
+        else
+        {
+            MoveCharacter(moveDir, isMoving);
+        }
+
+        ApplyGravityAndJump();
+    }
+
+    private void HandleDashInput(Vector3 moveDir, Vector2 movementInput, bool hasMoveInput)
+    {
+        if (isDashing || !hasMoveInput || Time.time < nextDashTime || !isGrounded)
+        {
+            return;
+        }
+
+        if (!IsDashPressed())
+        {
+            return;
+        }
+
+        StartDash(moveDir, movementInput);
+    }
+
+    private void StartDash(Vector3 moveDir, Vector2 movementInput)
+    {
+        isDashing = true;
+        dashTimer = dashDuration;
+        nextDashTime = Time.time + dashCooldown;
+
+        dashDirection = moveDir.sqrMagnitude > 0.001f ? moveDir.normalized : transform.forward;
+        dashAnimationInput = movementInput.sqrMagnitude > 0.001f ? movementInput : Vector2.up;
+
+        if (animator != null)
+        {
+            normalAnimatorSpeed = animator.speed;
+            animator.speed = dashAnimationSpeed;
+        }
+    }
+
+    private void MoveDash()
+    {
+        dashTimer -= Time.deltaTime;
+
+        float dashSpeed = dashDistance / Mathf.Max(0.001f, dashDuration);
+        controller.Move(dashDirection * dashSpeed * Time.deltaTime);
+
+        transform.forward = Vector3.Slerp(
+            transform.forward,
+            dashDirection,
+            turnSpeed * Time.deltaTime
+        );
+
+        if (dashTimer <= 0f)
+        {
+            StopDash();
+        }
+    }
+
+    private void StopDash()
+    {
+        isDashing = false;
+
+        if (animator != null)
+        {
+            animator.speed = normalAnimatorSpeed;
+        }
+    }
+
+    private void MoveCharacter(Vector3 moveDir, bool isMoving)
+    {
         if (isMoving)
         {
             float actualMoveSpeed = GetCurrentMoveSpeed();
-            transform.position += moveDir * actualMoveSpeed * Time.deltaTime;
+            controller.Move(moveDir * actualMoveSpeed * Time.deltaTime);
 
             transform.forward = Vector3.Slerp(
                 transform.forward,
@@ -49,6 +172,27 @@ public class PlayerController : MonoBehaviour
                 turnSpeed * Time.deltaTime
             );
         }
+    }
+
+    private void ApplyGravityAndJump()
+    {
+        if (isGrounded && verticalVelocity.y < 0f)
+        {
+            verticalVelocity.y = groundedStickForce;
+        }
+
+        if (!isDashing && IsJumpPressed() && isGrounded)
+        {
+            verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+            if (animator != null)
+            {
+                animator.SetTrigger(JumpHash);
+            }
+        }
+
+        verticalVelocity.y += gravity * Time.deltaTime;
+        controller.Move(verticalVelocity * Time.deltaTime);
     }
 
     private float GetCurrentMoveSpeed()
@@ -71,6 +215,7 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat(BlendHash, currentSpeedFactor, animatorDampTime, Time.deltaTime);
         animator.SetFloat(HorizontalHash, movementInput.x, animatorDampTime, Time.deltaTime);
         animator.SetFloat(VerticalHash, movementInput.y, animatorDampTime, Time.deltaTime);
+        animator.SetBool(IsGroundedHash, isGrounded);
     }
 
     private Vector3 GetMoveDirection(Vector2 movementInput)
@@ -129,5 +274,15 @@ public class PlayerController : MonoBehaviour
         }
 
         return new Vector2(h, v).normalized;
+    }
+
+    private bool IsJumpPressed()
+    {
+        return Keyboard.current != null && Keyboard.current[jumpKey].wasPressedThisFrame;
+    }
+
+    private bool IsDashPressed()
+    {
+        return Keyboard.current != null && Keyboard.current[dashKey].wasPressedThisFrame;
     }
 }

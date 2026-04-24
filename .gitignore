@@ -106,6 +106,14 @@ InitTestScene*.unity*
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
-# Large texture files from TextureHaven package (over 100MB)
-/[Aa]ssets/[Pp]ackages/package TextureHaven/terrain_4k*/*.png
-/[Aa]ssets/[Pp]ackages/package TextureHaven/terra*/*.png
+# Ignore large TextureHaven terrain 4K textures
+/Assets/Packages/package TextureHaven/terrain_4k/terrain_4k_textures/
+
+# Optional: ignore all large texture files inside TextureHaven package
+/Assets/Packages/package TextureHaven/**/*.png
+/Assets/Packages/package TextureHaven/**/*.jpg
+/Assets/Packages/package TextureHaven/**/*.jpeg
+/Assets/Packages/package TextureHaven/**/*.tga
+/Assets/Packages/package TextureHaven/**/*.psd
+/Assets/Packages/package TextureHaven/**/*.exr
+/Assets/Packages/package TextureHaven/**/*.hdr
