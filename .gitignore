@@ -105,3 +105,7 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Large texture files from TextureHaven package (over 100MB)
+/[Aa]ssets/[Pp]ackages/package TextureHaven/terrain_4k*/*.png
+/[Aa]ssets/[Pp]ackages/package TextureHaven/terra*/*.png
