@@ -117,3 +117,22 @@ InitTestScene*.unity*
 /Assets/Packages/package TextureHaven/**/*.psd
 /Assets/Packages/package TextureHaven/**/*.exr
 /Assets/Packages/package TextureHaven/**/*.hdr
+
+# Large local assets / downloaded packages
+Assets/Packages/
+Assets/_TerrainAutoUpgrade/
+
+# Heavy source/model files
+*.blend
+*.fbx
+*.glb
+*.gltf
+*.unitypackage
+*.zip
+*.rar
+*.7z
+*.mp4
+*.mov
+*.wav
+*.psd
+*.tga
