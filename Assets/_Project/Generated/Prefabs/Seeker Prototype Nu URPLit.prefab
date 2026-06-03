@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 362629955180284891}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Foot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41,7 +41,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6326612422957855253}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_end_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,7 +72,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 436042309935417498}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Thumb2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2278995334285329023}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_07
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -136,7 +136,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6487955494322639711}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -168,7 +168,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 553935202723874780}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Index1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -200,7 +200,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5165035922931744840}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_ToeBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -231,7 +231,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4159400622262169623}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_C_Hips
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -265,7 +265,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 754958855242560883}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_08
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -297,7 +297,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8183915403024735063}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_end_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -328,7 +328,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7616437651906442753}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_end_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -359,7 +359,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8251868064463231452}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_07
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -391,7 +391,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 980014178825580896}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_end_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -422,7 +422,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1258580696418007380}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Adj_L_FaceEye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -453,7 +453,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8134143682809935065}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Little2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -485,7 +485,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8567655718598121706}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Adj_R_FaceEye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -516,7 +516,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5279115787113080530}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide1_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -548,7 +548,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8251648861404704469}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Ring2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -580,7 +580,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7560210330817394876}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -612,7 +612,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4089695698028637942}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -644,7 +644,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1193713517707476721}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_end_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -675,7 +675,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8636645973717964295}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -706,7 +706,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5511158574084766943}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -738,7 +738,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1619634354300560597}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide1_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -770,7 +770,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6967418467344843804}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_end_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -801,7 +801,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7249969206016474942}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Little3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -832,7 +832,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7057681724892822982}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide1_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -864,7 +864,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 485702150663068126}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -895,7 +895,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7779906343270211787}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_14
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -926,7 +926,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7042708266432837872}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -968,8 +968,10 @@ GameObject:
   - component: {fileID: 3640411127217443584}
   - component: {fileID: 1581441602074863670}
   - component: {fileID: 295554631262695951}
+  - component: {fileID: 9071220080518353959}
   - component: {fileID: 1013520683112367517}
-  m_Layer: 0
+  - component: {fileID: 7761676991432836050}
+  m_Layer: 6
   m_Name: Seeker Prototype Nu URPLit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1296,6 +1298,8 @@ MonoBehaviour:
   jumpKey: 1
   dashKey: 55
   runKey: 51
+  attackKey: 24
+  allowMouseLeftAttack: 1
 --- !u!114 &295554631262695951
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1310,6 +1314,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimatorBridge
   animator: {fileID: 5706916121304617909}
   animatorDampTime: 0.1
+--- !u!114 &9071220080518353959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1560933002036265053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63f564e9697046ec82fbb8ce98531366, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombatController
+  inputReader: {fileID: 1581441602074863670}
+  animatorBridge: {fileID: 295554631262695951}
+  attackLockDuration: 0.75
+  characterHealth: {fileID: 0}
+  attackPoint: {fileID: 0}
+  damageMask:
+    serializedVersion: 2
+    m_Bits: 0
+  attackDamage: 20
+  attackRadius: 1.8
+  attackForwardOffset: 1.3
+  enemyKnockbackDistance: 1.2
+  enemyKnockbackDuration: 0.18
 --- !u!114 &1013520683112367517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1324,6 +1353,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   inputReader: {fileID: 1581441602074863670}
   animatorBridge: {fileID: 295554631262695951}
+  combatController: {fileID: 9071220080518353959}
   controller: {fileID: 3640411127217443584}
   cameraTransform: {fileID: 0}
   acceleration: 5
@@ -1337,7 +1367,57 @@ MonoBehaviour:
   dashDuration: 0.18
   dashCooldown: 3
   dashAnimationSpeed: 1.8
+  dashEnergyCost: 25
+  playerHealth: {fileID: 0}
   currentSpeedFactor: 0
+--- !u!114 &7761676991432836050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1560933002036265053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af03d1cdc4bb469b9b727484e447fde1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
+  characterData: {fileID: 0}
+  initializeFromCharacterData: 1
+  fallbackBaseStats:
+    maxHP: 100
+    attack: 20
+    defense: 10
+    critRate: 0.05
+    critDamage: 0.5
+    moveSpeed: 5
+    attackSpeed: 1
+    staminaMax: 100
+    staminaRegen: 12
+    energyMax: 100
+    energyRegen: 5
+    cooldownReduction: 0
+    companionSynergy: 1
+    statusResistance: 0
+  runtimeStats:
+    maxHP: 100
+    currentHP: 100
+    attack: 20
+    defense: 10
+    critRate: 0.05
+    critDamage: 0.5
+    moveSpeed: 5
+    attackSpeed: 1
+    staminaMax: 100
+    currentStamina: 100
+    staminaRegen: 12
+    energyMax: 100
+    currentEnergy: 100
+    energyRegen: 5
+    cooldownReduction: 0
+    companionSynergy: 1
+    statusResistance: 0
+  destroyOnDeath: 0
 --- !u!1 &1568113171000732798
 GameObject:
   m_ObjectHideFlags: 0
@@ -1347,7 +1427,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6955927148111254283}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_18
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1379,7 +1459,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 829806554565025815}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1411,7 +1491,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4080145278766753808}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_18
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1442,7 +1522,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4608832835456235902}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_LowerLeg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1492,7 +1572,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4821275012574643757}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide1_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1524,7 +1604,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7538784368306634296}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_14
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1556,7 +1636,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 925630943288299233}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_end_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1587,7 +1667,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7294498896106199933}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1619,7 +1699,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2746137246284496684}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_end_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1650,7 +1730,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9209167082492842300}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1682,7 +1762,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5597960477713957549}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_end_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1713,7 +1793,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3652035580190751000}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1745,7 +1825,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4547980865732621944}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Middle2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1777,7 +1857,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3301151445928467989}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Thumb1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1810,7 +1890,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3254524820693690936}
   - component: {fileID: 4994884675447590565}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_C_Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1877,7 +1957,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5867526265868986282}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1909,7 +1989,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1245807956370151950}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1941,7 +2021,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3969945907006099029}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_end_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1972,7 +2052,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5075788845635994494}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2004,7 +2084,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1304987055696820633}
   - component: {fileID: 8800364038383439012}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Hand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2056,7 +2136,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 868999948036952334}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Thumb3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2087,7 +2167,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 857454920752774723}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Little1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2120,7 +2200,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5920287347873064176}
   - component: {fileID: 2640777236214328941}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_LowerArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2174,7 +2254,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1770755235455576932}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2206,7 +2286,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7129641902304468767}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2237,7 +2317,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 805567814355257100}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_15
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2269,7 +2349,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7477154199373715198}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_Bust1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2301,7 +2381,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 549044136588218913}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2333,7 +2413,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8039271783260395372}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_C_Chest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2365,7 +2445,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6366885757047999322}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2398,7 +2478,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3664479183900993257}
   - component: {fileID: 6651441025559759991}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_UpperArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2450,7 +2530,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6344061682728324372}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_17
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2481,7 +2561,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8788169346584613968}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2512,7 +2592,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9075146503310058064}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2544,7 +2624,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5464961816681330997}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_end_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2575,7 +2655,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1563108619488055752}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2607,7 +2687,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3604968834985451619}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2639,7 +2719,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3290236115280259617}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_end_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2670,7 +2750,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3444517592522938653}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_end_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2701,7 +2781,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7702491953785394823}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_17
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2733,7 +2813,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7558136980034410312}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_end_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2764,7 +2844,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4157150341700026363}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2797,7 +2877,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8971146495171177960}
   - component: {fileID: 5687345197928635453}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_C_Neck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2845,7 +2925,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7194574019186035868}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_end_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2876,7 +2956,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6423830224136102530}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Thumb1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2908,7 +2988,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 412290884723410019}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2939,7 +3019,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7942297257235238770}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2971,7 +3051,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7294182315826716938}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_Bust1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3003,7 +3083,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1379782835704290191}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_14
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3035,7 +3115,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7498081816860229759}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3067,7 +3147,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7503310187468503929}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_end_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3098,7 +3178,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6400734646595412721}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide1_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3130,7 +3210,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 849951683831331369}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide1_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3163,7 +3243,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6910815044119467743}
   - component: {fileID: 6817333627271615590}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Face
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3452,7 +3532,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5742458724821660588}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3484,7 +3564,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6546480467641820440}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3516,7 +3596,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4638761805334347744}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3549,7 +3629,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5862928805697822639}
   - component: {fileID: 2974400746607676909}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Hand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3601,7 +3681,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8089546748722781513}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_09
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3632,7 +3712,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6850786579525871370}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3664,7 +3744,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3107208857053141645}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_09
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3696,7 +3776,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4887191858436909723}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Index2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3729,7 +3809,7 @@ GameObject:
   m_Component:
   - component: {fileID: 195227062764524442}
   - component: {fileID: 1266767523736670026}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Hair
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4011,7 +4091,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6942978376575275315}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_end_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4042,7 +4122,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9168793978348915864}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4074,7 +4154,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2192202603623173849}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4106,7 +4186,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2092847075252938704}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4138,7 +4218,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3745699338643477070}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Thumb3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4169,7 +4249,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5070680648008992275}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4200,7 +4280,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8236827604889958547}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide1_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4232,7 +4312,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7512760706810998365}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide1_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4264,7 +4344,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5396573808079340430}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4296,7 +4376,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2548060102315484711}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Little2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4328,7 +4408,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 380382709315135952}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4360,7 +4440,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5073514477299722221}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Index3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4391,7 +4471,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4829718111354957450}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Root
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4423,7 +4503,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2809799667645888521}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4480,7 +4560,7 @@ GameObject:
   - component: {fileID: 9095610564968833071}
   - component: {fileID: 1515184038107059355}
   - component: {fileID: 8569946545387292304}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: secondary
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5322,7 +5402,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8776395562625663205}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5353,7 +5433,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6937312310681108192}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Middle3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5384,7 +5464,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 623857262575940637}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5416,7 +5496,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7343418215455830726}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_16
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5447,7 +5527,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 363358063940070829}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_08
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5479,7 +5559,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5526890995742504557}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5511,7 +5591,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1215928187674700205}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_end_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5542,7 +5622,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7508416515561082358}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_UpperLeg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5575,7 +5655,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3019529132806218816}
   - component: {fileID: 2515579347775038184}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_LowerArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5629,7 +5709,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7346912327909098138}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5661,7 +5741,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7650210953848052302}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_end_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5692,7 +5772,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7132123138773728790}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5724,7 +5804,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7909972697654296713}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_15
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5756,7 +5836,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3657159704410034916}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Thumb2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5788,7 +5868,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7487881362295447659}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_Bust2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5819,7 +5899,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6202997492209828673}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5851,7 +5931,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1663746553344491560}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5883,7 +5963,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1138191786303602491}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5915,7 +5995,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6702979024508904241}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_end_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5946,7 +6026,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3606268865362669791}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5978,7 +6058,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7466049838780246671}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6009,7 +6089,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7894011359485820995}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6040,7 +6120,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7008645528407502027}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_end_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6071,7 +6151,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3955870233904067892}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6103,7 +6183,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7269509799533341090}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_end_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6134,7 +6214,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2592348511155597747}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6166,7 +6246,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7428065704076868124}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_Bust2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6197,7 +6277,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 651384477664733355}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Middle1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6229,7 +6309,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1036038437804052145}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_07
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6260,7 +6340,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5927660531292421113}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Index3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6291,7 +6371,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7158650321896586052}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Little3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6322,7 +6402,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2261065844487330425}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Ring3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6353,7 +6433,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7926940105300814930}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Ring1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6385,7 +6465,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6894594051776111979}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_end_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6416,7 +6496,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 198469356069377157}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide1_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6448,7 +6528,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4199972589430539673}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_end_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6479,7 +6559,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8106739178176423162}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_16
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6511,7 +6591,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3119669760194633992}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair2_09
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6543,7 +6623,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1202171501459658789}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Shoulder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6576,7 +6656,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4493350377333510924}
   - component: {fileID: 3547639845994861730}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_C_UpperChest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6632,7 +6712,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7810936598481543948}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_LowerLeg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6682,7 +6762,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8453561339074835736}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6715,7 +6795,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6775631012547703335}
   - component: {fileID: 6334417998504817912}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_UpperArm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6767,7 +6847,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2442740128338826928}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Shoulder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6799,7 +6879,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 531967050158850877}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6831,7 +6911,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1970176173171111608}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_end_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6862,7 +6942,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5562130509893705236}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Index1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6894,7 +6974,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8050268422665144963}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_end_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6925,7 +7005,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2264801425937083603}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6957,7 +7037,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8539578618550668505}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_end_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6988,7 +7068,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6896451452906935040}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7021,7 +7101,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7046898039772765845}
   - component: {fileID: 2460435085011578998}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7314,7 +7394,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3402928622690036032}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Index2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7346,7 +7426,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3297669703492520170}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Ring2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7378,7 +7458,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3170484363450516899}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair1_16
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7410,7 +7490,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2068814920612242751}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Middle2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7442,7 +7522,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6376159887853889737}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7474,7 +7554,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 327185535387257724}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_end_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7505,7 +7585,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2176186564593771105}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7537,7 +7617,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5434644507262424423}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_end_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7568,7 +7648,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2097583562561799840}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_end_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7599,7 +7679,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7743481754338328720}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_08
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7630,7 +7710,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1305602994201120085}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_end_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7661,7 +7741,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6501763401988803185}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Foot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7693,7 +7773,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 908860611537721522}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_ToeBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7724,7 +7804,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6457231226565927644}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7756,7 +7836,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2939838084669641426}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Little1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7788,7 +7868,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6979674336420228124}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Ring3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7819,7 +7899,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5231058224853354981}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7851,7 +7931,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1423249760117266702}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_Hair3_15
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7882,7 +7962,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1603551288635150957}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide2_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7914,7 +7994,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8260567655422907295}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtFront_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7946,7 +8026,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7240077538031095004}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide1_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7978,7 +8058,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5321596112534867612}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtSide1_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8010,7 +8090,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2207851824772210643}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_R_Middle3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8041,7 +8121,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6576169087492264389}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_end_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8072,7 +8152,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9104634777486280325}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide2_end_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8103,7 +8183,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5121193534373150256}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8135,7 +8215,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3796516154084482539}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtBack_end_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8166,7 +8246,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8264708644498551921}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Ring1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8199,7 +8279,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4845651607025864462}
   - component: {fileID: 2449261461525376790}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_C_Spine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8247,7 +8327,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2683145060480774046}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_L_CoatSkirtBack_end_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8278,7 +8358,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4308652095238984982}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_UpperLeg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8310,7 +8390,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4891773962036283121}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_end_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8341,7 +8421,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3964975573805100633}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtSide1_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8373,7 +8453,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7303699291277638133}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Sec_R_CoatSkirtFront_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8405,7 +8485,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4572912314543737012}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: J_Bip_L_Middle1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
