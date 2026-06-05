@@ -34,6 +34,9 @@ public class HUDTopStatusController : MonoBehaviour
 
     private void Awake()
     {
+        if (GameDataManager.Instance != null)
+            currency = GameDataManager.Instance.Currency;
+
         gameSecondsElapsed = (startHour * 3600f) + (startMinute * 60f);
         smoothedFrameMs = Time.unscaledDeltaTime * 1000f;
         RefreshTime();
@@ -75,6 +78,8 @@ public class HUDTopStatusController : MonoBehaviour
     public void SetCurrency(int amount)
     {
         currency = amount;
+        if (GameDataManager.Instance != null)
+            GameDataManager.Instance.Currency = currency;
         RefreshCurrency();
     }
 

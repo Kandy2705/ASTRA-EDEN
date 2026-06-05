@@ -42,8 +42,30 @@ public class ScenePortal : MonoBehaviour
             return;
         }
 
+        SavePlayerState();
+
         isLoading = true;
         StartCoroutine(LoadSceneRoutine());
+    }
+
+    private void SavePlayerState()
+    {
+        if (GameDataManager.Instance == null) return;
+
+        GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+        if (player == null) return;
+
+        GameDataManager.Instance.SaveScenePosition(
+            SceneManager.GetActiveScene().name,
+            player.transform.position
+        );
+
+        CharacterHealth health = player.GetComponent<CharacterHealth>();
+        if (health != null && health.RuntimeStats != null)
+        {
+            var s = health.RuntimeStats;
+            GameDataManager.Instance.SavePlayerStats(s.currentHP, s.currentStamina, s.currentEnergy);
+        }
     }
 
     private IEnumerator LoadSceneRoutine()

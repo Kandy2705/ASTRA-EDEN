@@ -7,7 +7,7 @@ using UnityEngine.UI;
 /// Phiên bản nâng cấp của ScenePortal: có fade đen màn hình trước khi load scene.
 /// Cần một Canvas + Image đen full màn hình gán vào fadeImage.
 /// </summary>
-[RequireComponent(typeof(Collider))]
+// [RequireComponent(typeof(Collider))]
 public class ScenePortalFade : MonoBehaviour
 {
     [Header("Scene Settings")]
@@ -67,8 +67,49 @@ public class ScenePortalFade : MonoBehaviour
             return;
         }
 
+        SavePlayerState();
+
         isLoading = true;
         StartCoroutine(FadeAndLoadRoutine());
+    }
+
+    public void LoadSceneByButton()
+    {
+        if (isLoading) return;
+
+        if (string.IsNullOrWhiteSpace(targetSceneName))
+        {
+            Debug.LogWarning($"[ScenePortalFade] Chưa nhập 'targetSceneName' trên '{name}'.");
+            return;
+        }
+
+        if (showDebugLog)
+            Debug.Log($"[ScenePortalFade] Button được bấm -> fade & load '{targetSceneName}'");
+
+        SavePlayerState();
+
+        isLoading = true;
+        StartCoroutine(FadeAndLoadRoutine());
+    }
+
+    private void SavePlayerState()
+    {
+        if (GameDataManager.Instance == null) return;
+
+        GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+        if (player == null) return;
+
+        GameDataManager.Instance.SaveScenePosition(
+            SceneManager.GetActiveScene().name,
+            player.transform.position
+        );
+
+        CharacterHealth health = player.GetComponent<CharacterHealth>();
+        if (health != null && health.RuntimeStats != null)
+        {
+            var s = health.RuntimeStats;
+            GameDataManager.Instance.SavePlayerStats(s.currentHP, s.currentStamina, s.currentEnergy);
+        }
     }
 
     private IEnumerator FadeAndLoadRoutine()

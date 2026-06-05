@@ -25,6 +25,7 @@ public class CharacterHealth : MonoBehaviour
     private void Awake()
     {
         Initialize();
+        RestoreFromGameData();
     }
 
     private void OnValidate()
@@ -144,6 +145,17 @@ public class CharacterHealth : MonoBehaviour
     private bool IsPlayerHealth()
     {
         return CompareTag("Player") || transform.root.CompareTag("Player");
+    }
+
+    private void RestoreFromGameData()
+    {
+        if (!IsPlayerHealth() || GameDataManager.Instance == null || !GameDataManager.Instance.HasPlayerData)
+            return;
+
+        runtimeStats.currentHP = Mathf.Min(runtimeStats.maxHP, GameDataManager.Instance.PlayerHP);
+        runtimeStats.currentStamina = Mathf.Min(runtimeStats.staminaMax, GameDataManager.Instance.PlayerStamina);
+        runtimeStats.currentEnergy = Mathf.Min(runtimeStats.energyMax, GameDataManager.Instance.PlayerEnergy);
+        Changed?.Invoke(this);
     }
 
     private void Die()
