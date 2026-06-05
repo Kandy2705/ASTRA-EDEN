@@ -15,6 +15,7 @@ public class GameDataManager : MonoBehaviour
 
     private const string LastRotYKey = "ASTRA_LAST_ROT_Y";
     private const string ContinueFlagKey = "ASTRA_LOAD_FROM_CONTINUE";
+    private const string ScenePositionsJsonKey = "ASTRA_SCENE_POSITIONS_JSON";
 
     [Header("Tiền tệ")]
     [SerializeField] private int currency;
@@ -119,9 +120,62 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetFloat(LastPosYKey, position.y);
         PlayerPrefs.SetFloat(LastPosZKey, position.z);
 
+        SaveAllScenePositionsToPrefs();
+
         PlayerPrefs.Save();
 
         Debug.Log($"[GameDataManager] Save position scene={sceneName}, pos={position}");
+    }
+
+    private void SaveAllScenePositionsToPrefs()
+    {
+        ScenePositionSaveData data = new ScenePositionSaveData();
+
+        foreach (var kvp in scenePositions)
+        {
+            data.entries.Add(new ScenePositionEntry
+            {
+                sceneName = kvp.Key,
+                position = kvp.Value
+            });
+        }
+
+        string json = JsonUtility.ToJson(data);
+        PlayerPrefs.SetString(ScenePositionsJsonKey, json);
+
+        Debug.Log($"[GameDataManager] Saved scene positions json: {json}");
+    }
+
+    private void LoadAllScenePositionsFromPrefs()
+    {
+        scenePositions.Clear();
+
+        string json = PlayerPrefs.GetString(ScenePositionsJsonKey, "");
+
+        if (string.IsNullOrEmpty(json))
+        {
+            SyncPosToLists();
+            return;
+        }
+
+        ScenePositionSaveData data = JsonUtility.FromJson<ScenePositionSaveData>(json);
+
+        if (data == null || data.entries == null)
+        {
+            SyncPosToLists();
+            return;
+        }
+
+        foreach (var entry in data.entries)
+        {
+            if (string.IsNullOrEmpty(entry.sceneName)) continue;
+
+            scenePositions[entry.sceneName] = entry.position;
+        }
+
+        SyncPosToLists();
+
+        Debug.Log($"[GameDataManager] Loaded {scenePositions.Count} scene positions from save.");
     }
 
     public void SaveLastPlayerTransform(string sceneName, Transform playerTransform)
@@ -198,6 +252,8 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey(LastRotYKey);
         PlayerPrefs.DeleteKey(ContinueFlagKey);
 
+        PlayerPrefs.DeleteKey(ScenePositionsJsonKey);
+
         PlayerPrefs.DeleteKey("ASTRA_CURRENCY");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_HP");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_STAMINA");
@@ -227,13 +283,7 @@ public class GameDataManager : MonoBehaviour
         playerStamina = PlayerPrefs.GetFloat("ASTRA_PLAYER_STAMINA", playerStamina);
         playerEnergy = PlayerPrefs.GetFloat("ASTRA_PLAYER_ENERGY", playerEnergy);
 
-        string lastScene = PlayerPrefs.GetString(LastSceneKey, "");
-        if (!string.IsNullOrEmpty(lastScene))
-        {
-            Vector3 lastPos = GetLastSavedPosition();
-            scenePositions[lastScene] = lastPos;
-            SyncPosToLists();
-        }
+        LoadAllScenePositionsFromPrefs();
     }
 
     private void SyncPosToLists()
@@ -247,4 +297,16 @@ public class GameDataManager : MonoBehaviour
             posValues.Add(kvp.Value);
         }
     }
+}
+[System.Serializable]
+public class ScenePositionSaveData
+{
+    public List<ScenePositionEntry> entries = new List<ScenePositionEntry>();
+}
+
+[System.Serializable]
+public class ScenePositionEntry
+{
+    public string sceneName;
+    public Vector3 position;
 }

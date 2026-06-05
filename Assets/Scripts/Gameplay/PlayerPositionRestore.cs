@@ -13,7 +13,6 @@ public class PlayerPositionRestore : MonoBehaviour
 
     private IEnumerator Start()
     {
-        // Chờ 1 frame để player/controller spawn xong
         yield return null;
 
         if (GameDataManager.Instance == null)
@@ -22,47 +21,60 @@ public class PlayerPositionRestore : MonoBehaviour
             yield break;
         }
 
-        if (restoreOnlyWhenContinue && !GameDataManager.Instance.ShouldLoadFromContinue())
-        {
-            if (showDebugLog)
-                Debug.Log("[PlayerPositionRestore] Không có cờ Continue/Restore nên không restore.");
-            yield break;
-        }
-
         string currentScene = SceneManager.GetActiveScene().name;
 
+        bool shouldRestore = !restoreOnlyWhenContinue || GameDataManager.Instance.ShouldLoadFromContinue();
 
-        // Lấy vị trí đã lưu riêng cho scene hiện tại
-        if (!GameDataManager.Instance.TryGetScenePosition(currentScene, out Vector3 savedPos))
+        if (shouldRestore)
         {
-            if (showDebugLog)
-                Debug.Log($"[PlayerPositionRestore] Scene '{currentScene}' chưa có vị trí lưu.");
+            if (GameDataManager.Instance.TryGetScenePosition(currentScene, out Vector3 savedPos))
+            {
+                float savedRotY = GameDataManager.Instance.GetLastSavedRotationY();
+
+                CharacterController cc = GetComponent<CharacterController>();
+                NavMeshAgent agent = GetComponent<NavMeshAgent>();
+
+                if (cc != null) cc.enabled = false;
+                if (agent != null) agent.enabled = false;
+
+                transform.position = savedPos;
+                transform.rotation = Quaternion.Euler(0f, savedRotY, 0f);
+
+                if (agent != null) agent.enabled = true;
+                if (cc != null) cc.enabled = true;
+
+                RestorePlayerStatsIfPossible();
+
+                if (showDebugLog)
+                {
+                    Debug.Log($"[PlayerPositionRestore] Restored scene={currentScene}, pos={savedPos}, rotY={savedRotY}");
+                }
+            }
+            else
+            {
+                if (showDebugLog)
+                {
+                    Debug.Log($"[PlayerPositionRestore] Scene '{currentScene}' chưa có vị trí lưu, dùng spawn mặc định.");
+                }
+            }
 
             GameDataManager.Instance.ClearContinueFlag();
-            yield break;
+        }
+        else
+        {
+            if (showDebugLog)
+            {
+                Debug.Log("[PlayerPositionRestore] Không có cờ Continue/Restore nên không restore.");
+            }
         }
 
-        float savedRotY = GameDataManager.Instance.GetLastSavedRotationY();
-
-        CharacterController cc = GetComponent<CharacterController>();
-        NavMeshAgent agent = GetComponent<NavMeshAgent>();
-
-        if (cc != null) cc.enabled = false;
-        if (agent != null) agent.enabled = false;
-
-        transform.position = savedPos;
-        transform.rotation = Quaternion.Euler(0f, savedRotY, 0f);
-
-        if (agent != null) agent.enabled = true;
-        if (cc != null) cc.enabled = true;
-
-        RestorePlayerStatsIfPossible();
-
-        GameDataManager.Instance.ClearContinueFlag();
+        // QUAN TRỌNG:
+        // Sau khi vào scene hiện tại, lưu scene này thành scene mới nhất để Continue biết.
+        GameDataManager.Instance.SaveLastPlayerTransform(currentScene, transform);
 
         if (showDebugLog)
         {
-            Debug.Log($"[PlayerPositionRestore] Restored scene={currentScene}, pos={savedPos}, rotY={savedRotY}");
+            Debug.Log($"[PlayerPositionRestore] Mark current scene as last played: {currentScene}");
         }
     }
 
