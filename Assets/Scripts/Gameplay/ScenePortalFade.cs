@@ -21,6 +21,9 @@ public class ScenePortalFade : MonoBehaviour
     [Tooltip("Số giây chờ thêm sau khi fade xong rồi mới load")]
     [Min(0f)] public float delayBeforeLoad = 0f;
 
+    [Tooltip("Bật nếu muốn khi load scene mới thì player được đưa về vị trí đã lưu của scene đó.")]
+    public bool restoreSavedPositionOnLoad = false;
+
     [Tooltip("Thời gian fade từ trong suốt -> đen")]
     [Min(0f)] public float fadeDuration = 1.0f;
 
@@ -69,6 +72,14 @@ public class ScenePortalFade : MonoBehaviour
 
         SavePlayerState();
 
+        if (restoreSavedPositionOnLoad && GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.MarkLoadFromContinue();
+
+            if (showDebugLog)
+                Debug.Log("[ScenePortalFade] Đã bật cờ Restore/Continue bằng Trigger.");
+        }
+
         isLoading = true;
         StartCoroutine(FadeAndLoadRoutine());
     }
@@ -88,6 +99,39 @@ public class ScenePortalFade : MonoBehaviour
 
         SavePlayerState();
 
+        if (restoreSavedPositionOnLoad && GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.MarkLoadFromContinue();
+
+            if (showDebugLog)
+                Debug.Log("[ScenePortalFade] Đã bật cờ Restore/Continue bằng Button.");
+        }
+
+        isLoading = true;
+        StartCoroutine(FadeAndLoadRoutine());
+    }
+
+    public void LoadSceneByButtonRestorePosition()
+    {
+        if (isLoading) return;
+
+        if (string.IsNullOrWhiteSpace(targetSceneName))
+        {
+            Debug.LogWarning($"[ScenePortalFade] Chưa nhập 'targetSceneName' trên '{name}'.");
+            return;
+        }
+
+        if (showDebugLog)
+            Debug.Log($"[ScenePortalFade] Button được bấm -> restore position & load '{targetSceneName}'");
+
+        SavePlayerState();
+
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.MarkLoadFromContinue();
+            Debug.Log("[ScenePortalFade] Đã bật cờ Restore/Continue.");
+        }
+
         isLoading = true;
         StartCoroutine(FadeAndLoadRoutine());
     }
@@ -99,9 +143,9 @@ public class ScenePortalFade : MonoBehaviour
         GameObject player = GameObject.FindGameObjectWithTag(playerTag);
         if (player == null) return;
 
-        GameDataManager.Instance.SaveScenePosition(
+        GameDataManager.Instance.SaveLastPlayerTransform(
             SceneManager.GetActiveScene().name,
-            player.transform.position
+            player.transform
         );
 
         CharacterHealth health = player.GetComponent<CharacterHealth>();
