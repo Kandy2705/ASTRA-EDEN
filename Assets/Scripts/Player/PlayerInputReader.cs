@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-
+using UnityEngine.EventSystems;
 public class PlayerInputReader : MonoBehaviour
 {
     [Header("Keys")]
@@ -59,7 +59,28 @@ public class PlayerInputReader : MonoBehaviour
             return false;
         }
 
-        return Mouse.current.leftButton.wasPressedThisFrame;
+        if (!Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            return false;
+        }
+
+        // Nếu đang click lên UI Button thì không đánh
+        if (IsPointerOverUI())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool IsPointerOverUI()
+    {
+        if (EventSystem.current == null)
+        {
+            return false;
+        }
+
+        return EventSystem.current.IsPointerOverGameObject();
     }
 
     private static Vector2 ReadMovementInput(Keyboard keyboard)

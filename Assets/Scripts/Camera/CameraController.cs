@@ -68,6 +68,11 @@ public class CameraController : MonoBehaviour
     [SerializeField] private bool rotateOnlyWhileHoldingRightMouse = true;
     [SerializeField] private bool hideCursorWhileRotating;
 
+    [Header("Fast Movement Follow")]
+    [SerializeField] private float fastFollowDistance = 1.5f;
+    [SerializeField] private float snapDistance = 4f;
+    [SerializeField] private float fastFollowSmoothSpeed = 35f;
+
     private float yaw;
     private float pitch = 15f;
     private Vector3 currentVelocity;
@@ -216,6 +221,25 @@ public class CameraController : MonoBehaviour
     private void ApplyCameraTransform(Vector3 targetPosition, Quaternion targetRotation)
     {
         float activeSmoothSpeed = GetActiveSmoothSpeed();
+
+        float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
+
+        // Nếu camera bị bỏ quá xa, snap thẳng tới vị trí đúng
+        if (distanceToTarget >= snapDistance)
+        {
+            transform.position = targetPosition;
+            transform.rotation = targetRotation;
+            currentVelocity = Vector3.zero;
+            return;
+        }
+
+        // Nếu player đang di chuyển nhanh/dodge làm camera tụt lại,
+        // tăng tốc độ follow tạm thời.
+        if (distanceToTarget >= fastFollowDistance)
+        {
+            activeSmoothSpeed = fastFollowSmoothSpeed;
+        }
+
         float damping = 1f - Mathf.Exp(-activeSmoothSpeed * Time.deltaTime);
 
         transform.position = Vector3.SmoothDamp(
