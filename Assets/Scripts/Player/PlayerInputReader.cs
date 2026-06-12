@@ -8,6 +8,9 @@ public class PlayerInputReader : MonoBehaviour
     [SerializeField] private Key dashKey = Key.LeftCtrl;
     [SerializeField] private Key runKey = Key.LeftShift;
     [SerializeField] private Key attackKey = Key.J;
+    [SerializeField] private Key skill1Key = Key.Q;
+    [SerializeField] private Key skill2Key = Key.E;
+    [SerializeField] private Key skill3Key = Key.R;
     [SerializeField] private bool allowMouseLeftAttack = true;
 
     public Vector2 MoveInput { get; private set; }
@@ -15,6 +18,10 @@ public class PlayerInputReader : MonoBehaviour
     public bool DashPressed { get; private set; }
     public bool RunHeld { get; private set; }
     public bool AttackPressed { get; private set; }
+    public bool Skill1Pressed { get; private set; }
+    public bool Skill2Pressed { get; private set; }
+    public bool Skill3Pressed { get; private set; }
+    public int SkillIndexPressed { get; private set; } = -1;
 
     private void Update()
     {
@@ -39,6 +46,10 @@ public class PlayerInputReader : MonoBehaviour
         DashPressed = keyboard[dashKey].wasPressedThisFrame;
         RunHeld = keyboard[runKey].isPressed;
         AttackPressed = keyboard[attackKey].wasPressedThisFrame || IsMouseLeftAttackPressed();
+        Skill1Pressed = keyboard[skill1Key].wasPressedThisFrame;
+        Skill2Pressed = keyboard[skill2Key].wasPressedThisFrame;
+        Skill3Pressed = keyboard[skill3Key].wasPressedThisFrame;
+        SkillIndexPressed = Skill1Pressed ? 1 : Skill2Pressed ? 2 : Skill3Pressed ? 3 : -1;
     }
 
     private bool IsMouseLeftAttackPressed()

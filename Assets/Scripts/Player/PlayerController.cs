@@ -90,6 +90,7 @@ public class PlayerController : MonoBehaviour
         Vector2 movementInput = inputReader.MoveInput;
         Vector3 moveDir = GetMoveDirection(movementInput);
         bool isAttacking = combatController != null && combatController.IsAttacking;
+        bool attackMoveActive = combatController != null && combatController.IsAttackMoveActive;
         bool canMove = !isDashing && !isAttacking;
         bool isMoving = canMove && moveDir.sqrMagnitude > 0.001f;
         bool isRunning = isMoving && inputReader.RunHeld;
@@ -120,6 +121,10 @@ public class PlayerController : MonoBehaviour
         if (isDashing)
         {
             MoveDash();
+        }
+        else if (attackMoveActive)
+        {
+            MoveAttackForward();
         }
         else if (!isAttacking)
         {
@@ -205,6 +210,20 @@ public class PlayerController : MonoBehaviour
                 turnSpeed * Time.deltaTime
             );
         }
+    }
+
+    private void MoveAttackForward()
+    {
+        if (combatController == null)
+        {
+            return;
+        }
+
+        float attackMoveSpeed = combatController.AttackMoveSpeed;
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+
+        controller.Move(forward.normalized * attackMoveSpeed * Time.deltaTime);
     }
 
     private void ApplyGravityAndJump(bool isAttacking)

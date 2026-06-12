@@ -1132,8 +1132,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7f2fd3d8281943bf994cd95c84b68a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutoSavePlayerPosition
+  saveOnStart: 1
   saveOnDisable: 1
   saveOnApplicationQuit: 1
+  saveEveryFewSeconds: 1
+  startSaveDelay: 1
+  saveInterval: 2
 --- !u!4 &998685130 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4420664804571618, guid: 8fc40ebf5a41b30428929f5ba3697759, type: 3}
@@ -1366,6 +1370,26 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3336960250927388807, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: m_Intensity
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 4567541918929111336, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: m_Size.x
+      value: 4.213611
+      objectReference: {fileID: 0}
+    - target: {fileID: 4567541918929111336, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: m_Center.x
+      value: 1.6068056
+      objectReference: {fileID: 0}
+    - target: {fileID: 4567541918929111336, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: m_Center.y
+      value: 1.3362736
+      objectReference: {fileID: 0}
+    - target: {fileID: 4828664149292371432, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5163425229218118359, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
       propertyPath: m_LocalPosition.x
       value: 23.54463
@@ -1409,6 +1433,18 @@ PrefabInstance:
     - target: {fileID: 5265652959956353919, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6868925603054436214, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -25.66
+      objectReference: {fileID: 0}
+    - target: {fileID: 6868925603054436214, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -12.67
+      objectReference: {fileID: 0}
+    - target: {fileID: 8048279123455620899, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: fadeImage
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8048279123455620899, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
       propertyPath: restoreSavedPositionOnLoad

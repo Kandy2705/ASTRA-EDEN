@@ -7,6 +7,10 @@ public class PlayerCombatController : MonoBehaviour
     [SerializeField] private PlayerInputReader inputReader;
     [SerializeField] private PlayerAnimatorBridge animatorBridge;
     [SerializeField] private float attackLockDuration = 0.75f;
+    [SerializeField] private float attack2MoveDistance = 3f;
+    [SerializeField] private float attack2MoveDuration = 1f;
+    [SerializeField] private int attackMoveSkillIndex = 1;
+    [SerializeField] private float[] skillLockDurations = new float[4] { 0.75f, 1f, 1f, 1.2f };
 
     [Header("Damage")]
     [SerializeField] private CharacterHealth characterHealth;
@@ -20,11 +24,15 @@ public class PlayerCombatController : MonoBehaviour
     [SerializeField] private float enemyKnockbackDuration = 0.18f;
 
     private float attackLockTimer;
+    private float attackMoveRemaining;
     private readonly Collider[] attackHits = new Collider[16];
     private readonly CharacterHealth[] damagedTargets = new CharacterHealth[16];
 
     public bool IsAttacking => attackLockTimer > 0f;
+    public bool IsAttackMoveActive => attackMoveRemaining > 0f;
+    public float AttackMoveSpeed => attack2MoveDistance / Mathf.Max(attack2MoveDuration, 0.001f);
     public float AttackDamage => attackDamage;
+    private int currentSkillIndex;
 
     private void Reset()
     {
@@ -62,16 +70,37 @@ public class PlayerCombatController : MonoBehaviour
             return;
         }
 
-        if (!IsAttacking && inputReader.AttackPressed)
+        if (!IsAttacking)
         {
-            StartAttack();
+            int pressedSkill = inputReader.SkillIndexPressed;
+            if (pressedSkill >= 0)
+            {
+                StartAttack(pressedSkill);
+                return;
+            }
+
+            if (inputReader.AttackPressed)
+            {
+                StartAttack(0);
+            }
         }
     }
 
-    private void StartAttack()
+    private void StartAttack(int skillIndex)
     {
-        attackLockTimer = attackLockDuration;
-        animatorBridge.TriggerAttack();
+        currentSkillIndex = Mathf.Clamp(skillIndex, 0, 3);
+        attackLockTimer = skillLockDurations[currentSkillIndex];
+
+        if (currentSkillIndex == attackMoveSkillIndex)
+        {
+            attackMoveRemaining = attack2MoveDuration;
+        }
+
+        if (animatorBridge != null)
+        {
+            animatorBridge.TriggerCastSkill(currentSkillIndex);
+        }
+
         ApplyAttackDamage();
     }
 
@@ -80,6 +109,11 @@ public class PlayerCombatController : MonoBehaviour
         if (attackLockTimer > 0f)
         {
             attackLockTimer -= Time.deltaTime;
+        }
+
+        if (attackMoveRemaining > 0f)
+        {
+            attackMoveRemaining -= Time.deltaTime;
         }
     }
 

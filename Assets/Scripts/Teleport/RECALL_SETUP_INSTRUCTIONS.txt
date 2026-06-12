@@ -1,0 +1,70 @@
+RECALL PORTAL SYSTEM - SETUP GUIDE
+===================================
+
+SCRIPTS CREATED:
+1. RecallPortalManager.cs - Quản lý việc gọi cổng từ nút UI
+2. RecallPortal.cs - Script cổng teleport (animation, teleport, despawn)
+3. RecallUIButton.cs - Kết nối nút UI ItemTeleportHome
+
+SETUP STEPS:
+============
+
+1. CREATE PORTAL PREFAB:
+   - Trong Assets, tạo một GameObject 3D (Cube, Sphere, hoặc custom model)
+   - Đặt tên: "RecallPortal" hoặc tương tự
+   - Thêm Mesh Collider (set as Trigger)
+   - Gắn script RecallPortal.cs
+   - Thêm Material với Emission (để nó phát sáng)
+   - Tạo Prefab: drag GameObject vào thư mục Assets/Resources/Prefabs (hoặc thư mục tùy ý)
+
+2. SETUP PLAYER:
+   - Gắn tag "Player" cho Player GameObject (Edit > Project Settings > Tags)
+   - Đảm bảo Player có CharacterController component
+   - Tạo một empty GameObject con tên "PortalSpawnPoint" dưới Player, set position bằng 0
+     (để cổng spawn trước mặt Player)
+
+3. SETUP DESTINATION POINT:
+   - Nếu teleport trong scene hiện tại:
+     Tạo một empty GameObject tên "RecallDestination" ở vị trí muốn teleport tới
+   
+   - Nếu teleport sang scene khác:
+     Bật "Use Scene Load" trong RecallPortal Inspector
+     Sửa "Target Scene Name" thành tên scene muốn dịch chuyển (ví dụ: "HomeScene", "MainHub", etc.)
+     Và uncomment dòng: UnityEngine.SceneManagement.SceneManager.LoadScene(targetSceneName);
+
+4. SETUP MANAGER IN SCENE:
+   - Tạo empty GameObject tên "RecallManager"
+   - Gắn script RecallPortalManager.cs
+   - Trong Inspector:
+     - Portal Prefab: kéo prefab RecallPortal vào
+     - Portal Spawn Point: kéo PortalSpawnPoint (con của Player) vào
+     - Spawn Distance: 2.5 (hoặc tùy thích)
+     - Player Controller: kéo Player có CharacterController vào
+
+5. SETUP UI BUTTON:
+   - Tìm hoặc tạo UI Button "ItemTeleportHome"
+   - Gắn script RecallUIButton.cs vào button
+   - Trong Inspector:
+     - Recall Manager: kéo RecallManager GameObject vào
+
+6. SETUP PORTAL SCRIPT (trong RecallPortal - gắn vào Prefab):
+   - Destination Point: kéo RecallDestination vào (nếu teleport trong scene)
+   - Use Scene Load: false (mặc định teleport trong scene)
+   - Target Scene Name: điền tên scene muốn load (ví dụ: "HomeScene", "MainHub")
+   - Scale Up Duration: 1.5 (thời gian cổng scale up)
+   - Rotation Speed: 45 (tốc độ xoay)
+   - Emission Intensity: 2 (độ phát sáng)
+   - Auto Destroy Time: 30 (tự hủy sau 30 giây nếu chưa dùng)
+
+CHÚ Ý:
+======
+- Portal Material cần có Emission channel để hiệu ứng glow hoạt động
+- Nếu muốn load scene khác, đổi "Use Scene Load" = true và sửa target scene name
+- Có comment "TODO" trong RecallPortal.cs để điền SceneManager.LoadScene() sau
+- Collider của cổng phải là Trigger để OnTriggerEnter hoạt động
+
+OPTIONAL - ADD EFFECTS:
+=======================
+- Thêm Particle System vào cổng để hiệu ứng tốt hơn
+- Thêm Audio Source để phát âm thanh khi mở/đóng cổng
+- Thêm Light component để cổng sáng lên khi scale up

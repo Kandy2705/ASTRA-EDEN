@@ -8,6 +8,8 @@ public class PlayerAnimatorBridge : MonoBehaviour
     private static readonly int JumpHash = Animator.StringToHash("Jump");
     private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
+    private static readonly int CastSkillHash = Animator.StringToHash("CastSkill");
+    private static readonly int SkillIndexHash = Animator.StringToHash("SkillIndex");
 
     [SerializeField] private Animator animator;
     [SerializeField] private float animatorDampTime = 0.1f;
@@ -54,6 +56,52 @@ public class PlayerAnimatorBridge : MonoBehaviour
         {
             animator.SetTrigger(AttackHash);
         }
+    }
+
+    public void TriggerCastSkill(int skillIndex)
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        if (HasParameter(SkillIndexHash, AnimatorControllerParameterType.Int))
+        {
+            animator.SetInteger(SkillIndexHash, skillIndex);
+        }
+        else if (HasParameter(SkillIndexHash, AnimatorControllerParameterType.Float))
+        {
+            animator.SetFloat(SkillIndexHash, skillIndex);
+        }
+
+        if (HasParameter(CastSkillHash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.SetTrigger(CastSkillHash);
+        }
+        else
+        {
+            animator.SetTrigger(AttackHash);
+        }
+    }
+
+    private bool HasParameter(int hash, AnimatorControllerParameterType type)
+    {
+        if (animator == null)
+        {
+            return false;
+        }
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+            if (parameter.nameHash == hash && parameter.type == type)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void PushPlaybackSpeed(float speed)

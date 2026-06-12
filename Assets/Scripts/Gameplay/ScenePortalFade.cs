@@ -21,6 +21,9 @@ public class ScenePortalFade : MonoBehaviour
     [Tooltip("Số giây chờ thêm sau khi fade xong rồi mới load")]
     [Min(0f)] public float delayBeforeLoad = 0f;
 
+    [Tooltip("Số giây chờ trước khi tắt movement của player")]
+    [Min(0f)] public float delayBeforeStopMovement = 0.5f;
+
     [Tooltip("Bật nếu muốn khi load scene mới thì player được đưa về vị trí đã lưu của scene đó.")]
     public bool restoreSavedPositionOnLoad = false;
 
@@ -81,7 +84,7 @@ public class ScenePortalFade : MonoBehaviour
         }
 
         isLoading = true;
-        StartCoroutine(FadeAndLoadRoutine());
+        StartCoroutine(FadeAndLoadRoutine(other.gameObject));
     }
 
     public void LoadSceneByButton()
@@ -108,7 +111,8 @@ public class ScenePortalFade : MonoBehaviour
         }
 
         isLoading = true;
-        StartCoroutine(FadeAndLoadRoutine());
+        GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+        StartCoroutine(FadeAndLoadRoutine(player));
     }
 
     public void LoadSceneByButtonRestorePosition()
@@ -133,7 +137,8 @@ public class ScenePortalFade : MonoBehaviour
         }
 
         isLoading = true;
-        StartCoroutine(FadeAndLoadRoutine());
+        GameObject player = GameObject.FindGameObjectWithTag(playerTag);
+        StartCoroutine(FadeAndLoadRoutine(player));
     }
 
     private void SavePlayerState()
@@ -156,31 +161,68 @@ public class ScenePortalFade : MonoBehaviour
         }
     }
 
-    private IEnumerator FadeAndLoadRoutine()
+    private void DisablePlayerMovement(GameObject player)
     {
-        // Fade đen
-        if (fadeImage != null && fadeDuration > 0f)
+        if (showDebugLog)
+            Debug.Log($"[ScenePortalFade] Tắt movement và animation của player...");
+
+        PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();
+        if (inputReader != null)
         {
-            float t = 0f;
-            Color c = fadeImage.color;
-            while (t < fadeDuration)
-            {
-                t += Time.deltaTime;
-                c.a = Mathf.Clamp01(t / fadeDuration);
-                fadeImage.color = c;
-                yield return null;
-            }
-            c.a = 1f;
-            fadeImage.color = c;
+            inputReader.enabled = false;
+            if (showDebugLog)
+                Debug.Log("[ScenePortalFade] Đã tắt PlayerInputReader");
         }
 
-        if (delayBeforeLoad > 0f)
-            yield return new WaitForSeconds(delayBeforeLoad);
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+            if (showDebugLog)
+                Debug.Log("[ScenePortalFade] Đã tắt PlayerController");
+        }
+
+        CharacterController characterController = player.GetComponent<CharacterController>();
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+            if (showDebugLog)
+                Debug.Log("[ScenePortalFade] Đã tắt CharacterController");
+        }
+
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            if (showDebugLog)
+                Debug.Log("[ScenePortalFade] Đã reset velocity");
+        }
+
+        // Tắt animation
+        Animator animator = player.GetComponent<Animator>();
+        if (animator != null)
+        {
+            animator.enabled = false;
+            if (showDebugLog)
+                Debug.Log("[ScenePortalFade] Đã tắt Animator");
+        }
+    }
+
+    private IEnumerator FadeAndLoadRoutine(GameObject player)
+    {
+        // Tắt animation và movement ngay lập tức
+        DisablePlayerMovement(player);
 
         if (showDebugLog)
-            Debug.Log($"[ScenePortalFade] Đang load scene '{targetSceneName}'");
+            Debug.Log($"[ScenePortalFade] Chuyển sang Loading screen & load '{targetSceneName}'");
 
-        SceneManager.LoadScene(targetSceneName);
+        yield return null; // Chờ 1 frame để player stop animation
+
+        // Pass target scene name vào Loading screen
+        LoadingScreenController.TargetSceneName = targetSceneName;
+
+        // Load Loading scene (sẽ tự động load target scene và update progress bar)
+        SceneManager.LoadScene("Loading");
     }
 
     /// <summary>
