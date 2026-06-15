@@ -22,6 +22,9 @@ public class RagdollOnDeath : MonoBehaviour
     [SerializeField] private float deathImpulse = 1.5f;
     [SerializeField] private float deathTorque = 2.5f;
 
+    [Tooltip("Bật khi có script khác (vd EnemyPatrol) điều phối việc chạy anim Die rồi mới ragdoll. Khi true, RagdollOnDeath KHÔNG tự bật ragdoll lúc Died.")]
+    [SerializeField] private bool controlledExternally;
+
     private bool isRagdollActive;
     private bool hasWarnedMissingParts;
     private Collider rootCollider;
@@ -228,7 +231,13 @@ public class RagdollOnDeath : MonoBehaviour
 
     private void HandleDied(CharacterHealth deadHealth)
     {
+        if (controlledExternally) return;
         EnableRagdoll();
+    }
+
+    public void SetControlledExternally(bool value)
+    {
+        controlledExternally = value;
     }
 
     private void WarnMissingParts()

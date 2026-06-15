@@ -8,6 +8,9 @@ public class EnemyPatrol : MonoBehaviour
     private static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
     private static readonly int VerticalHash = Animator.StringToHash("Vertical");
     private static readonly int AttackHash = Animator.StringToHash("Attack");
+    private static readonly int HitHash = Animator.StringToHash("Hit");
+    private static readonly int DieHash = Animator.StringToHash("Die");
+    private static readonly int IsDeadHash = Animator.StringToHash("IsDead");
 
     [SerializeField] private Transform pointA;
     [SerializeField] private Transform pointB;
@@ -30,6 +33,20 @@ public class EnemyPatrol : MonoBehaviour
     [SerializeField] private float animatorDampTime = 0.1f; //thoi gian damper cho animator
     [SerializeField] private float movingThreshold = 0.05f; //nguong di chuyen
 
+    [Header("Hit / Death Animation")]
+    [Tooltip("Bật để chạy anim Die (trigger Die + bool IsDead) khi chết, sau đó mới gọi Ragdoll.")]
+    [SerializeField] private bool useDeathAnimation = true;
+    [Tooltip("Thời gian chờ anim Die chạy xong rồi mới bật ragdoll/destroy (giây).")]
+    [SerializeField] private float deathAnimationDuration = 2.0f;
+    [Tooltip("Bật để trigger anim Hit (Animator param 'Hit') khi enemy bị đánh dính.")]
+    [SerializeField] private bool useHitAnimation = true;
+    [Tooltip("Thời gian khóa di chuyển khi bị đánh dính, để anim Hit chạy không bị cắt.")]
+    [SerializeField] private float hitStunDuration = 0.25f;
+
+    [Header("Model Orientation")]
+    [Tooltip("Tick nếu model bị lật ngược 180° (forward thật ra là -Z). Sẽ đảo logic xoay + animator velocity.")]
+    [SerializeField] private bool flipForward180 = false;
+
     [Header("Attack")]
     [SerializeField] private LayerMask playerLayer;
     [SerializeField] private float attackLockDuration = 0.9f;
@@ -51,6 +68,10 @@ public class EnemyPatrol : MonoBehaviour
     private bool swingActive;
     private bool swingHitResolved;
     private float swingElapsed;
+    private float hitStunTimer;
+    private float deathTimer;
+    private bool deathSequenceFinished;
+    private float lastKnownHP = float.NaN;
 
     private enum EnemyState
     {
@@ -66,6 +87,10 @@ public class EnemyPatrol : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+        if (agent != null && flipForward180)
+        {
+            agent.updateRotation = false;
+        }
         AssignDefaultPlayerLayer();
         EnsureEnemyHealth();
         EnsureKnockback();
@@ -117,6 +142,15 @@ public class EnemyPatrol : MonoBehaviour
         }
 
         TickAttackLock();
+
+        if (hitStunTimer > 0f)
+        {
+            hitStunTimer -= Time.deltaTime;
+            StopAgent();
+            UpdateAnimator(0f);
+            return;
+        }
+
         if (IsAttacking || (knockback != null && knockback.IsKnockedBack))
         {
             StopAgent();
@@ -149,7 +183,21 @@ public class EnemyPatrol : MonoBehaviour
         else
             HandleChase();
 
+        ApplyFlippedFacing();
         UpdateAnimator(GetTargetBlend());
+    }
+
+    private void ApplyFlippedFacing()
+    {
+        if (!flipForward180 || agent == null) return;
+        if (agent.velocity.sqrMagnitude <= movingThreshold * movingThreshold) return;
+
+        Vector3 dir = agent.velocity;
+        dir.y = 0f;
+        if (dir.sqrMagnitude <= 0.0001f) return;
+
+        Quaternion target = Quaternion.LookRotation(-dir.normalized);
+        transform.rotation = Quaternion.Slerp(transform.rotation, target, 10f * Time.deltaTime);
     }
 
     private void OnDestroy()
@@ -157,6 +205,7 @@ public class EnemyPatrol : MonoBehaviour
         if (enemyHealth != null)
         {
             enemyHealth.Died -= HandleHealthDied;
+            enemyHealth.Changed -= HandleHealthChanged;
         }
     }
 
@@ -212,6 +261,11 @@ public class EnemyPatrol : MonoBehaviour
         if (agent != null && agent.velocity.sqrMagnitude > movingThreshold * movingThreshold)
         {
             localVelocity = transform.InverseTransformDirection(agent.velocity.normalized);
+            if (flipForward180)
+            {
+                localVelocity.x = -localVelocity.x;
+                localVelocity.z = -localVelocity.z;
+            }
         }
 
         animator.SetFloat(BlendHash, targetBlend, animatorDampTime, Time.deltaTime);
@@ -374,7 +428,8 @@ public class EnemyPatrol : MonoBehaviour
 
         if (direction.sqrMagnitude > 0.001f)
         {
-            transform.rotation = Quaternion.LookRotation(direction);
+            Vector3 facing = flipForward180 ? -direction : direction;
+            transform.rotation = Quaternion.LookRotation(facing);
         }
     }
 
@@ -422,7 +477,45 @@ public class EnemyPatrol : MonoBehaviour
 
         enemyHealth.Died -= HandleHealthDied;
         enemyHealth.Died += HandleHealthDied;
+        enemyHealth.Changed -= HandleHealthChanged;
+        enemyHealth.Changed += HandleHealthChanged;
         isDead = enemyHealth.IsDead;
+        lastKnownHP = enemyHealth.RuntimeStats != null ? enemyHealth.RuntimeStats.currentHP : float.NaN;
+    }
+
+    private void HandleHealthChanged(CharacterHealth h)
+    {
+        if (h == null || h.RuntimeStats == null) return;
+        float currentHP = h.RuntimeStats.currentHP;
+
+        if (!float.IsNaN(lastKnownHP) && currentHP < lastKnownHP - 0.001f && !isDead && !h.IsDead)
+        {
+            TriggerHitAnimation();
+        }
+
+        lastKnownHP = currentHP;
+    }
+
+    private void TriggerHitAnimation()
+    {
+        if (!useHitAnimation || animator == null) return;
+        if (!HasAnimatorParameter(HitHash, AnimatorControllerParameterType.Trigger)) return;
+
+        animator.SetTrigger(HitHash);
+        if (hitStunDuration > 0f)
+        {
+            hitStunTimer = Mathf.Max(hitStunTimer, hitStunDuration);
+        }
+    }
+
+    private bool HasAnimatorParameter(int hash, AnimatorControllerParameterType type)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null) return false;
+        foreach (var p in animator.parameters)
+        {
+            if (p.nameHash == hash && p.type == type) return true;
+        }
+        return false;
     }
 
     private void EnsureKnockback()
@@ -444,6 +537,11 @@ public class EnemyPatrol : MonoBehaviour
         {
             ragdollOnDeath = GetComponent<RagdollOnDeath>();
         }
+
+        if (ragdollOnDeath != null && useDeathAnimation)
+        {
+            ragdollOnDeath.SetControlledExternally(true);
+        }
     }
 
     private void HandleHealthDied(CharacterHealth deadHealth)
@@ -454,8 +552,46 @@ public class EnemyPatrol : MonoBehaviour
 
     private void HandleDeath()
     {
-        isDead = true;
+        if (!isDead)
+        {
+            isDead = true;
+        }
         attackLockTimer = 0f;
+        hitStunTimer = 0f;
+
+        FreezeAgentForDeath();
+        UpdateAnimator(0f);
+
+        if (animator != null)
+        {
+            if (HasAnimatorParameter(IsDeadHash, AnimatorControllerParameterType.Bool))
+            {
+                animator.SetBool(IsDeadHash, true);
+            }
+        }
+
+        if (useDeathAnimation && animator != null && !deathSequenceFinished)
+        {
+            if (deathTimer <= 0f)
+            {
+                animator.ResetTrigger(AttackHash);
+                animator.ResetTrigger(HitHash);
+                if (HasAnimatorParameter(DieHash, AnimatorControllerParameterType.Trigger))
+                {
+                    animator.SetTrigger(DieHash);
+                }
+                deathTimer = Mathf.Max(0.05f, deathAnimationDuration);
+            }
+
+            deathTimer -= Time.deltaTime;
+
+            if (deathTimer > 0f)
+            {
+                return;
+            }
+
+            deathSequenceFinished = true;
+        }
 
         if (ragdollOnDeath != null)
         {
@@ -463,13 +599,24 @@ public class EnemyPatrol : MonoBehaviour
             return;
         }
 
-        StopAgent();
-        UpdateAnimator(0f);
-
         if (agent != null)
         {
             agent.enabled = false;
         }
+    }
+
+    private void FreezeAgentForDeath()
+    {
+        if (agent == null) return;
+        if (!agent.enabled) return;
+        if (agent.isOnNavMesh)
+        {
+            agent.ResetPath();
+            agent.velocity = Vector3.zero;
+            agent.isStopped = true;
+        }
+        agent.updatePosition = false;
+        agent.updateRotation = false;
     }
 
     private void RefreshDebugHealth()

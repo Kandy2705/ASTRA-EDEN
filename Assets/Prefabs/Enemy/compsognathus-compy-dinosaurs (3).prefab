@@ -552,15 +552,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5688fe4e0e2874ada8933cdeb715735c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1645.526
+      value: 2263.26
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5688fe4e0e2874ada8933cdeb715735c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 95.399
+      value: 86.08197
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5688fe4e0e2874ada8933cdeb715735c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1444.321
+      value: 881.78577
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5688fe4e0e2874ada8933cdeb715735c, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1090,6 +1090,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: compsognathus-compy-dinosaurs (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5688fe4e0e2874ada8933cdeb715735c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1044207583462672117, guid: 5688fe4e0e2874ada8933cdeb715735c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: -37.91148
@@ -1603,7 +1607,12 @@ MonoBehaviour:
   patrolSpeed: 3
   chaseSpeed: 6
   animatorDampTime: 0.1
-  movingThreshold: 0.4
+  movingThreshold: 0.3
+  useDeathAnimation: 1
+  deathAnimationDuration: 2
+  useHitAnimation: 1
+  hitStunDuration: 0.25
+  flipForward180: 0
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -1712,6 +1721,7 @@ MonoBehaviour:
   disableRootCollider: 1
   deathImpulse: 1.5
   deathTorque: 2.5
+  controlledExternally: 0
 --- !u!65 &100546956858779002
 BoxCollider:
   m_ObjectHideFlags: 0

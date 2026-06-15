@@ -23,8 +23,19 @@ public class PlayerCombatController : MonoBehaviour
     [SerializeField] private float enemyKnockbackDistance = 1.2f;
     [SerializeField] private float enemyKnockbackDuration = 0.18f;
 
+    [Header("Damage Timing")]
+    [Tooltip("Bật để chỉ gây dame khi Animation Event OnAttackHit() được gọi từ clip. Tắt = quay lại flow cũ (dame ngay lúc bấm).")]
+    [SerializeField] private bool useAnimationEventDamage = true;
+    [Tooltip("Fallback: nếu bật và sau X giây không có Animation Event nào, sẽ tự gây dame để tránh kẹt. 0 = tắt fallback.")]
+    [SerializeField] private float damageEventFallback = 0.4f;
+    [Tooltip("Dame cho từng skillIndex (0..3). Để 0 = dùng attackDamage chung.")]
+    [SerializeField] private float[] perSkillDamage = new float[4] { 0f, 0f, 0f, 0f };
+
     private float attackLockTimer;
     private float attackMoveRemaining;
+    private float swingElapsed;
+    private bool swingActive;
+    private bool swingHitResolved;
     private readonly Collider[] attackHits = new Collider[16];
     private readonly CharacterHealth[] damagedTargets = new CharacterHealth[16];
 
@@ -101,7 +112,39 @@ public class PlayerCombatController : MonoBehaviour
             animatorBridge.TriggerCastSkill(currentSkillIndex);
         }
 
+        BeginSwing();
+
+        if (!useAnimationEventDamage)
+        {
+            ApplyAttackDamage();
+            swingHitResolved = true;
+        }
+    }
+
+    private void BeginSwing()
+    {
+        swingActive = true;
+        swingHitResolved = false;
+        swingElapsed = 0f;
+    }
+
+    /// <summary>Gọi từ Animation Event ở frame impact của clip attack.</summary>
+    public void OnAttackHit()
+    {
+        if (!swingActive || swingHitResolved)
+        {
+            return;
+        }
+        swingHitResolved = true;
         ApplyAttackDamage();
+    }
+
+    /// <summary>Optional: gọi cuối clip để chắc chắn reset state.</summary>
+    public void OnAttackEnd()
+    {
+        swingActive = false;
+        swingHitResolved = false;
+        swingElapsed = 0f;
     }
 
     private void TickAttackLock()
@@ -114,6 +157,21 @@ public class PlayerCombatController : MonoBehaviour
         if (attackMoveRemaining > 0f)
         {
             attackMoveRemaining -= Time.deltaTime;
+        }
+
+        if (swingActive)
+        {
+            swingElapsed += Time.deltaTime;
+
+            if (useAnimationEventDamage && !swingHitResolved && damageEventFallback > 0f && swingElapsed >= damageEventFallback)
+            {
+                OnAttackHit();
+            }
+
+            if (attackLockTimer <= 0f)
+            {
+                OnAttackEnd();
+            }
         }
     }
 
@@ -130,6 +188,7 @@ public class PlayerCombatController : MonoBehaviour
 
         int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, attackHits, damageMask, QueryTriggerInteraction.Collide);
         int damagedCount = 0;
+        float dmg = GetActiveDamage();
         for (int i = 0; i < hitCount; i++)
         {
             CharacterHealth targetHealth = attackHits[i].GetComponentInParent<CharacterHealth>();
@@ -138,11 +197,21 @@ public class PlayerCombatController : MonoBehaviour
                 continue;
             }
 
-            targetHealth.TakeDamage(attackDamage);
+            targetHealth.TakeDamage(dmg);
             ApplyKnockback(targetHealth);
             damagedTargets[damagedCount] = targetHealth;
             damagedCount++;
         }
+    }
+
+    private float GetActiveDamage()
+    {
+        if (perSkillDamage != null && currentSkillIndex >= 0 && currentSkillIndex < perSkillDamage.Length)
+        {
+            float perSkill = perSkillDamage[currentSkillIndex];
+            if (perSkill > 0f) return perSkill;
+        }
+        return attackDamage;
     }
 
     private void ApplyKnockback(CharacterHealth targetHealth)
