@@ -580,6 +580,10 @@ public class EnemyPatrol : MonoBehaviour
                 {
                     animator.SetTrigger(DieHash);
                 }
+                if (ragdollOnDeath != null)
+                {
+                    ragdollOnDeath.BeginDeathPhysics();
+                }
                 deathTimer = Mathf.Max(0.05f, deathAnimationDuration);
             }
 

@@ -140,7 +140,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &203000002
 Transform:
   m_ObjectHideFlags: 0
@@ -186,6 +186,10 @@ PrefabInstance:
     - target: {fileID: 1014989259798498, guid: 8fc40ebf5a41b30428929f5ba3697759, type: 3}
       propertyPath: m_Name
       value: MagicSword_Iron
+      objectReference: {fileID: 0}
+    - target: {fileID: 1014989259798498, guid: 8fc40ebf5a41b30428929f5ba3697759, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4420664804571618, guid: 8fc40ebf5a41b30428929f5ba3697759, type: 3}
       propertyPath: m_LocalScale.x
@@ -439,6 +443,9 @@ MonoBehaviour:
   showCursorOnStart: 1
   rotateOnlyWhileHoldingRightMouse: 1
   hideCursorWhileRotating: 0
+  fastFollowDistance: 1.5
+  snapDistance: 4
+  fastFollowSmoothSpeed: 35
 --- !u!114 &330585549
 MonoBehaviour:
   m_ObjectHideFlags: 0

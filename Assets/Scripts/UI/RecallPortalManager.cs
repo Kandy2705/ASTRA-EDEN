@@ -13,6 +13,11 @@ public class RecallPortalManager : MonoBehaviour
     [SerializeField] private CharacterController playerController;
     [SerializeField] private float rotateYPrefab = 90f;
 
+    [SerializeField] private LayerMask groundMask;
+    [SerializeField] private float raycastHeight = 20f;
+    [SerializeField] private float raycastDistance = 100f;
+    [SerializeField] private float groundOffset = 0.05f;
+
     private GameObject currentPortal;
 
     private void Awake()
@@ -47,7 +52,19 @@ public class RecallPortalManager : MonoBehaviour
         Transform spawnTransform = portalSpawnPoint != null ? portalSpawnPoint : transform;
 
         Vector3 spawnPos = spawnTransform.position + spawnTransform.forward * spawnDistance;
-        spawnPos.y = spawnTransform.position.y + spawnHeightOffset;
+
+        // Raycast từ trên xuống để tìm mặt Terrain/Ground
+        Vector3 rayStart = spawnPos + Vector3.up * raycastHeight;
+
+        if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, raycastDistance, groundMask, QueryTriggerInteraction.Ignore))
+        {
+            spawnPos = hit.point + Vector3.up * groundOffset;
+        }
+        else
+        {
+            Debug.LogWarning("Không tìm thấy mặt đất/Terrain để spawn portal. Dùng vị trí mặc định.");
+            spawnPos.y = spawnTransform.position.y + spawnHeightOffset;
+        }
 
         Quaternion portalRotation = Quaternion.Euler(
             0f,
