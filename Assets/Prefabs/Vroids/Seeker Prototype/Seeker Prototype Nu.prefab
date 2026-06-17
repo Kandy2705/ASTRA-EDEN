@@ -6991,6 +6991,7 @@ GameObject:
   - component: {fileID: 559529952146503809}
   - component: {fileID: 908721642075562601}
   - component: {fileID: 7254071530502945434}
+  - component: {fileID: 4740292446844745432}
   m_Layer: 6
   m_Name: Seeker Prototype Nu
   m_TagString: Player
@@ -7522,6 +7523,7 @@ MonoBehaviour:
   deathImpulse: 1.5
   deathTorque: 2.5
   controlledExternally: 0
+  applyRootDeathImpulse: 0
 --- !u!114 &3838790990694105422
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7603,6 +7605,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimationEventRelay
   owner: {fileID: 817504941376431520}
+--- !u!114 &4740292446844745432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c95d30ed42eff420cb6208e031f014be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LootCollector
+  logToConsole: 1
 --- !u!1 &7318886399150952759
 GameObject:
   m_ObjectHideFlags: 0

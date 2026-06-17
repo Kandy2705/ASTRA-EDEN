@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b054de17ce143c39302d60c49703f46, type: 3}
+  m_Name: SO_Character_MiraSolen
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterData
+  characterId: mira_solen
+  displayName: Mira Solen
+  characterClass: 4
+  gender: 2
+  rarity: 4
+  characterPrefab: {fileID: 0}
+  portrait: {fileID: 0}
+  icon: {fileID: 0}
+  defaultSkin: {fileID: 0}
+  baseStats:
+    maxHP: 900
+    attack: 125
+    defense: 55
+    critRate: 0.13
+    critDamage: 0.65
+    moveSpeed: 6.4
+    attackSpeed: 1.1
+    staminaMax: 95
+    staminaRegen: 11
+    energyMax: 100
+    energyRegen: 9
+    cooldownReduction: 0
+    companionSynergy: 1.05
+    statusResistance: 0
+  defaultWeaponType: 4
+  normalAttack: {fileID: 0}
+  heavyAttack: {fileID: 0}
+  skill1: {fileID: 11400000, guid: 2e14058123a8f48eba3e0e457e7a143c, type: 2}
+  skill2: {fileID: 11400000, guid: d97a60de580cd4547a17d88eee7df8d9, type: 2}
+  ultimate: {fileID: 11400000, guid: 913370920aace4b998f279e75e4cd125, type: 2}
+  animatorController: {fileID: 0}
+  unlockType: 0
+  description: 

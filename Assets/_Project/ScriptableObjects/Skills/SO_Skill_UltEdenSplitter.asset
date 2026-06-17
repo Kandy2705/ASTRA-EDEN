@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bf216853a8148f0ae7806591c049084, type: 3}
+  m_Name: SO_Skill_UltEdenSplitter
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  skillId: ult_eden_splitter
+  displayName: Eden Splitter
+  skillType: 4
+  description: "Lao t\u1EDBi combo ch\xE9m v\xE0 n\u1ED5 core"
+  cooldown: 0
+  staminaCost: 0
+  energyCost: 100
+  energyGain: 0
+  damageMultiplier: 6.5
+  poiseDamage: 70
+  element: 1
+  animationTrigger: 
+  vfxPrefab: {fileID: 0}
+  sfx: {fileID: 0}
+  statusEffect: {fileID: 0}

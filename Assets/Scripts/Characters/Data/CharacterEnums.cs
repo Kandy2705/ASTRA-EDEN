@@ -5,7 +5,8 @@ public enum CharacterClass
     Mage,
     Gunner,
     Archer,
-    Support
+    Support,
+    HeavyBlade
 }
 
 public enum CharacterGender

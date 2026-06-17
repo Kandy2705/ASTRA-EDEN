@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce21bd449593e4d86a2647cd23812162, type: 3}
+  m_Name: SO_LootTable_LootCoreCorrupted
+  m_EditorClassIdentifier: Assembly-CSharp::LootTableData
+  rollCount: 0
+  rollChance: 1
+  entries:
+  - item: {fileID: 11400000, guid: 162129b3504824ea6bdb2810831c3ac1, type: 2}
+    weight: 1
+    minQuantity: 1
+    maxQuantity: 2
+    guaranteed: 1
+    guaranteedChance: 0.55
+  - item: {fileID: 11400000, guid: 6629eedb60c49473a8231ea98bb84b9b, type: 2}
+    weight: 1
+    minQuantity: 1
+    maxQuantity: 1
+    guaranteed: 1
+    guaranteedChance: 0.28
+  - item: {fileID: 11400000, guid: f3e824254ce6543dcae61d728a571bb7, type: 2}
+    weight: 1
+    minQuantity: 1
+    maxQuantity: 1
+    guaranteed: 1
+    guaranteedChance: 0.18

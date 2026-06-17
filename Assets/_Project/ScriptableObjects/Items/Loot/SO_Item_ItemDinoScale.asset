@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74af38f1ebbb40919697c02f12600f46, type: 3}
+  m_Name: SO_Item_ItemDinoScale
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemId: item_dino_scale
+  displayName: Dino Scale
+  type: 1
+  rarity: 0
+  itemPrefab: {fileID: 0}
+  stackable: 1
+  maxStack: 999
+  icon: {fileID: 0}
+  description: "V\u1EA3y dino \u2014 v\u1EADt li\u1EC7u ch\u1EBF t\u1EA1o ph\xF2ng
+    th\u1EE7."

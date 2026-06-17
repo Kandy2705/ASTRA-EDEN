@@ -5,7 +5,23 @@ public enum WeaponType
     Catalyst,
     Gun,
     Bow,
-    SupportDevice
+    SupportDevice,
+    Longsword,
+    Spear,
+    Staff,
+    Greatsword
+}
+
+public enum DamageElement
+{
+    Physical,
+    Core,
+    Crystal,
+    Poison,
+    Shock,
+    Nature,
+    Light,
+    Corruption
 }
 
 public enum SkillType

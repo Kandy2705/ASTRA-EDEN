@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9bf7a46e3fc45a7a1fb8d65971b233, type: 3}
+  m_Name: SO_Enemy_EnemyPrismScreecher
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyId: enemy_prism_screecher
+  displayName: Prism Screecher
+  archetype: 4
+  rank: 1
+  zone: 4
+  enemyPrefab: {fileID: 0}
+  portrait: {fileID: 0}
+  icon: {fileID: 0}
+  baseStats:
+    maxHP: 950
+    attack: 88
+    defense: 45
+    poise: 70
+    moveSpeed: 3.2
+    turnSpeed: 600
+  sightRange: 20
+  sightAngle: 145
+  hearingRange: 9
+  aggroKeepRange: 34
+  attackRange: 11
+  attackCooldown: 3.2
+  attackPatterns:
+  - {fileID: 11400000, guid: c6d51a24965f64340a46566a328b6ebe, type: 2}
+  - {fileID: 11400000, guid: 2df7fa4f839f34b3e804c2edb4ee5529, type: 2}
+  - {fileID: 11400000, guid: 712000b77026e40438ce755435e60489, type: 2}
+  expReward: 130
+  goldMin: 45
+  goldMax: 80
+  mainLootTable: {fileID: 11400000, guid: 3955930c34977468fa95ff874e681570, type: 2}
+  description: 

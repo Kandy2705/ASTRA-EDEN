@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9bf7a46e3fc45a7a1fb8d65971b233, type: 3}
+  m_Name: SO_Enemy_EnemyArmoredHerbivoreJuvenile
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyId: enemy_armored_herbivore_juvenile
+  displayName: Armored Herbivore Juvenile
+  archetype: 3
+  rank: 0
+  zone: 2
+  enemyPrefab: {fileID: 0}
+  portrait: {fileID: 0}
+  icon: {fileID: 0}
+  baseStats:
+    maxHP: 800
+    attack: 65
+    defense: 60
+    poise: 110
+    moveSpeed: 2.6
+    turnSpeed: 380
+  sightRange: 12
+  sightAngle: 100
+  hearingRange: 7
+  aggroKeepRange: 24
+  attackRange: 2.6
+  attackCooldown: 2.8
+  attackPatterns:
+  - {fileID: 11400000, guid: c8658d706a49a4d588b715a07d1036fc, type: 2}
+  - {fileID: 11400000, guid: d54ab1e217ea647cca12ad4ebb406803, type: 2}
+  expReward: 60
+  goldMin: 20
+  goldMax: 36
+  mainLootTable: {fileID: 11400000, guid: b64e4a3a1fcbe4f6381f8ec7bac6ee4b, type: 2}
+  description: 

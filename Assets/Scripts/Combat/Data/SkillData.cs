@@ -19,6 +19,7 @@ public class SkillData : ScriptableObject
     [Header("Combat")]
     [Min(0f)] public float damageMultiplier = 1f; //hệ số sát thương lên máu địch.
     [Min(0f)] public float poiseDamage; //sát thương làm vỡ poise, nếu địch có poise > 0 thì sẽ không bị choáng mà chỉ bị giật lùi, khi nào poise về 0 thì mới choáng được.
+    public DamageElement element = DamageElement.Physical;
 
     [Header("Presentation")]
     public string animationTrigger;

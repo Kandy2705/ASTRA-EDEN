@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bf216853a8148f0ae7806591c049084, type: 3}
+  m_Name: SO_Skill_SkillPrismField
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  skillId: skill_prism_field
+  displayName: Prism Field
+  skillType: 3
+  description: "T\u1EA1o v\xF9ng kh\u1ED1ng ch\u1EBF tinh th\u1EC3"
+  cooldown: 14
+  staminaCost: 12
+  energyCost: 0
+  energyGain: 16
+  damageMultiplier: 3.2
+  poiseDamage: 25
+  element: 2
+  animationTrigger: 
+  vfxPrefab: {fileID: 0}
+  sfx: {fileID: 0}
+  statusEffect: {fileID: 0}

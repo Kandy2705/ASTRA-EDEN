@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9bf7a46e3fc45a7a1fb8d65971b233, type: 3}
+  m_Name: SO_Enemy_EnemyDriftbackBoarlizard
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyId: enemy_driftback_boarlizard
+  displayName: Driftback Boar-Lizard
+  archetype: 3
+  rank: 0
+  zone: 1
+  enemyPrefab: {fileID: 0}
+  portrait: {fileID: 0}
+  icon: {fileID: 0}
+  baseStats:
+    maxHP: 550
+    attack: 55
+    defense: 45
+    poise: 80
+    moveSpeed: 2.8
+    turnSpeed: 420
+  sightRange: 12
+  sightAngle: 100
+  hearingRange: 7
+  aggroKeepRange: 22
+  attackRange: 2.4
+  attackCooldown: 2.4
+  attackPatterns:
+  - {fileID: 11400000, guid: c8658d706a49a4d588b715a07d1036fc, type: 2}
+  - {fileID: 11400000, guid: d54ab1e217ea647cca12ad4ebb406803, type: 2}
+  expReward: 40
+  goldMin: 14
+  goldMax: 24
+  mainLootTable: {fileID: 11400000, guid: 628783291622b46aeabf3d9f9914a706, type: 2}
+  description: 

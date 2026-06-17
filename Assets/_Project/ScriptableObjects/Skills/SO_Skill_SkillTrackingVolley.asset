@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bf216853a8148f0ae7806591c049084, type: 3}
+  m_Name: SO_Skill_SkillTrackingVolley
+  m_EditorClassIdentifier: Assembly-CSharp::SkillData
+  skillId: skill_tracking_volley
+  displayName: Tracking Volley
+  skillType: 2
+  description: "B\u1EAFn lo\u1EA1t t\xEAn b\xE1m m\u1EE5c ti\xEAu"
+  cooldown: 7
+  staminaCost: 10
+  energyCost: 0
+  energyGain: 12
+  damageMultiplier: 2.5
+  poiseDamage: 20
+  element: 0
+  animationTrigger: 
+  vfxPrefab: {fileID: 0}
+  sfx: {fileID: 0}
+  statusEffect: {fileID: 0}

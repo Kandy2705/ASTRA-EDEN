@@ -11,6 +11,7 @@ public class EnemyPatrol : MonoBehaviour
     private static readonly int HitHash = Animator.StringToHash("Hit");
     private static readonly int DieHash = Animator.StringToHash("Die");
     private static readonly int IsDeadHash = Animator.StringToHash("IsDead");
+    private static readonly RaycastHit[] LosHitBuffer = new RaycastHit[8];
 
     [SerializeField] private Transform pointA;
     [SerializeField] private Transform pointB;
@@ -25,13 +26,33 @@ public class EnemyPatrol : MonoBehaviour
     [SerializeField] private float debugMaxHP;
 
     [Header("Chase Settings")]
-    [SerializeField] private float detectRange; //khoang cach de nhan dien player
-    [SerializeField] private float loseRange; //khoang cach de mat mat player
-    [SerializeField] private float attackRange; //khoang cach de tan cong
+    [SerializeField] private float detectRange = 14f; //khoang cach toi da nhan dien player (sight range)
+    [SerializeField] private float loseRange = 22f; //khoang cach buoc enemy quen player (aggro keep range)
+    [SerializeField] private float attackRange = 2f; //khoang cach de tan cong
     [SerializeField] private float patrolSpeed = 2f; //toc do di chuyen khi dieu tra
     [SerializeField] private float chaseSpeed = 4f; //toc do di chuyen khi truy cap
     [SerializeField] private float animatorDampTime = 0.1f; //thoi gian damper cho animator
     [SerializeField] private float movingThreshold = 0.05f; //nguong di chuyen
+
+    [Header("Perception (FOV + LOS)")]
+    [Tooltip("Goc nhin tong (do). 90-120 la hop ly cho enemy thuong.")]
+    [Range(10f, 360f)]
+    [SerializeField] private float sightAngle = 110f;
+    [Tooltip("Transform mat/eye sensor de raycast LOS. Bo trong se dung transform.position + eyeHeight.")]
+    [SerializeField] private Transform eyeSensor;
+    [Tooltip("Cao do mat khi khong gan eyeSensor (de raycast tu day).")]
+    [SerializeField] private float eyeHeight = 1.6f;
+    [Tooltip("Cao do nguc player de raycast den (tranh mat dat).")]
+    [SerializeField] private float targetChestHeight = 1.0f;
+    [Tooltip("Layer cua vat can che tam nhin (Default, Wall, Terrain...). KHONG bao gom Player.")]
+    [SerializeField] private LayerMask obstacleMask = ~0;
+    [Tooltip("Sau khi mat dau player, giu aggro them bao nhieu giay roi moi tro ve patrol.")]
+    [SerializeField] private float loseTargetTime = 6f;
+    [Tooltip("Khi mat aggro va ngoai range nay, quay ve diem patrol goc.")]
+    [SerializeField] private bool returnToPatrolOnLost = true;
+    [Tooltip("Bat de bo qua FOV/LOS khi player vao sat (gan hon detectRange * thi nay) - mo phong nghe/cam giac.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float proximityAlertRatio = 0.3f;
 
     [Header("Hit / Death Animation")]
     [Tooltip("Bật để chạy anim Die (trigger Die + bool IsDead) khi chết, sau đó mới gọi Ragdoll.")]
@@ -72,6 +93,8 @@ public class EnemyPatrol : MonoBehaviour
     private float deathTimer;
     private bool deathSequenceFinished;
     private float lastKnownHP = float.NaN;
+    private float lostSightTimer;
+    private bool hasLineOfSight;
 
     private enum EnemyState
     {
@@ -165,17 +188,39 @@ public class EnemyPatrol : MonoBehaviour
         }
 
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        bool canSeePlayer = CanSeePlayer(distanceToPlayer);
+        hasLineOfSight = canSeePlayer;
 
-        if (currentState == EnemyState.Patrol && distanceToPlayer <= detectRange)
+        if (currentState == EnemyState.Patrol)
         {
-            currentState = EnemyState.Chase;
-            agent.speed = chaseSpeed;
+            if (canSeePlayer)
+            {
+                currentState = EnemyState.Chase;
+                agent.speed = chaseSpeed;
+                lostSightTimer = 0f;
+            }
         }
-        else if (currentState == EnemyState.Chase && distanceToPlayer >= loseRange)
+        else // Chase
         {
-            currentState = EnemyState.Patrol;
-            agent.speed = patrolSpeed;
-            GoToCurrentPatrolPoint();
+            if (canSeePlayer)
+            {
+                lostSightTimer = 0f;
+            }
+            else
+            {
+                lostSightTimer += Time.deltaTime;
+                bool tooFar = distanceToPlayer >= loseRange;
+                if (tooFar || lostSightTimer >= loseTargetTime)
+                {
+                    currentState = EnemyState.Patrol;
+                    agent.speed = patrolSpeed;
+                    lostSightTimer = 0f;
+                    if (returnToPatrolOnLost)
+                    {
+                        GoToCurrentPatrolPoint();
+                    }
+                }
+            }
         }
 
         if (currentState == EnemyState.Patrol)
@@ -233,6 +278,52 @@ public class EnemyPatrol : MonoBehaviour
         }
     }
 
+
+    /// <summary>FOV + LOS perception. Returns true neu player nam trong sight range, sight angle va khong bi vat can che.</summary>
+    private bool CanSeePlayer(float distanceToPlayer)
+    {
+        if (player == null) return false;
+        if (distanceToPlayer > detectRange) return false;
+
+        Vector3 eyePos = GetEyePosition();
+        Vector3 targetPos = player.position + Vector3.up * targetChestHeight;
+        Vector3 toTarget = targetPos - eyePos;
+        float planarDist = new Vector2(toTarget.x, toTarget.z).magnitude;
+        if (planarDist < 0.001f) planarDist = 0.001f;
+
+        // Proximity alert: rat gan thi bo qua FOV (mo phong nghe/cam giac)
+        bool insideProximity = distanceToPlayer <= detectRange * proximityAlertRatio;
+
+        if (!insideProximity)
+        {
+            Vector3 forward = transform.forward;
+            if (flipForward180) forward = -forward;
+            Vector3 toTargetPlanar = new Vector3(toTarget.x, 0f, toTarget.z).normalized;
+            Vector3 forwardPlanar = new Vector3(forward.x, 0f, forward.z).normalized;
+            float dot = Vector3.Dot(forwardPlanar, toTargetPlanar);
+            float halfAngleCos = Mathf.Cos(sightAngle * 0.5f * Mathf.Deg2Rad);
+            if (dot < halfAngleCos) return false;
+        }
+
+        // LOS raycast tu mat den nguc player, bo qua collider cua chinh enemy
+        float rayDist = toTarget.magnitude;
+        int count = Physics.RaycastNonAlloc(eyePos, toTarget.normalized, LosHitBuffer, rayDist, obstacleMask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < count; i++)
+        {
+            Transform t = LosHitBuffer[i].transform;
+            if (t == null) continue;
+            if (t == transform || t.IsChildOf(transform)) continue; // chinh minh
+            if (t == player || t.IsChildOf(player) || player.IsChildOf(t)) continue; // muc tieu
+            return false; // co vat can khac chan
+        }
+        return true;
+    }
+
+    private Vector3 GetEyePosition()
+    {
+        if (eyeSensor != null) return eyeSensor.position;
+        return transform.position + Vector3.up * eyeHeight;
+    }
 
     void GoToCurrentPatrolPoint()
     {
@@ -638,8 +729,36 @@ public class EnemyPatrol : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectRange);
+        Vector3 origin = Application.isPlaying ? GetEyePosition() : transform.position + Vector3.up * eyeHeight;
+
+        // FOV cone
+        Vector3 forward = transform.forward;
+        if (flipForward180) forward = -forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude > 0.0001f) forward.Normalize();
+
+        Gizmos.color = hasLineOfSight ? new Color(0f, 1f, 0f, 0.9f) : new Color(1f, 0.9f, 0.2f, 0.9f);
+        Quaternion leftRot = Quaternion.AngleAxis(-sightAngle * 0.5f, Vector3.up);
+        Quaternion rightRot = Quaternion.AngleAxis(sightAngle * 0.5f, Vector3.up);
+        Vector3 leftDir = leftRot * forward;
+        Vector3 rightDir = rightRot * forward;
+        Gizmos.DrawLine(origin, origin + leftDir * detectRange);
+        Gizmos.DrawLine(origin, origin + rightDir * detectRange);
+
+        const int arcSegments = 24;
+        Vector3 prev = origin + leftDir * detectRange;
+        for (int i = 1; i <= arcSegments; i++)
+        {
+            float t = (float)i / arcSegments;
+            Quaternion rot = Quaternion.AngleAxis(Mathf.Lerp(-sightAngle * 0.5f, sightAngle * 0.5f, t), Vector3.up);
+            Vector3 cur = origin + (rot * forward) * detectRange;
+            Gizmos.DrawLine(prev, cur);
+            prev = cur;
+        }
+
+        // Proximity alert ring
+        Gizmos.color = new Color(1f, 0.5f, 0f, 0.6f);
+        Gizmos.DrawWireSphere(transform.position, detectRange * proximityAlertRatio);
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, loseRange);
