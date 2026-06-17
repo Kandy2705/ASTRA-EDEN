@@ -9,6 +9,8 @@ public class ItemData : ScriptableObject
     public ItemType type;
     public ItemRarity rarity;
 
+    public GameObject itemPrefab;
+
     [Header("Stack")]
     public bool stackable = true;
     [Min(1)] public int maxStack = 99;

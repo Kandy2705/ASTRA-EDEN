@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74af38f1ebbb40919697c02f12600f46, type: 3}
+  m_Name: SO_Item_Hide
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemId: hide
+  displayName: Hide
+  type: 1
+  rarity: 0
+  itemPrefab: {fileID: 919132149155446097, guid: cab1e82abf177484c97d4189183f3422, type: 3}
+  stackable: 1
+  maxStack: 999
+  icon: {fileID: 0}
+  description: "Mi\u1EBFng da v\xE0 v\u1EA3y t\u1EEB sinh v\u1EADt Eden-7. Material
+    ph\u1ED5 bi\u1EBFn d\xF9ng cho gi\xE1p v\xE0 t\xFAi \u0111\u1EF1ng."
