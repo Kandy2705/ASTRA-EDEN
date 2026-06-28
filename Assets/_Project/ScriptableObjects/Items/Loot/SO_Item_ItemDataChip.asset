@@ -16,8 +16,13 @@ MonoBehaviour:
   displayName: Data Chip
   type: 1
   rarity: 1
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 3593352762831120244, guid: 5ad5a990605e545d6809e5034a8b6e76, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "Chip d\u1EEF li\u1EC7u \u2014 t\xE0i nguy\xEAn RuinedLab."
+  icon: {fileID: -746619127, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "Chip d\u1EEF li\u1EC7u c\u1ED5 ch\u1EE9a th\xF4ng tin nghi\xEAn c\u1EE9u.
+    D\xF9ng \u0111\u1EC3 m\u1EDF kh\xF3a lore, nhi\u1EC7m v\u1EE5 ho\u1EB7c n\xE2ng
+    k\u1EF9 n\u0103ng.\n0"
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

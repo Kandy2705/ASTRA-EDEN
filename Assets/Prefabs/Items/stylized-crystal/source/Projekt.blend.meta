@@ -3,7 +3,12 @@ guid: 76dbe55519503473092ed98f449fcf5f
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Crystal
+    second: {fileID: 2100000, guid: 9c3e78e357e4d4f48b846a2d5309f1d8, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -16,8 +16,13 @@ MonoBehaviour:
   displayName: Corrupted Claw
   type: 1
   rarity: 0
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 8048463076664080017, guid: e1200cde286ed46c3bbe032b1a093d94, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "M\xF3ng vu\u1ED1t nhi\u1EC5m corruption."
+  icon: {fileID: 870179378, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "M\xF3ng vu\u1ED1t nhi\u1EC5m Corruption. C\xF3 th\u1EC3 d\xF9ng \u0111\u1EC3
+    ch\u1EBF t\u1EA1o ho\u1EB7c n\xE2ng c\u1EA5p trang b\u1ECB mang n\u0103ng l\u01B0\u1EE3ng
+    tha h\xF3a."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

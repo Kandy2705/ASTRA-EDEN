@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Small Health Potion
   type: 3
   rarity: 1
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 2989674153904193561, guid: 4bd2477faa4924ba6aa41f8dc78c6b6d, type: 3}
   stackable: 1
   maxStack: 99
-  icon: {fileID: 0}
-  description: "B\xECnh m\xE1u nh\u1ECF \u2014 h\u1ED3i HP."
+  icon: {fileID: -333460160, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "B\xECnh h\u1ED3i m\xE1u nh\u1ECF. H\u1ED3i m\u1ED9t l\u01B0\u1EE3ng
+    HP cho nh\xE2n v\u1EADt khi s\u1EED d\u1EE5ng."
+  restoreHP: 300
+  restoreStamina: 0
+  restoreEnergy: 0

@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Core Fragment
   type: 2
   rarity: 1
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 5474670013329849606, guid: 6e0822db37464426c985dfdae92f3763, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "M\u1EA3nh core \u2014 n\xE2ng c\u1EA5p trung c\u1EA5p."
+  icon: {fileID: -2064417054, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "M\u1EA3nh l\xF5i n\u0103ng l\u01B0\u1EE3ng nh\u1ECF. D\xF9ng cho
+    n\xE2ng c\u1EA5p nh\xE2n v\u1EADt, k\u1EF9 n\u0103ng ho\u1EB7c companion."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

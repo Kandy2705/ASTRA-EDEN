@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Horn Shard
   type: 1
   rarity: 1
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 8289248345830159302, guid: dea4ca96dbb0a4bf3a07dc57879d86f4, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "M\u1EA3nh s\u1EEBng \u2014 v\u1EADt li\u1EC7u hi\u1EBFm."
+  icon: {fileID: -1021920379, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "M\u1EA3nh s\u1EEBng c\u1EE9ng t\u1EEB sinh v\u1EADt d\u1EA1ng Trike
+    ho\u1EB7c Herbivore. D\xF9ng cho trang b\u1ECB ph\xE1 gi\xE1p/stagger."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

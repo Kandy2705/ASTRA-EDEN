@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Gacha Ticket
   type: 5
   rarity: 2
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 4503925223663762714, guid: 33b697c20769741b893a8663881a69e5, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "V\xE9 gacha \u2014 quy \u0111\u1ED5i nh\xE2n v\u1EADt."
+  icon: {fileID: -694452198, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "V\xE9 d\xF9ng t\u1EA1i Echo Archive \u0111\u1EC3 tri\u1EC7u h\u1ED3i
+    v\u1EADt ph\u1EA9m, nh\xE2n v\u1EADt ho\u1EB7c companion core."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

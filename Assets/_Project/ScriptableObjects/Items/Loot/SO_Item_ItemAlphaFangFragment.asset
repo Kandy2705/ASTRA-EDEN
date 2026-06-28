@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Alpha Fang Fragment
   type: 4
   rarity: 2
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 1446272277764090788, guid: d6a5b2ccccf6d476b92b74318ec67c66, type: 3}
   stackable: 1
   maxStack: 99
-  icon: {fileID: 0}
-  description: "M\u1EA3nh r\u0103ng Alpha \u2014 boss drop hi\u1EBFm."
+  icon: {fileID: 1666369467, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "M\u1EA3nh r\u0103ng Alpha \u2014 boss drop hi\u1EBFm. D\xF9ng cho
+    n\xE2ng c\u1EA5p b\u1EADc cao ho\u1EB7c ascension."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

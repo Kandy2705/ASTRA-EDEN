@@ -20,4 +20,9 @@ public class ItemData : ScriptableObject
 
     [Header("Info")]
     [TextArea(2, 4)] public string description;
+
+    [Header("Consumable Effects (chi ap dung khi type = Consumable)")]
+    [Min(0f)] public float restoreHP;
+    [Min(0f)] public float restoreStamina;
+    [Min(0f)] public float restoreEnergy;
 }

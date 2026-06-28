@@ -16,8 +16,13 @@ MonoBehaviour:
   displayName: Core Cell
   type: 2
   rarity: 1
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 827504683165465641, guid: d56e026bfba774f01b121a5c9ceb6cb1, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "T\u1EBF b\xE0o core \u2014 n\xE2ng c\u1EA5p cao c\u1EA5p."
+  icon: {fileID: 107070993, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "Pin n\u0103ng l\u01B0\u1EE3ng l\xF5i ch\u1EE9a Core Energy \u1ED5n
+    \u0111\u1ECBnh. D\xF9ng \u0111\u1EC3 n\xE2ng skill, companion ho\u1EB7c k\xEDch
+    ho\u1EA1t thi\u1EBFt b\u1ECB c\u1ED5."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

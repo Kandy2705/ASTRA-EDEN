@@ -17,8 +17,8 @@ MonoBehaviour:
   archetype: 3
   rangeType: 1
   minRange: 0
-  maxRange: 2.8
-  cooldown: 2.8
+  maxRange: 1.1
+  cooldown: 0
   windup: 0.55
   activeTime: 0.25
   recovery: 0.75

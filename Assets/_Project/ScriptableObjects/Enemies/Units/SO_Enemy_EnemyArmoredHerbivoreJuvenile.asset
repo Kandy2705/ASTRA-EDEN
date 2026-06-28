@@ -31,8 +31,8 @@ MonoBehaviour:
   sightAngle: 100
   hearingRange: 7
   aggroKeepRange: 24
-  attackRange: 2.6
-  attackCooldown: 2.8
+  attackRange: 1.1
+  attackCooldown: 1
   attackPatterns:
   - {fileID: 11400000, guid: c8658d706a49a4d588b715a07d1036fc, type: 2}
   - {fileID: 11400000, guid: d54ab1e217ea647cca12ad4ebb406803, type: 2}

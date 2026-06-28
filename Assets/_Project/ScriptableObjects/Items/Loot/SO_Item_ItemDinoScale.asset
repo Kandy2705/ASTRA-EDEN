@@ -16,9 +16,12 @@ MonoBehaviour:
   displayName: Dino Scale
   type: 1
   rarity: 0
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 6333284796387962276, guid: 965027e790ae24044ab450e88d4a31da, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "V\u1EA3y dino \u2014 v\u1EADt li\u1EC7u ch\u1EBF t\u1EA1o ph\xF2ng
-    th\u1EE7."
+  icon: {fileID: -2126232681, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "V\u1EA3y dinosaur th\u01B0\u1EDDng. D\xF9ng \u0111\u1EC3 ch\u1EBF
+    t\u1EA1o gi\xE1p nh\u1EB9 ho\u1EB7c b\xE1n l\u1EA5y Gold."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

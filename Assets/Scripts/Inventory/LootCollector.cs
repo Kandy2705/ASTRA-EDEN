@@ -1,46 +1,35 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Tam thoi nhan item pickup va luu vao dictionary trong nho + cong Currency vao GameDataManager neu la Currency.
-/// Khi InventoryService chinh thuc co, thay the boi service do.
-/// </summary>
+[DisallowMultipleComponent]
 public class LootCollector : MonoBehaviour
 {
     [SerializeField] private bool logToConsole = true;
 
-    private readonly Dictionary<string, int> stash = new Dictionary<string, int>();
+    private PlayerInventoryService inventoryService;
 
     public event Action<ItemData, int> Collected;
 
-    public IReadOnlyDictionary<string, int> Stash => stash;
-
-    public int GetQuantity(string itemId)
+    private void Awake()
     {
-        if (string.IsNullOrEmpty(itemId)) return 0;
-        return stash.TryGetValue(itemId, out int q) ? q : 0;
+        inventoryService = GetComponent<PlayerInventoryService>();
     }
 
     public void Collect(ItemData item, int quantity)
     {
-        if (item == null || quantity <= 0) return;
+        if (item == null || quantity <= 0)
+        {
+            return;
+        }
 
-        // Currency -> day vao GameDataManager
+        if (inventoryService != null)
+        {
+            inventoryService.AddItem(item, quantity);
+        }
+
         if (item.type == ItemType.Currency && GameDataManager.Instance != null)
         {
             GameDataManager.Instance.AddCurrency(quantity);
-        }
-
-        // Cong vao stash chung (cho cac type khac, va de UI tam thoi co cho doc)
-        if (string.IsNullOrEmpty(item.itemId))
-        {
-            if (logToConsole) Debug.LogWarning($"PickupItem: '{item.name}' khong co itemId.", item);
-        }
-        else
-        {
-            stash.TryGetValue(item.itemId, out int current);
-            stash[item.itemId] = current + quantity;
         }
 
         Collected?.Invoke(item, quantity);

@@ -71,11 +71,12 @@ public class LootDropSpawner : MonoBehaviour
             GameObject go;
             if (prefab != null)
             {
-                go = Instantiate(prefab, spawnPos, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+                go = Instantiate(prefab, spawnPos, prefab.transform.rotation);
+                if (logDrops) Debug.Log($"[Loot] Spawn '{drop.item.displayName}' dùng prefab '{prefab.name}' tại {spawnPos}", drop.item);
             }
             else
             {
-                if (logDrops) Debug.LogWarning($"LootDropSpawner: item '{drop.item.displayName}' khong co prefab, tao placeholder.", drop.item);
+                if (logDrops) Debug.LogWarning($"[Loot] item '{drop.item.displayName}' KHÔNG có itemPrefab (override={pickupPrefabOverride}, item.itemPrefab={drop.item.itemPrefab}) — fallback Sphere placeholder.", drop.item);
                 go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 go.transform.localScale = Vector3.one * 0.3f;
                 go.transform.position = spawnPos;
@@ -90,21 +91,31 @@ public class LootDropSpawner : MonoBehaviour
 
     private static void EnsurePickup(GameObject go, ItemData item, int quantity)
     {
-        var pickup = go.GetComponent<PickupItem>();
-        if (pickup == null) pickup = go.AddComponent<PickupItem>();
-        pickup.Initialize(item, quantity);
-
         var col = go.GetComponent<Collider>();
         if (col == null)
         {
             var sc = go.AddComponent<SphereCollider>();
             sc.radius = 0.4f;
             sc.isTrigger = true;
+            col = sc;
         }
         else
         {
             col.isTrigger = true;
         }
+
+        var pickup = go.GetComponent<PickupItem>();
+        if (pickup == null) pickup = go.AddComponent<PickupItem>();
+        if (pickup == null)
+        {
+            Debug.LogError($"LootDropSpawner: không thể add PickupItem vào '{go.name}'. Item '{item?.displayName}' sẽ không pickup được.", go);
+            return;
+        }
+
+        pickup.Initialize(item, quantity);
+
+        var floating = go.GetComponent<FloatingLootVisual>();
+        if (floating == null) go.AddComponent<FloatingLootVisual>();
     }
 
     private void ApplyPopForce(GameObject go)

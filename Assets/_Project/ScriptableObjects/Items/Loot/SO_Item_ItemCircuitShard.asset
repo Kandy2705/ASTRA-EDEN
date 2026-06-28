@@ -15,9 +15,13 @@ MonoBehaviour:
   itemId: item_circuit_shard
   displayName: Circuit Shard
   type: 1
-  rarity: 0
-  itemPrefab: {fileID: 0}
+  rarity: 1
+  itemPrefab: {fileID: 3163924532133044897, guid: e62e7d740ac4349459a6ed0b0dfd2db5, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "M\u1EA3nh m\u1EA1ch \u0111i\u1EC7n."
+  icon: {fileID: -174342123, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "M\u1EA3nh m\u1EA1ch c\xF4ng ngh\u1EC7 c\xF2n s\xF3t l\u1EA1i trong
+    t\xE0n t\xEDch. D\xF9ng \u0111\u1EC3 n\xE2ng c\u1EA5p thi\u1EBFt b\u1ECB core-tech."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

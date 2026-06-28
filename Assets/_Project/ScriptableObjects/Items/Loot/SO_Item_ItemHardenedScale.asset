@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Hardened Scale
   type: 1
   rarity: 0
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 3233870441549619435, guid: c57df07cfd20444d893889251d7039e4, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "V\u1EA3y c\u1EE9ng \u2014 v\u1EADt li\u1EC7u ch\u1EBF gi\xE1p."
+  icon: {fileID: 1961899427, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "V\u1EA3y c\u1EE9ng t\u1EEB dinosaur ph\xF2ng th\u1EE7 cao. D\xF9ng
+    \u0111\u1EC3 n\xE2ng c\u1EA5p gi\xE1p ho\u1EB7c trang b\u1ECB tanker."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

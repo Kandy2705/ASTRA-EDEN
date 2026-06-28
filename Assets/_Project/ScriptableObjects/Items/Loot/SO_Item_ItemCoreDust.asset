@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Core Dust
   type: 2
   rarity: 1
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 827504683165465641, guid: ae61c58324b074454a8345214f0ba2df, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "B\u1EE5i core \u2014 n\xE2ng c\u1EA5p c\u01A1 b\u1EA3n."
+  icon: {fileID: 1371562018, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "B\u1EE5i n\u0103ng l\u01B0\u1EE3ng l\xF5i c\u1EA5p th\u1EA5p. D\xF9ng
+    l\xE0m nguy\xEAn li\u1EC7u n\xE2ng c\u1EA5p c\u01A1 b\u1EA3n."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

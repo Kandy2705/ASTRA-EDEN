@@ -3,7 +3,17 @@ guid: 90cfd425323ca4e478787875cba77288
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: hidden_croc_egg_base
+    second: {fileID: 2100000, guid: 8bd76351789a74ea6a99f26cc140aefc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: hidden_croc_egg_glass
+    second: {fileID: 2100000, guid: d9ac92054e3964dbdb7a03831b7697b4, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

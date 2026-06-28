@@ -16,9 +16,13 @@ MonoBehaviour:
   displayName: Toxic Residue
   type: 1
   rarity: 0
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 2820017938033403722, guid: 1b6d78e3db1e7494da4ff523bfa606da, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "D\u01B0 ch\u1EA5t \u0111\u1ED9c \u2014 v\u1EADt li\u1EC7u ch\u1EBF
-    poison."
+  icon: {fileID: 1964622606, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "C\u1EB7n \u0111\u1ED9c c\xF2n s\xF3t l\u1EA1i t\u1EEB sinh v\u1EADt
+    ho\u1EB7c v\xF9ng nhi\u1EC5m \u0111\u1ED9c. D\xF9ng craft v\u1EADt ph\u1EA9m
+    h\u1EC7 \u0111\u1ED9c c\u1EA5p th\u1EA5p."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

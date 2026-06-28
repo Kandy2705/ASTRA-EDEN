@@ -23,6 +23,11 @@ public class PlayerCombatController : MonoBehaviour
     [SerializeField] private float enemyKnockbackDistance = 1.2f;
     [SerializeField] private float enemyKnockbackDuration = 0.18f;
 
+    [Header("Cooldown")]
+    [SerializeField] private PlayerSkillCooldown skillCooldown;
+    [Tooltip("Map skill index (0..3) -> SkillData. Khi assign, cooldown sẽ lấy từ SkillData.cooldown. Để null = dùng baseCooldown trong PlayerSkillCooldown.")]
+    [SerializeField] private SkillData[] skillBindings = new SkillData[4];
+
     [Header("Damage Timing")]
     [Tooltip("Bật để chỉ gây dame khi Animation Event OnAttackHit() được gọi từ clip. Tắt = quay lại flow cũ (dame ngay lúc bấm).")]
     [SerializeField] private bool useAnimationEventDamage = true;
@@ -69,6 +74,11 @@ public class PlayerCombatController : MonoBehaviour
             characterHealth = GetComponent<CharacterHealth>();
         }
 
+        if (skillCooldown == null)
+        {
+            skillCooldown = GetComponent<PlayerSkillCooldown>();
+        }
+
         AssignDefaultEnemyLayer();
     }
 
@@ -86,7 +96,10 @@ public class PlayerCombatController : MonoBehaviour
             int pressedSkill = inputReader.SkillIndexPressed;
             if (pressedSkill >= 0)
             {
-                StartAttack(pressedSkill);
+                if (skillCooldown == null || skillCooldown.CanUseCombatSkill(pressedSkill))
+                {
+                    StartAttack(pressedSkill);
+                }
                 return;
             }
 
@@ -110,6 +123,12 @@ public class PlayerCombatController : MonoBehaviour
         if (animatorBridge != null)
         {
             animatorBridge.TriggerCastSkill(currentSkillIndex);
+        }
+
+        if (skillCooldown != null && currentSkillIndex > 0)
+        {
+            float duration = GetSkillCooldown(currentSkillIndex);
+            skillCooldown.StartCooldownForCombatIndex(currentSkillIndex, duration);
         }
 
         BeginSwing();
@@ -202,6 +221,13 @@ public class PlayerCombatController : MonoBehaviour
             damagedTargets[damagedCount] = targetHealth;
             damagedCount++;
         }
+    }
+
+    private float GetSkillCooldown(int skillIndex)
+    {
+        if (skillBindings == null || skillIndex < 0 || skillIndex >= skillBindings.Length) return 0f;
+        SkillData skill = skillBindings[skillIndex];
+        return skill != null ? skill.cooldown : 0f;
     }
 
     private float GetActiveDamage()

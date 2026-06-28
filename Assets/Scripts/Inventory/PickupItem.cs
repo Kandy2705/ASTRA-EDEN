@@ -42,8 +42,10 @@ public class PickupItem : MonoBehaviour
     {
         var col = GetComponent<Collider>();
         col.isTrigger = true;
-        visualRoot = transform.childCount > 0 ? transform.GetChild(0) : transform;
-        baseLocalPos = visualRoot.localPosition;
+        // Chỉ dùng child làm visualRoot. Nếu không có child, KHÔNG dùng root để bob,
+        // vì sẽ override worldPos do spawner set → item teleport về (0,0,0) localPos.
+        visualRoot = transform.childCount > 0 ? transform.GetChild(0) : null;
+        if (visualRoot != null) baseLocalPos = visualRoot.localPosition;
     }
 
     private void Update()

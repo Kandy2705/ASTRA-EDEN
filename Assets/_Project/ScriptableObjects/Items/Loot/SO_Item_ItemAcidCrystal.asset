@@ -15,9 +15,14 @@ MonoBehaviour:
   itemId: item_acid_crystal
   displayName: Acid Crystal
   type: 1
-  rarity: 0
-  itemPrefab: {fileID: 0}
+  rarity: 1
+  itemPrefab: {fileID: 5474670013329849606, guid: eb1e8bcdb27ef492d85281b992c03e5f, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "Tinh th\u1EC3 acid \u2014 v\u1EADt li\u1EC7u ch\u1EBF t\u1EA1o acid."
+  icon: {fileID: 165351969, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "Tinh th\u1EC3 acid k\u1EBFt tinh t\u1EEB sinh v\u1EADt phun \u0111\u1ED9c.
+    D\xF9ng \u0111\u1EC3 n\xE2ng c\u1EA5p v\u0169 kh\xED ho\u1EB7c k\u1EF9 n\u0103ng
+    h\u1EC7 \u0111\u1ED9c/\u0103n m\xF2n."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

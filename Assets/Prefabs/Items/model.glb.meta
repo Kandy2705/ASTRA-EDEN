@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 1b1821bf410ea405f9f0dd9fe5536b03
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: __UNIGLTF__DEFAULT__MATERIAL__
+    second: {fileID: 2100000, guid: be1666513e0344198ba56f1475143313, type: 2}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: cc45016b844e7624dae3aec10fb443ea, type: 3}
+  reverseAxis: 0
+  renderPipeline: 0

@@ -69,6 +69,8 @@ public class EnemyAIController : MonoBehaviour
     [Tooltip("Bật anim Hit khi mất HP nhưng poise còn.")]
     [SerializeField] private bool useHitAnimation = true;
     [SerializeField, Min(0f)] private float hitStunDuration = 0.25f;
+    [Tooltip("Tối thiểu giữa các flinch (Hurt) liên tiếp — chống spam đứng đơ khi bị combo nhỏ.")]
+    [SerializeField, Min(0f)] private float hurtCooldown = 0.6f;
     [Tooltip("Stagger duration khi poise vỡ.")]
     [SerializeField, Min(0f)] private float staggerDuration = 1.2f;
     [Tooltip("Poise hồi/giây sau khi stagger kết thúc.")]
@@ -92,6 +94,10 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField] private float debugPoise;
     [SerializeField] private float debugLastKnownHP;
     [SerializeField] private bool drawAttackGizmo = true;
+    [Tooltip("Bật để log mọi state transition + lý do vào/thoát Attack/Chase ra Console.")]
+    [SerializeField] private bool debugLogStateMachine = false;
+    [Tooltip("Bật để log distance, cooldown, agent.remainingDistance mỗi frame trong Chase. Spam nhiều — chỉ bật khi cần.")]
+    [SerializeField] private bool debugLogChaseTick = false;
 
     NavMeshAgent agent;
     Transform player;
@@ -114,11 +120,27 @@ public class EnemyAIController : MonoBehaviour
     enum AttackPhase { None, Windup, Active, Recovery }
     AttackPhase attackPhase = AttackPhase.None;
     bool hitResolvedThisSwing;
+    float nextHurtAllowedAt;
 
     public AIState State => currentState;
     public EnemyData Data => enemyData;
     public float MoveSpeed => enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.moveSpeed : agent != null ? agent.speed : 3f;
-    public float AttackRange => enemyData != null ? enemyData.attackRange : 2f;
+    /// <summary>Engage range = max(EnemyData.attackRange, max maxRange của attack patterns).
+    /// Tránh case attackRange data nhỏ hơn reach thực của animation → enemy phải chạy sát mới đánh.</summary>
+    public float AttackRange
+    {
+        get
+        {
+            float baseRange = enemyData != null ? enemyData.attackRange : 2f;
+            if (enemyData == null || enemyData.attackPatterns == null) return baseRange;
+            float maxPatternRange = 0f;
+            foreach (var ap in enemyData.attackPatterns)
+            {
+                if (ap != null && ap.maxRange > maxPatternRange) maxPatternRange = ap.maxRange;
+            }
+            return Mathf.Max(baseRange, maxPatternRange);
+        }
+    }
     public float AggroKeepRange => enemyData != null ? enemyData.aggroKeepRange : 22f;
     public float AttackCooldown => enemyData != null ? enemyData.attackCooldown : 2f;
     public float MaxPoise => enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.poise : 0f;
@@ -167,6 +189,8 @@ public class EnemyAIController : MonoBehaviour
 
         if (sensor != null) sensor.Configure(enemyData);
 
+        Debug.Log($"[AI:{name}] STARTED | enemyData={(enemyData != null ? enemyData.enemyId : "<null>")} agent={(agent != null)} health={(health != null)} sensor={(sensor != null)} hitbox={(attackHitbox != null)} animator={(animator != null)}", this);
+
         EnterState(AIState.Spawn);
     }
 
@@ -184,8 +208,11 @@ public class EnemyAIController : MonoBehaviour
         if (!initializeFromEnemyData || enemyData == null || enemyData.baseStats == null || agent == null) return;
         agent.speed = enemyData.baseStats.moveSpeed;
         agent.angularSpeed = enemyData.baseStats.turnSpeed;
-        agent.stoppingDistance = Mathf.Max(0.1f, enemyData.attackRange * 0.85f);
+        // Stop earlier hơn AttackRange một chút để enemy đứng trong tầm đánh, không bị "đứng rìa" thoát range khi animation đẩy.
+        agent.stoppingDistance = Mathf.Max(0.1f, AttackRange * 0.9f);
         if (flipForward180) agent.updateRotation = false;
+        if (debugLogStateMachine)
+            Debug.Log($"[AI:{name}] ApplyEnemyData | speed={agent.speed:F2} angularSpeed={agent.angularSpeed:F0} stopDist={agent.stoppingDistance:F2} effectiveAtkRange={AttackRange:F2} (data.attackRange={enemyData.attackRange:F2}) atkCooldown={AttackCooldown:F2} attackPatterns={(enemyData.attackPatterns != null ? enemyData.attackPatterns.Count : 0)}", this);
     }
 
     void Update()
@@ -234,12 +261,39 @@ public class EnemyAIController : MonoBehaviour
             case AIState.ReturnToOrigin: TickReturn(); break;
         }
 
+        ApplyMovementFacing();
         UpdateAnimatorMovement(GetTargetBlendForState());
+    }
+
+    /// <summary>Xoay model theo hướng velocity của agent. Cần khi flipForward180 = true (đã tắt agent.updateRotation),
+    /// hoặc khi state Patrol/Return/Retreat không có target để FaceTarget.</summary>
+    void ApplyMovementFacing()
+    {
+        if (agent == null) return;
+        if (agent.velocity.sqrMagnitude <= movingThreshold * movingThreshold) return;
+
+        // Khi đang chase/attack/detect → có player, đã có FaceTarget xử lý.
+        bool wantsFaceTarget = currentState == AIState.Chase || currentState == AIState.Attack || currentState == AIState.Detect;
+        if (wantsFaceTarget && player != null) return;
+
+        Vector3 dir = agent.velocity;
+        dir.y = 0f;
+        if (dir.sqrMagnitude <= 0.0001f) return;
+        dir.Normalize();
+
+        Vector3 facing = flipForward180 ? -dir : dir;
+        Quaternion target = Quaternion.LookRotation(facing);
+        transform.rotation = Quaternion.Slerp(transform.rotation, target, 10f * Time.deltaTime);
     }
 
     // ---------- State transitions ----------
     void EnterState(AIState next)
     {
+        if (debugLogStateMachine)
+        {
+            float dist = player != null ? HorizontalDistance(player.position) : -1f;
+            Debug.Log($"[AI:{name}] {currentState} → {next} | dist={dist:F2} attackRange={AttackRange:F2} cooldownLeft={attackCooldownTimer:F2} stopDist={(agent != null ? agent.stoppingDistance : 0f):F2}", this);
+        }
         currentState = next;
         stateTimer = 0f;
 
@@ -337,6 +391,15 @@ public class EnemyAIController : MonoBehaviour
         float distance = HorizontalDistance(player.position);
         bool canSee = sensor != null && sensor.CanSense(player, out _);
 
+        if (debugLogChaseTick)
+        {
+            float rem = (agent != null && !agent.pathPending) ? agent.remainingDistance : -1f;
+            float vel = agent != null ? agent.velocity.magnitude : 0f;
+            bool inRange = distance <= AttackRange;
+            bool cdReady = attackCooldownTimer <= 0f;
+            Debug.Log($"[AI:{name}] Chase tick | dist={distance:F2} atkRange={AttackRange:F2} inRange={inRange} cdReady={cdReady} cd={attackCooldownTimer:F2} agentVel={vel:F2} remDist={rem:F2} canSee={canSee}", this);
+        }
+
         if (canSee) lostSightTimer = 0f;
         else
         {
@@ -361,7 +424,17 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
+        // Đã trong tầm đánh nhưng cooldown chưa hết → đứng yên face player, không chạy lung tung.
+        // Tránh case "cắn xong chạy thêm vài bước rồi mới cắn tiếp".
+        if (distance <= AttackRange)
+        {
+            StopAgent();
+            FaceTarget();
+            return;
+        }
+
         SetDestinationSafe(player.position);
+        FaceTarget();
     }
 
     void TickAttack()
@@ -392,7 +465,8 @@ public class EnemyAIController : MonoBehaviour
 
     void TickHurt()
     {
-        if (hitStunTimer <= 0f) EnterState(AIState.Chase);
+        // Hard timeout — phòng trường hợp hitStunTimer bị reset bởi knockback/dame liên tiếp.
+        if (hitStunTimer <= 0f || stateTimer >= hitStunDuration + 0.1f) EnterState(AIState.Chase);
     }
 
     void TickStagger()
@@ -503,6 +577,15 @@ public class EnemyAIController : MonoBehaviour
         attackPhaseTimer = currentAttack != null ? currentAttack.windup : 0.3f;
         hitResolvedThisSwing = false;
         if (animator != null) animator.SetTrigger(AttackHash);
+        if (debugLogStateMachine)
+        {
+            string atkName = currentAttack != null ? currentAttack.displayName : "<null>";
+            float cd = currentAttack != null ? currentAttack.cooldown : AttackCooldown;
+            float wu = currentAttack != null ? currentAttack.windup : 0.3f;
+            float act = currentAttack != null ? currentAttack.activeTime : 0.2f;
+            float rec = currentAttack != null ? currentAttack.recovery : 0.4f;
+            Debug.Log($"[AI:{name}] BeginAttack '{atkName}' | windup={wu:F2} active={act:F2} recovery={rec:F2} cdAfter={cd:F2}", this);
+        }
     }
 
     AttackPatternData PickAttackPattern()
@@ -550,16 +633,27 @@ public class EnemyAIController : MonoBehaviour
 
     void ApplyPoiseDamage(float dmg)
     {
-        if (MaxPoise <= 0f)
+        // Luôn trừ poise nếu có poise system, để combo cuối cùng vỡ poise.
+        if (MaxPoise > 0f)
         {
-            // No poise system → flinch tạm thời.
-            if (currentState != AIState.Attack && currentState != AIState.Hurt) EnterState(AIState.Hurt);
-            return;
+            currentPoise = Mathf.Max(0f, currentPoise - dmg);
+            if (currentPoise <= 0f)
+            {
+                EnterState(AIState.Stagger);
+                return;
+            }
         }
 
-        currentPoise = Mathf.Max(0f, currentPoise - dmg);
-        if (currentPoise <= 0f) EnterState(AIState.Stagger);
-        else if (currentState != AIState.Attack && currentState != AIState.Hurt) EnterState(AIState.Hurt);
+        // Flinch (Hurt) chỉ trigger khi không đang attack/hurt/stagger và đã qua hurtCooldown.
+        // Tránh combo nhỏ liên tục đẩy enemy về Hurt mãi → đứng đơ.
+        if (currentState == AIState.Attack) return;
+        if (currentState == AIState.Hurt) return;
+        if (currentState == AIState.Stagger) return;
+        if (currentState == AIState.Dead) return;
+        if (Time.time < nextHurtAllowedAt) return;
+
+        nextHurtAllowedAt = Time.time + hurtCooldown;
+        EnterState(AIState.Hurt);
     }
 
     void OnDied(CharacterHealth h)

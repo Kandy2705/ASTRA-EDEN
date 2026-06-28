@@ -25,7 +25,7 @@ MonoBehaviour:
     attack: 45
     defense: 20
     poise: 40
-    moveSpeed: 4.2
+    moveSpeed: 7.5
     turnSpeed: 720
   sightRange: 14
   sightAngle: 110

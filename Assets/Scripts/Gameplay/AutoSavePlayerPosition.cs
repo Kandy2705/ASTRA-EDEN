@@ -47,7 +47,7 @@ public class AutoSavePlayerPosition : MonoBehaviour
         string sceneName = SceneManager.GetActiveScene().name;
         GameDataManager.Instance.SaveLastPlayerTransform(sceneName, transform);
 
-        Debug.Log($"[AutoSavePlayerPosition] Saved scene={sceneName}, pos={transform.position}");
+        // Debug.Log($"[AutoSavePlayerPosition] Saved scene={sceneName}, pos={transform.position}");
     }
 
     private void OnDisable()

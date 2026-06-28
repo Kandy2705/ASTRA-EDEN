@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Rare Core Shard
   type: 2
   rarity: 2
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 5474670013329849606, guid: 3eb6a80a6784d45a5b11350a8b612c71, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "M\u1EA3nh core hi\u1EBFm \u2014 n\xE2ng c\u1EA5p tier cao."
+  icon: {fileID: 21300000, guid: 85215451ec408463cb38b959c0746bea, type: 3}
+  description: "M\u1EA3nh core hi\u1EBFm c\xF3 n\u0103ng l\u01B0\u1EE3ng tinh khi\u1EBFt.
+    D\xF9ng cho n\xE2ng c\u1EA5p c\u1EA5p cao ho\u1EB7c unlock companion."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

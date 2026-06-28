@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Shell Fragment
   type: 1
   rarity: 0
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 3659807255853116665, guid: e4490a565f6d14655b1bb5475671a722, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "M\u1EA3nh v\u1ECF gi\xE1p d\xE0y."
+  icon: {fileID: -1958166089, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "M\u1EA3nh mai/v\u1ECF c\u1EE9ng. D\xF9ng \u0111\u1EC3 ch\u1EBF t\u1EA1o
+    gi\xE1p, khi\xEAn ho\u1EB7c trang b\u1ECB ph\xF2ng th\u1EE7."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

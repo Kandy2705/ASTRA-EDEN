@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
 
 public class GameDataManager : MonoBehaviour
 {
@@ -25,16 +26,42 @@ public class GameDataManager : MonoBehaviour
     [SerializeField] private float playerStamina = -1f;
     [SerializeField] private float playerEnergy = -1f;
 
+    [Header("Item Database")]
+    [SerializeField] private List<ItemData> itemDatabase = new List<ItemData>();
+
     [Header("Vị trí Player theo scene")]
     [SerializeField] private List<string> posSceneNames = new List<string>();
     [SerializeField] private List<Vector3> posValues = new List<Vector3>();
 
     private Dictionary<string, Vector3> scenePositions = new Dictionary<string, Vector3>();
 
+    private const string InventoryJsonKey = "ASTRA_INVENTORY_JSON";
+
+    [System.Serializable]
+    private class InventorySaveEntry
+    {
+        public string itemId;
+        public int quantity;
+    }
+
+    [System.Serializable]
+    private class InventorySaveData
+    {
+        public List<InventorySaveEntry> entries = new List<InventorySaveEntry>();
+    }
+
+    public event Action<int> OnCurrencyChanged;
+
     public int Currency
     {
         get => currency;
-        set => currency = Mathf.Max(0, value);
+        set
+        {
+            int newValue = Mathf.Max(0, value);
+            if (newValue == currency) return;
+            currency = newValue;
+            OnCurrencyChanged?.Invoke(currency);
+        }
     }
 
     public float PlayerHP
@@ -70,6 +97,7 @@ public class GameDataManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        ItemRegistry.Initialize(itemDatabase);
         LoadRuntimePositionLists();
         LoadPersistentData();
     }
@@ -88,6 +116,77 @@ public class GameDataManager : MonoBehaviour
     {
         Currency = currency + delta;
         SavePersistentData();
+    }
+
+    /// <summary>UI/HUD subscribe vao day, va goi ngay 1 lan voi gia tri hien tai de sync khi enable.</summary>
+    public void SubscribeAndFireCurrency(Action<int> handler)
+    {
+        if (handler == null) return;
+        OnCurrencyChanged += handler;
+        handler.Invoke(currency);
+    }
+
+    public void UnsubscribeCurrency(Action<int> handler)
+    {
+        if (handler == null) return;
+        OnCurrencyChanged -= handler;
+    }
+
+    public void SaveInventoryItem(string itemId, int quantity)
+    {
+        string json = PlayerPrefs.GetString(InventoryJsonKey, "{}");
+        InventorySaveData data = JsonUtility.FromJson<InventorySaveData>(json);
+        if (data == null) data = new InventorySaveData();
+
+        bool found = false;
+        for (int i = 0; i < data.entries.Count; i++)
+        {
+            if (data.entries[i].itemId == itemId)
+            {
+                data.entries[i].quantity = quantity;
+                found = true;
+                break;
+            }
+        }
+        if (!found) data.entries.Add(new InventorySaveEntry { itemId = itemId, quantity = quantity });
+
+        PlayerPrefs.SetString(InventoryJsonKey, JsonUtility.ToJson(data));
+        PlayerPrefs.Save();
+    }
+
+    public void SaveInventory(Dictionary<string, int> inventory)
+    {
+        InventorySaveData data = new InventorySaveData();
+        foreach (var kvp in inventory)
+        {
+            if (string.IsNullOrEmpty(kvp.Key)) continue;
+            data.entries.Add(new InventorySaveEntry { itemId = kvp.Key, quantity = kvp.Value });
+        }
+        PlayerPrefs.SetString(InventoryJsonKey, JsonUtility.ToJson(data));
+        PlayerPrefs.Save();
+    }
+
+    public Dictionary<string, int> LoadInventory()
+    {
+        Dictionary<string, int> result = new Dictionary<string, int>();
+        string json = PlayerPrefs.GetString(InventoryJsonKey, "");
+        if (string.IsNullOrEmpty(json)) return result;
+
+        InventorySaveData data = JsonUtility.FromJson<InventorySaveData>(json);
+        if (data == null) return result;
+
+        foreach (var entry in data.entries)
+        {
+            if (string.IsNullOrEmpty(entry.itemId)) continue;
+            result[entry.itemId] = entry.quantity;
+        }
+        return result;
+    }
+
+    public void DeleteInventoryData()
+    {
+        PlayerPrefs.DeleteKey(InventoryJsonKey);
+        PlayerPrefs.Save();
     }
 
     public void SavePlayerStats(float hp, float stamina, float energy)
@@ -124,7 +223,7 @@ public class GameDataManager : MonoBehaviour
 
         PlayerPrefs.Save();
 
-        Debug.Log($"[GameDataManager] Save position scene={sceneName}, pos={position}");
+        // Debug.Log($"[GameDataManager] Save position scene={sceneName}, pos={position}");
     }
 
     private void SaveAllScenePositionsToPrefs()
@@ -143,7 +242,7 @@ public class GameDataManager : MonoBehaviour
         string json = JsonUtility.ToJson(data);
         PlayerPrefs.SetString(ScenePositionsJsonKey, json);
 
-        Debug.Log($"[GameDataManager] Saved scene positions json: {json}");
+        // Debug.Log($"[GameDataManager] Saved scene positions json: {json}");
     }
 
     private void LoadAllScenePositionsFromPrefs()
@@ -190,7 +289,7 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetFloat(LastRotYKey, rotY);
         PlayerPrefs.Save();
 
-        Debug.Log($"[GameDataManager] Save transform scene={sceneName}, pos={pos}, rotY={rotY}");
+        // Debug.Log($"[GameDataManager] Save transform scene={sceneName}, pos={pos}, rotY={rotY}");
     }
 
     public bool TryGetScenePosition(string sceneName, out Vector3 position)
@@ -253,6 +352,8 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey(ContinueFlagKey);
 
         PlayerPrefs.DeleteKey(ScenePositionsJsonKey);
+
+        DeleteInventoryData();
 
         PlayerPrefs.DeleteKey("ASTRA_CURRENCY");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_HP");

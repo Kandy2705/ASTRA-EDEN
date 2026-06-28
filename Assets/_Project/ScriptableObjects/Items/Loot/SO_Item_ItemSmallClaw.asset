@@ -16,8 +16,12 @@ MonoBehaviour:
   displayName: Small Claw
   type: 1
   rarity: 0
-  itemPrefab: {fileID: 0}
+  itemPrefab: {fileID: 5892349947088969594, guid: e9503e014e67744f4844f04369ba440b, type: 3}
   stackable: 1
   maxStack: 999
-  icon: {fileID: 0}
-  description: "M\xF3ng vu\u1ED1t nh\u1ECF \u2014 v\u1EADt li\u1EC7u ch\u1EBF t\u1EA1o."
+  icon: {fileID: 108978060, guid: 2f693db0bd2444107902bbc47e12178d, type: 3}
+  description: "M\xF3ng nh\u1ECF t\u1EEB sinh v\u1EADt y\u1EBFu. Nguy\xEAn li\u1EC7u
+    c\u01A1 b\u1EA3n \u0111\u1EC3 craft ho\u1EB7c b\xE1n l\u1EA5y Gold."
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0
