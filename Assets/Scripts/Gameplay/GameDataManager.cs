@@ -36,6 +36,7 @@ public class GameDataManager : MonoBehaviour
     private Dictionary<string, Vector3> scenePositions = new Dictionary<string, Vector3>();
 
     private const string InventoryJsonKey = "ASTRA_INVENTORY_JSON";
+    private const string ZoneProgressJsonKey = "ASTRA_ZONE_PROGRESS_JSON";
 
     [System.Serializable]
     private class InventorySaveEntry
@@ -49,6 +50,14 @@ public class GameDataManager : MonoBehaviour
     {
         public List<InventorySaveEntry> entries = new List<InventorySaveEntry>();
     }
+
+    [System.Serializable]
+    private class ZoneProgressSaveData
+    {
+        public List<string> clearedZoneIds = new List<string>();
+    }
+
+    private HashSet<string> clearedZones = new HashSet<string>();
 
     public event Action<int> OnCurrencyChanged;
 
@@ -90,7 +99,8 @@ public class GameDataManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            Instance.MergeItemDatabase(itemDatabase);
+            Destroy(this);
             return;
         }
 
@@ -100,6 +110,110 @@ public class GameDataManager : MonoBehaviour
         ItemRegistry.Initialize(itemDatabase);
         LoadRuntimePositionLists();
         LoadPersistentData();
+        LoadZoneProgress();
+    }
+
+    public void MergeItemDatabase(List<ItemData> extraItems)
+    {
+        if (extraItems == null || extraItems.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < extraItems.Count; i++)
+        {
+            ItemData item = extraItems[i];
+            if (item == null || string.IsNullOrEmpty(item.itemId))
+            {
+                continue;
+            }
+
+            bool exists = false;
+            for (int j = 0; j < itemDatabase.Count; j++)
+            {
+                if (itemDatabase[j] != null && itemDatabase[j].itemId == item.itemId)
+                {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists)
+            {
+                itemDatabase.Add(item);
+            }
+        }
+
+        ItemRegistry.Initialize(itemDatabase);
+    }
+
+    public ItemData ResolveItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+        {
+            return null;
+        }
+
+        ItemData fromRegistry = ItemRegistry.Get(itemId);
+        if (fromRegistry != null)
+        {
+            return fromRegistry;
+        }
+
+        for (int i = 0; i < itemDatabase.Count; i++)
+        {
+            ItemData item = itemDatabase[i];
+            if (item != null && item.itemId == itemId)
+            {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    public bool IsZoneCleared(string zoneId)
+    {
+        if (string.IsNullOrEmpty(zoneId)) return false;
+        return clearedZones.Contains(zoneId);
+    }
+
+    public void MarkZoneCleared(string zoneId)
+    {
+        if (string.IsNullOrEmpty(zoneId)) return;
+        clearedZones.Add(zoneId);
+        SaveZoneProgress();
+        SavePersistentData();
+    }
+
+    public void SaveZoneProgress()
+    {
+        ZoneProgressSaveData data = new ZoneProgressSaveData();
+        foreach (string zoneId in clearedZones)
+        {
+            data.clearedZoneIds.Add(zoneId);
+        }
+
+        PlayerPrefs.SetString(ZoneProgressJsonKey, JsonUtility.ToJson(data));
+        PlayerPrefs.Save();
+    }
+
+    private void LoadZoneProgress()
+    {
+        clearedZones.Clear();
+        string json = PlayerPrefs.GetString(ZoneProgressJsonKey, "");
+        if (string.IsNullOrEmpty(json)) return;
+
+        ZoneProgressSaveData data = JsonUtility.FromJson<ZoneProgressSaveData>(json);
+        if (data?.clearedZoneIds == null) return;
+
+        for (int i = 0; i < data.clearedZoneIds.Count; i++)
+        {
+            if (!string.IsNullOrEmpty(data.clearedZoneIds[i]))
+            {
+                clearedZones.Add(data.clearedZoneIds[i]);
+            }
+        }
     }
 
     private void LoadRuntimePositionLists()
@@ -162,8 +276,13 @@ public class GameDataManager : MonoBehaviour
             if (string.IsNullOrEmpty(kvp.Key)) continue;
             data.entries.Add(new InventorySaveEntry { itemId = kvp.Key, quantity = kvp.Value });
         }
-        PlayerPrefs.SetString(InventoryJsonKey, JsonUtility.ToJson(data));
+
+        string json = JsonUtility.ToJson(data);
+        PlayerPrefs.SetString(InventoryJsonKey, json);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
         PlayerPrefs.Save();
+
+        Debug.Log($"[GameDataManager] Saved inventory ({data.entries.Count} entries).");
     }
 
     public Dictionary<string, int> LoadInventory()
@@ -354,6 +473,8 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey(ScenePositionsJsonKey);
 
         DeleteInventoryData();
+        clearedZones.Clear();
+        PlayerPrefs.DeleteKey(ZoneProgressJsonKey);
 
         PlayerPrefs.DeleteKey("ASTRA_CURRENCY");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_HP");

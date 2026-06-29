@@ -49,7 +49,7 @@ public class HUDTopStatusController : MonoBehaviour
 
         if (inventoryService == null)
         {
-            inventoryService = FindObjectOfType<PlayerInventoryService>();
+            inventoryService = PlayerInventoryService.FindForPlayer();
         }
 
         RefreshTime();
@@ -61,7 +61,7 @@ public class HUDTopStatusController : MonoBehaviour
     {
         if (inventoryService == null)
         {
-            inventoryService = FindObjectOfType<PlayerInventoryService>();
+            inventoryService = PlayerInventoryService.FindForPlayer();
         }
 
         if (inventoryService != null)
@@ -153,13 +153,18 @@ public class HUDTopStatusController : MonoBehaviour
             return;
         }
 
-        if (inventoryService == null || currencyItemData == null)
+        if (inventoryService != null)
         {
-            currencyText.text = "0";
+            currencyText.text = inventoryService.GetGoldQuantity(currencyItemData).ToString("N0");
             return;
         }
 
-        int amount = inventoryService.GetQuantity(currencyItemData);
-        currencyText.text = amount.ToString("N0");
+        if (GameDataManager.Instance != null)
+        {
+            currencyText.text = GameDataManager.Instance.Currency.ToString("N0");
+            return;
+        }
+
+        currencyText.text = "0";
     }
 }

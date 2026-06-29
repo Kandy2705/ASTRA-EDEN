@@ -74,27 +74,21 @@ public class InventoryScreenController : MonoBehaviour
 
     private void Awake()
     {
-        if (inventoryService == null)
-        {
-            inventoryService = FindFirstObjectByType<PlayerInventoryService>();
-        }
-
         PrepareTemplate();
         HideExistingChildrenExceptTemplate();
         HookButtons();
+        SetDefaultItemStats();
     }
 
     private void OnEnable()
     {
-        if (inventoryService == null)
-        {
-            inventoryService = FindFirstObjectByType<PlayerInventoryService>();
-        }
+        BindInventoryService();
+    }
 
-        if (inventoryService != null)
-        {
-            inventoryService.OnInventoryChanged += RefreshNow;
-        }
+    private void Start()
+    {
+        BindInventoryService();
+        RefreshNow();
     }
 
     private void OnDisable()
@@ -105,6 +99,39 @@ public class InventoryScreenController : MonoBehaviour
         }
     }
 
+    private void BindInventoryService()
+    {
+        PlayerInventoryService resolved = ResolveInventoryService();
+        if (resolved == null)
+        {
+            return;
+        }
+
+        if (inventoryService != resolved)
+        {
+            if (inventoryService != null)
+            {
+                inventoryService.OnInventoryChanged -= RefreshNow;
+            }
+
+            inventoryService = resolved;
+        }
+
+        inventoryService.OnInventoryChanged -= RefreshNow;
+        inventoryService.OnInventoryChanged += RefreshNow;
+    }
+
+    private static PlayerInventoryService ResolveInventoryService()
+    {
+        PlayerInventoryService playerService = PlayerInventoryService.FindForPlayer();
+        if (playerService != null)
+        {
+            return playerService;
+        }
+
+        return FindFirstObjectByType<PlayerInventoryService>(FindObjectsInactive.Include);
+    }
+
     private void OnDestroy()
     {
         UnhookButtons();
@@ -112,10 +139,7 @@ public class InventoryScreenController : MonoBehaviour
 
     public void RefreshNow()
     {
-        if (inventoryService == null)
-        {
-            inventoryService = FindFirstObjectByType<PlayerInventoryService>();
-        }
+        BindInventoryService();
 
         Debug.Log("[InventoryUI] RefreshNow called.");
         Refresh();
@@ -172,20 +196,29 @@ public class InventoryScreenController : MonoBehaviour
             selectedItemData = visibleStacks.Count > 0 ? visibleStacks[0].itemData : null;
         }
 
+        InventorySlotUI[] existingSlots = contentRoot.GetComponentsInChildren<InventorySlotUI>(true);
+        int usedExistingSlots = 0;
+
         for (int i = 0; i < visibleStacks.Count; i++)
         {
             InventoryItemStack stack = visibleStacks[i];
-
-            InventorySlotUI slot = Instantiate(slotTemplate, contentRoot);
-            slot.gameObject.name = $"Slot_{stack.itemData.itemId}";
-            slot.gameObject.SetActive(true);
+            InventorySlotUI slot = AcquireSlot(existingSlots, ref usedExistingSlots);
 
             slot.Setup(stack, SelectItem);
             slot.SetSelected(stack.itemData == selectedItemData);
 
-            spawnedSlots.Add(slot);
-
             Debug.Log($"[InventoryUI] Spawn slot: {stack.itemData.displayName} x {stack.quantity}");
+        }
+
+        for (int i = usedExistingSlots; i < existingSlots.Length; i++)
+        {
+            InventorySlotUI slot = existingSlots[i];
+            if (slot == null || IsTemplateSlot(slot))
+            {
+                continue;
+            }
+
+            slot.gameObject.SetActive(false);
         }
 
         Canvas.ForceUpdateCanvases();
@@ -358,7 +391,7 @@ public class InventoryScreenController : MonoBehaviour
         }
 
         UpdateRarityStars(selectedItemData.rarity);
-        UpdateConsumableStats(selectedItemData);
+        UpdateItemStats(selectedItemData);
 
         if (useButton != null)
         {
@@ -405,9 +438,7 @@ public class InventoryScreenController : MonoBehaviour
         }
 
         UpdateRarityStars(ItemRarity.Common);
-        SetTextVisible(restoreHpText, false, string.Empty);
-        SetTextVisible(restoreStaminaText, false, string.Empty);
-        SetTextVisible(restoreEnergyText, false, string.Empty);
+        SetDefaultItemStats();
 
         if (useButton != null)
         {
@@ -420,27 +451,36 @@ public class InventoryScreenController : MonoBehaviour
         }
     }
 
-    private void UpdateConsumableStats(ItemData itemData)
+    private void SetDefaultItemStats()
     {
-        bool isConsumable = itemData != null && itemData.type == ItemType.Consumable;
+        SetStatValue(restoreHpText, 0f);
+        SetStatValue(restoreStaminaText, 0f);
+        SetStatValue(restoreEnergyText, 0f);
+    }
 
-        SetTextVisible(
-            restoreHpText,
-            isConsumable && itemData.restoreHP > 0f,
-            $"HP: +{itemData.restoreHP:0}"
-        );
+    private void UpdateItemStats(ItemData itemData)
+    {
+        if (itemData == null)
+        {
+            SetDefaultItemStats();
+            return;
+        }
 
-        SetTextVisible(
-            restoreStaminaText,
-            isConsumable && itemData.restoreStamina > 0f,
-            $"Stamina: +{itemData.restoreStamina:0}"
-        );
+        // UI label: Hp / Def / Speed — map từ restoreHP / restoreStamina / restoreEnergy trên ItemData.
+        SetStatValue(restoreHpText, itemData.restoreHP);
+        SetStatValue(restoreStaminaText, itemData.restoreStamina);
+        SetStatValue(restoreEnergyText, itemData.restoreEnergy);
+    }
 
-        SetTextVisible(
-            restoreEnergyText,
-            isConsumable && itemData.restoreEnergy > 0f,
-            $"Energy: +{itemData.restoreEnergy:0}"
-        );
+    private static void SetStatValue(TMP_Text text, float value)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        text.gameObject.SetActive(true);
+        text.text = Mathf.Max(0f, value).ToString("0");
     }
 
     private void UpdateRarityStars(ItemRarity rarity)
@@ -482,17 +522,22 @@ public class InventoryScreenController : MonoBehaviour
 
     private void UpdateCurrencyTexts()
     {
-        if (inventoryService == null)
+        if (goldAmountText != null)
         {
-            return;
+            int goldAmount = 0;
+            if (inventoryService != null)
+            {
+                goldAmount = inventoryService.GetGoldQuantity(goldItem);
+            }
+            else if (GameDataManager.Instance != null)
+            {
+                goldAmount = GameDataManager.Instance.Currency;
+            }
+
+            goldAmountText.text = goldAmount.ToString("N0");
         }
 
-        if (goldAmountText != null && goldItem != null)
-        {
-            goldAmountText.text = inventoryService.GetQuantity(goldItem).ToString("N0");
-        }
-
-        if (coreAmountText != null)
+        if (coreAmountText != null && inventoryService != null)
         {
             int totalCoreAmount = GetTotalQuantity(coreItems);
             coreAmountText.text = totalCoreAmount.ToString("N0");
@@ -624,9 +669,31 @@ public class InventoryScreenController : MonoBehaviour
         }
     }
 
+    private InventorySlotUI AcquireSlot(InventorySlotUI[] existingSlots, ref int usedExistingSlots)
+    {
+        while (usedExistingSlots < existingSlots.Length)
+        {
+            InventorySlotUI candidate = existingSlots[usedExistingSlots++];
+            if (candidate != null && !IsTemplateSlot(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        InventorySlotUI slot = Instantiate(slotTemplate, contentRoot);
+        slot.gameObject.SetActive(true);
+        spawnedSlots.Add(slot);
+        return slot;
+    }
+
+    private bool IsTemplateSlot(InventorySlotUI slot)
+    {
+        return slotTemplate != null && slot == slotTemplate;
+    }
+
     private void HideExistingChildrenExceptTemplate()
     {
-        if (!hideExistingContentChildren || contentRoot == null || slotTemplate == null)
+        if (!hideExistingContentChildren || contentRoot == null)
         {
             return;
         }
@@ -635,7 +702,12 @@ public class InventoryScreenController : MonoBehaviour
         {
             Transform child = contentRoot.GetChild(i);
 
-            if (child == slotTemplate.transform)
+            if (child.GetComponent<InventorySlotUI>() != null)
+            {
+                continue;
+            }
+
+            if (slotTemplate != null && child == slotTemplate.transform)
             {
                 continue;
             }

@@ -6992,6 +6992,10 @@ GameObject:
   - component: {fileID: 908721642075562601}
   - component: {fileID: 7254071530502945434}
   - component: {fileID: 4740292446844745432}
+  - component: {fileID: 3617732800106431330}
+  - component: {fileID: 7446676202604255623}
+  - component: {fileID: 4688957090041989746}
+  - component: {fileID: 3849946475836124822}
   m_Layer: 6
   m_Name: Seeker Prototype Nu
   m_TagString: Player
@@ -7324,6 +7328,9 @@ MonoBehaviour:
   skill1Key: 31
   skill2Key: 19
   skill3Key: 32
+  interactKey: 20
+  companionCommandKey: 34
+  companionSkillKey: 21
   allowMouseLeftAttack: 1
 --- !u!114 &7724119998996307472
 MonoBehaviour:
@@ -7372,6 +7379,12 @@ MonoBehaviour:
   attackForwardOffset: 1.3
   enemyKnockbackDistance: 1.2
   enemyKnockbackDuration: 0.18
+  skillCooldown: {fileID: 0}
+  skillBindings:
+  - {fileID: 11400000, guid: afb49e9d550c94e0890da6061aa388ff, type: 2}
+  - {fileID: 11400000, guid: d8a468301f1d34faaa579eb363ba5272, type: 2}
+  - {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
+  - {fileID: 11400000, guid: 92bc67a49a7184aedaa583200bd436c3, type: 2}
   useAnimationEventDamage: 1
   damageEventFallback: 0.4
   perSkillDamage:
@@ -7618,6 +7631,92 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootCollector
   logToConsole: 1
+--- !u!114 &3617732800106431330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c8ffe147a11437e95ba58434f9d643, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInventoryService
+  items: []
+  debugItem: {fileID: 0}
+  debugAmount: 1
+--- !u!114 &7446676202604255623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79471613aa8e741a89897b27457a40f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractController
+  inputReader: {fileID: 0}
+  scanRadius: 3
+  interactableMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  logInteract: 0
+--- !u!114 &4688957090041989746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 588802f94c0384812b6e0ac2937b0336, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CompanionSummonController
+  companionPrefab: {fileID: 1854996814765377967, guid: d885a41ef35404ebca580ac5c7b35d42, type: 3}
+  spawnOffset: {x: -1.5, y: 0, z: -1.5}
+  summonOnStart: 1
+  inputReader: {fileID: 0}
+  skillCooldown: {fileID: 0}
+  companionCommandSlotIndex: 3
+  companionSkillSlotIndex: 4
+--- !u!114 &3849946475836124822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 580ba45cd4e5c40029bdeaac9411e4f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillCooldown
+  slots:
+  - slotName: Skill1 (Q)
+    baseCooldown: 4
+    remaining: 0
+    total: 0
+  - slotName: Skill2 (E)
+    baseCooldown: 5
+    remaining: 0
+    total: 0
+  - slotName: Ultimate (R)
+    baseCooldown: 12
+    remaining: 0
+    total: 0
+  - slotName: Companion Command
+    baseCooldown: 8
+    remaining: 0
+    total: 0
+  - slotName: Companion Ultimate
+    baseCooldown: 20
+    remaining: 0
+    total: 0
+  combatToCooldownMap: ffffffff000000000100000002000000
 --- !u!1 &7318886399150952759
 GameObject:
   m_ObjectHideFlags: 0

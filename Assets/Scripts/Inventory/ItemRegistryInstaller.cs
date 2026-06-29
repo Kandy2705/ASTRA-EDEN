@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(-50)]
 [DisallowMultipleComponent]
 public class ItemRegistryInstaller : MonoBehaviour
 {
@@ -9,6 +10,12 @@ public class ItemRegistryInstaller : MonoBehaviour
 
     private void Awake()
     {
+        if (allItems == null || allItems.Count == 0)
+        {
+            Debug.LogWarning("[ItemRegistryInstaller] allItems trống — bỏ qua, không ghi đè registry.", this);
+            return;
+        }
+
         ItemRegistry.Initialize(allItems);
     }
 }

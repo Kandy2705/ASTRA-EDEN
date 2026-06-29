@@ -8,10 +8,19 @@ public static class ItemRegistry
 
     public static void Initialize(List<ItemData> allItems)
     {
+        if (allItems == null || allItems.Count == 0)
+        {
+            if (itemsById == null)
+            {
+                itemsById = new Dictionary<string, ItemData>();
+                initialized = true;
+            }
+
+            return;
+        }
+
         itemsById = new Dictionary<string, ItemData>();
         initialized = true;
-
-        if (allItems == null) return;
 
         foreach (ItemData item in allItems)
         {

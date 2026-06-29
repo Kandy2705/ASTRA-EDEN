@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -22,35 +23,104 @@ public class InventoryToggleController : MonoBehaviour
     [SerializeField] private bool showCursorWhenOpen = true;
 
     private bool isOpen;
+    private readonly List<GameObject> activatedAncestors = new List<GameObject>();
 
     public bool IsOpen => isOpen;
 
     private void Awake()
     {
-        if (inventoryScreenController == null && inventoryRoot != null)
+        ResolveInventoryReferences();
+
+        if (inventoryRoot == null)
         {
-            inventoryScreenController = inventoryRoot.GetComponentInChildren<InventoryScreenController>(true);
+            Debug.LogWarning("[InventoryToggle] inventoryRoot chưa được gán. Kéo object Panels/Inventory vào Managers.");
         }
 
         SetInventoryOpen(false);
     }
 
+    private void Start()
+    {
+        ResolveInventoryReferences();
+    }
+
+    private void ResolveInventoryReferences()
+    {
+        if (inventoryScreenController == null)
+        {
+            inventoryScreenController = FindFirstObjectByType<InventoryScreenController>(FindObjectsInactive.Include);
+        }
+
+        GameObject panelRoot = FindInventoryPanelRoot();
+        if (panelRoot != null && ShouldUseInventoryPanelRoot(inventoryRoot, panelRoot))
+        {
+            inventoryRoot = panelRoot;
+        }
+
+        if (inventoryScreenController == null && inventoryRoot != null)
+        {
+            inventoryScreenController = inventoryRoot.GetComponentInChildren<InventoryScreenController>(true);
+        }
+    }
+
+    private static bool ShouldUseInventoryPanelRoot(GameObject currentRoot, GameObject panelRoot)
+    {
+        return currentRoot == null
+            || currentRoot.name == "Ingame_Inventory"
+            || currentRoot != panelRoot;
+    }
+
+    private static GameObject FindInventoryPanelRoot()
+    {
+        GameObject panels = GameObject.Find("Panels");
+        if (panels == null)
+        {
+            return null;
+        }
+
+        foreach (Transform child in panels.transform)
+        {
+            if (child.name == "Inventory")
+            {
+                return child.gameObject;
+            }
+        }
+
+        return null;
+    }
+
     private void Update()
     {
-        if (Keyboard.current == null)
+        if (!TryGetTogglePressed(out bool togglePressed, out bool escapePressed))
         {
             return;
         }
 
-        if (Keyboard.current[toggleKey].wasPressedThisFrame)
+        if (togglePressed)
         {
             ToggleInventory();
         }
 
-        if (isOpen && Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (isOpen && escapePressed)
         {
             CloseInventory();
         }
+    }
+
+    private bool TryGetTogglePressed(out bool togglePressed, out bool escapePressed)
+    {
+        togglePressed = false;
+        escapePressed = false;
+
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null)
+        {
+            return false;
+        }
+
+        togglePressed = keyboard[toggleKey].wasPressedThisFrame;
+        escapePressed = keyboard.escapeKey.wasPressedThisFrame;
+        return true;
     }
 
     public void ToggleInventory()
@@ -74,12 +144,27 @@ public class InventoryToggleController : MonoBehaviour
 
         if (inventoryRoot != null)
         {
-            inventoryRoot.SetActive(isOpen);
+            if (isOpen)
+            {
+                EnsureAncestorsActive(inventoryRoot);
+                EnsureMenuCanvasVisible(inventoryRoot);
+                inventoryRoot.SetActive(true);
+            }
+            else
+            {
+                inventoryRoot.SetActive(false);
+                RestoreActivatedAncestors();
+            }
         }
 
         if (isOpen && inventoryScreenController != null)
         {
             inventoryScreenController.RefreshNow();
+        }
+
+        if (isOpen)
+        {
+            Debug.Log($"[InventoryToggle] Opened inventory UI (root={(inventoryRoot != null ? inventoryRoot.name : "null")}).");
         }
 
         if (gameplayHudCanvas != null)
@@ -94,8 +179,69 @@ public class InventoryToggleController : MonoBehaviour
 
         if (showCursorWhenOpen)
         {
-            Cursor.visible = isOpen;
-            Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
+            // Gameplay camera dùng giữ chuột phải để xoay — không lock cursor khi đóng inventory.
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+    }
+
+    private void EnsureAncestorsActive(GameObject target)
+    {
+        activatedAncestors.Clear();
+
+        Transform parent = target.transform.parent;
+        while (parent != null)
+        {
+            if (!parent.gameObject.activeSelf)
+            {
+                activatedAncestors.Add(parent.gameObject);
+                parent.gameObject.SetActive(true);
+            }
+
+            parent = parent.parent;
+        }
+    }
+
+    private void RestoreActivatedAncestors()
+    {
+        for (int i = activatedAncestors.Count - 1; i >= 0; i--)
+        {
+            if (activatedAncestors[i] != null)
+            {
+                activatedAncestors[i].SetActive(false);
+            }
+        }
+
+        activatedAncestors.Clear();
+    }
+
+    private static void EnsureMenuCanvasVisible(GameObject inventoryPanel)
+    {
+        if (inventoryPanel == null)
+        {
+            return;
+        }
+
+        Canvas canvas = inventoryPanel.GetComponentInParent<Canvas>(true);
+        if (canvas == null)
+        {
+            return;
+        }
+
+        if (canvas.renderMode == RenderMode.ScreenSpaceCamera && canvas.worldCamera == null)
+        {
+            canvas.worldCamera = Camera.main;
+        }
+
+        if (canvas.renderMode == RenderMode.ScreenSpaceCamera && canvas.worldCamera == null)
+        {
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        }
+
+        canvas.enabled = true;
+        if (canvas.sortingOrder < 10)
+        {
+            canvas.sortingOrder = 10;
         }
     }
 }

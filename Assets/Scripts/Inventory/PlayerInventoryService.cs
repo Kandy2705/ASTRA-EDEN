@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(100)]
+[DisallowMultipleComponent]
 public class PlayerInventoryService : MonoBehaviour
 {
     [Header("Inventory Data")]
@@ -15,9 +17,50 @@ public class PlayerInventoryService : MonoBehaviour
 
     public event Action OnInventoryChanged;
 
+    private bool hasLoadedFromSave;
+
+    public static PlayerInventoryService FindForPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            return null;
+        }
+
+        PlayerInventoryService[] services = player.GetComponents<PlayerInventoryService>();
+        if (services.Length > 1)
+        {
+            Debug.LogWarning(
+                $"[Inventory] Player có {services.Length} PlayerInventoryService — dùng component đầu tiên, xóa bản trùng trong scene/prefab.");
+        }
+
+        return services.Length > 0 ? services[0] : null;
+    }
+
     private void Start()
     {
+        TryLoadFromGameData();
+
+        if (!hasLoadedFromSave)
+        {
+            OnInventoryChanged?.Invoke();
+        }
+    }
+
+    private void TryLoadFromGameData()
+    {
+        if (hasLoadedFromSave || GameDataManager.Instance == null)
+        {
+            return;
+        }
+
         LoadFromGameData();
+        hasLoadedFromSave = true;
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveToGameData();
     }
 
     private void OnDestroy()
@@ -27,26 +70,44 @@ public class PlayerInventoryService : MonoBehaviour
 
     public void LoadFromGameData()
     {
-        if (GameDataManager.Instance == null) return;
+        if (GameDataManager.Instance == null)
+        {
+            Debug.LogWarning("[Inventory] LoadFromGameData bỏ qua — chưa có GameDataManager.");
+            return;
+        }
 
         Dictionary<string, int> data = GameDataManager.Instance.LoadInventory();
         items.Clear();
 
+        int loadedCount = 0;
+        int missingCount = 0;
+
         foreach (var kvp in data)
         {
-            ItemData item = ItemRegistry.Get(kvp.Key);
+            ItemData item = GameDataManager.Instance.ResolveItem(kvp.Key);
             if (item != null)
             {
                 items.Add(new InventoryItemStack(item, kvp.Value));
+                loadedCount++;
+            }
+            else
+            {
+                missingCount++;
+                Debug.LogWarning($"[Inventory] Không tìm thấy ItemData cho itemId='{kvp.Key}' (qty={kvp.Value}).");
             }
         }
 
+        Debug.Log($"[Inventory] Loaded {loadedCount} stacks from save (missing={missingCount}, raw={data.Count}).");
         OnInventoryChanged?.Invoke();
     }
 
     public void SaveToGameData()
     {
-        if (GameDataManager.Instance == null) return;
+        if (GameDataManager.Instance == null)
+        {
+            Debug.LogWarning("[Inventory] SaveToGameData bỏ qua — chưa có GameDataManager.");
+            return;
+        }
 
         Dictionary<string, int> data = new Dictionary<string, int>();
         foreach (var stack in items)
@@ -56,6 +117,7 @@ public class PlayerInventoryService : MonoBehaviour
         }
 
         GameDataManager.Instance.SaveInventory(data);
+        Debug.Log($"[Inventory] Saved {data.Count} item types to PlayerPrefs.");
     }
 
     public bool AddItem(ItemData itemData, int amount)
@@ -83,7 +145,7 @@ public class PlayerInventoryService : MonoBehaviour
             items.Add(new InventoryItemStack(itemData, amount));
         }
 
-        Debug.Log($"[Inventory] Added {amount} x {itemData.name}");
+        Debug.Log($"[Inventory] Added {amount} x {itemData.name} (total stacks={items.Count}, service={name})");
         OnInventoryChanged?.Invoke();
         SaveToGameData();
         return true;
@@ -118,6 +180,36 @@ public class PlayerInventoryService : MonoBehaviour
     {
         InventoryItemStack stack = FindStack(itemData);
         return stack != null ? stack.quantity : 0;
+    }
+
+    public static ItemData ResolveGoldItem(ItemData assignedGold = null)
+    {
+        if (assignedGold != null)
+        {
+            return assignedGold;
+        }
+
+        if (GameDataManager.Instance != null)
+        {
+            ItemData fromManager = GameDataManager.Instance.ResolveItem("gold");
+            if (fromManager != null)
+            {
+                return fromManager;
+            }
+        }
+
+        return ItemRegistry.Get("gold");
+    }
+
+    public int GetGoldQuantity(ItemData assignedGold = null)
+    {
+        ItemData gold = ResolveGoldItem(assignedGold);
+        if (gold == null)
+        {
+            return GameDataManager.Instance != null ? GameDataManager.Instance.Currency : 0;
+        }
+
+        return GetQuantity(gold);
     }
 
     public bool HasItem(ItemData itemData, int amount)

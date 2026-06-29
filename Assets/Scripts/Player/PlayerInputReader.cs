@@ -11,6 +11,9 @@ public class PlayerInputReader : MonoBehaviour
     [SerializeField] private Key skill1Key = Key.Q;
     [SerializeField] private Key skill2Key = Key.E;
     [SerializeField] private Key skill3Key = Key.R;
+    [SerializeField] private Key interactKey = Key.F;
+    [SerializeField] private Key companionCommandKey = Key.T;
+    [SerializeField] private Key companionSkillKey = Key.G;
     [SerializeField] private bool allowMouseLeftAttack = true;
 
     public Vector2 MoveInput { get; private set; }
@@ -21,6 +24,9 @@ public class PlayerInputReader : MonoBehaviour
     public bool Skill1Pressed { get; private set; }
     public bool Skill2Pressed { get; private set; }
     public bool Skill3Pressed { get; private set; }
+    public bool InteractPressed { get; private set; }
+    public bool CompanionCommandPressed { get; private set; }
+    public bool CompanionSkillPressed { get; private set; }
     public int SkillIndexPressed { get; private set; } = -1;
 
     private void Update()
@@ -49,6 +55,9 @@ public class PlayerInputReader : MonoBehaviour
         Skill1Pressed = keyboard[skill1Key].wasPressedThisFrame;
         Skill2Pressed = keyboard[skill2Key].wasPressedThisFrame;
         Skill3Pressed = keyboard[skill3Key].wasPressedThisFrame;
+        InteractPressed = keyboard[interactKey].wasPressedThisFrame;
+        CompanionCommandPressed = keyboard[companionCommandKey].wasPressedThisFrame;
+        CompanionSkillPressed = keyboard[companionSkillKey].wasPressedThisFrame;
         SkillIndexPressed = Skill1Pressed ? 1 : Skill2Pressed ? 2 : Skill3Pressed ? 3 : -1;
     }
 

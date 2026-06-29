@@ -124,6 +124,20 @@ public class EnemyAIController : MonoBehaviour
 
     public AIState State => currentState;
     public EnemyData Data => enemyData;
+
+    /// <summary>Gọi ngay sau Instantiate, trước Start(), để gán EnemyData + patrol từ spawn point.</summary>
+    public void ApplySpawnConfiguration(EnemyData data, Transform[] patrolPts)
+    {
+        if (data != null)
+        {
+            enemyData = data;
+        }
+
+        if (patrolPts != null && patrolPts.Length > 0)
+        {
+            patrolPoints = patrolPts;
+        }
+    }
     public float MoveSpeed => enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.moveSpeed : agent != null ? agent.speed : 3f;
     /// <summary>Engage range = max(EnemyData.attackRange, max maxRange của attack patterns).
     /// Tránh case attackRange data nhỏ hơn reach thực của animation → enemy phải chạy sát mới đánh.</summary>

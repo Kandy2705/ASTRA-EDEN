@@ -12,7 +12,18 @@ public class LootCollector : MonoBehaviour
 
     private void Awake()
     {
-        inventoryService = GetComponent<PlayerInventoryService>();
+        inventoryService = ResolveInventoryService();
+    }
+
+    private PlayerInventoryService ResolveInventoryService()
+    {
+        PlayerInventoryService onSelf = GetComponent<PlayerInventoryService>();
+        if (onSelf != null)
+        {
+            return onSelf;
+        }
+
+        return GetComponentInParent<PlayerInventoryService>() ?? PlayerInventoryService.FindForPlayer();
     }
 
     public void Collect(ItemData item, int quantity)
@@ -20,6 +31,11 @@ public class LootCollector : MonoBehaviour
         if (item == null || quantity <= 0)
         {
             return;
+        }
+
+        if (inventoryService == null)
+        {
+            inventoryService = ResolveInventoryService();
         }
 
         if (inventoryService != null)

@@ -192,6 +192,14 @@ namespace Drakkar
 		
 		public static void TryAddLate(ILateUpdatable obj)
 		{
+			if (instance == null || instance.lateUpdate == null)
+			{
+			#if UNITY_EDITOR
+				Debug.LogError("<color=red>There is no DRAKKAR UPDATER in the scene!</color>");
+			#endif
+				return;
+			}
+
 			if (!instance.lateUpdate.Contains(obj))
 				instance.lateUpdate.Add(obj);
 		}
@@ -210,6 +218,11 @@ namespace Drakkar
 		}
 		public static void TryRemoveLate(ILateUpdatable obj)
 		{
+			if (instance == null || instance.lateUpdate == null)
+			{
+				return;
+			}
+
 			if (instance.lateUpdate.Contains(obj))
 				instance.lateUpdate.BookRemove(obj);
 		}

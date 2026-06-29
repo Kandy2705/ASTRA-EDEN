@@ -9,11 +9,21 @@ namespace Drakkar.Examples
 
 		public void StartTrail()
 		{
+			if (Trail == null)
+			{
+				return;
+			}
+
 			Trail.Begin();
 		}
 
 		public void StopTrail()
 		{
+			if (Trail == null)
+			{
+				return;
+			}
+
 			Trail.End();
 		}
 	}

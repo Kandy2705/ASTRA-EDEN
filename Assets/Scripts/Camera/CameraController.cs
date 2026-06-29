@@ -100,6 +100,8 @@ public class CameraController : MonoBehaviour
             return;
         }
 
+        SanitizeCameraMode();
+
         // 1. Read camera input after gameplay movement has already updated.
         ApplyCursorState(IsRotatingCamera());
         ReadMouseInput();
@@ -123,16 +125,6 @@ public class CameraController : MonoBehaviour
 
     private void ReadMouseInput()
     {
-        if (currentMode == CameraMode.LockOn && lockOnTarget != null)
-        {
-            return;
-        }
-
-        if (currentMode == CameraMode.Boss && bossTarget != null)
-        {
-            return;
-        }
-
         if (!IsRotatingCamera())
         {
             return;
@@ -164,13 +156,17 @@ public class CameraController : MonoBehaviour
 
     private Quaternion CalculateCameraRotation()
     {
-        if (currentMode == CameraMode.LockOn && lockOnTarget != null)
+        // Chỉ auto-framing khi player không đang giữ chuột phải để xoay tay.
+        if (!IsRotatingCamera())
         {
-            UpdateLookAtAngles(lockOnTarget.position + lockOnTargetOffset, lockOnRotationSpeed);
-        }
-        else if (currentMode == CameraMode.Boss && bossTarget != null)
-        {
-            UpdateBossAngles();
+            if (currentMode == CameraMode.LockOn && lockOnTarget != null)
+            {
+                UpdateLookAtAngles(lockOnTarget.position + lockOnTargetOffset, lockOnRotationSpeed);
+            }
+            else if (currentMode == CameraMode.Boss && bossTarget != null)
+            {
+                UpdateBossAngles();
+            }
         }
 
         return Quaternion.Euler(pitch, yaw, 0f);
@@ -302,6 +298,19 @@ public class CameraController : MonoBehaviour
         bossTarget = null;
     }
 
+    private void SanitizeCameraMode()
+    {
+        if (bossTarget == null && currentMode == CameraMode.Boss)
+        {
+            currentMode = CameraMode.Exploration;
+        }
+
+        if (lockOnTarget == null && currentMode == CameraMode.LockOn)
+        {
+            currentMode = CameraMode.Combat;
+        }
+    }
+
     private Vector3 GetActiveTargetOffset()
     {
         switch (currentMode)
@@ -334,12 +343,8 @@ public class CameraController : MonoBehaviour
 
     private float GetActiveClampedDistance()
     {
-        if (currentMode == CameraMode.Exploration)
-        {
-            return Mathf.Clamp(distance, minDistance, maxDistance);
-        }
-
-        return Mathf.Max(minDistance, GetActiveDistance());
+        // Luôn dùng distance (đã chỉnh bằng scroll) — zoom hoạt động ở mọi camera mode.
+        return Mathf.Clamp(distance, minDistance, maxDistance);
     }
 
     private float GetActiveSmoothSpeed()

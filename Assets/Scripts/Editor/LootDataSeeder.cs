@@ -174,6 +174,21 @@ public static class LootDataSeeder
             lt.rollCount = 0;     // không dùng weighted roll, dùng guaranteed-with-chance cho khớp bảng
             lt.rollChance = 1f;
 
+            if (itemLookup.TryGetValue("gold", out var goldItem) && row.gold > 0)
+            {
+                int minGold = Mathf.Max(1, row.gold / 10);
+                int maxGold = Mathf.Max(minGold, row.gold / 5);
+                lt.entries.Add(new LootTableData.Entry
+                {
+                    item = goldItem,
+                    weight = 1f,
+                    minQuantity = minGold,
+                    maxQuantity = maxGold,
+                    guaranteed = true,
+                    guaranteedChance = 1f,
+                });
+            }
+
             foreach (var e in row.entries)
             {
                 if (!itemLookup.TryGetValue(e.id, out var itemSO))

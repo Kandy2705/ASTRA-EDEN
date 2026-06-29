@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &6890332829012372037
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2509189007583347567, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: owner
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3724893302676923832, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_Speed
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3724893302676923832, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_StoppingDistance
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5053360894976517098, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_Name
+      value: Companion_Compy
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2263.26
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 86.08197
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 881.78577
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 6330253225892992813, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5053360894976517098, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4267512003932911644}
+  m_SourcePrefab: {fileID: 100100000, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+--- !u!1 &1854996814765377967 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5053360894976517098, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+  m_PrefabInstance: {fileID: 6890332829012372037}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4267512003932911644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1854996814765377967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1d8493094b884e3d9e8d3f51528f457, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CompanionController
+  owner: {fileID: 0}
+  followDistance: 3
+  stopDistance: 2
+  teleportDistance: 18
+  followSpeed: 4.5
+  commandAttackDamage: 35
+  commandAttackRange: 3
+  commandCooldown: 8
+  skillDamage: 80
+  skillRadius: 4
+  skillCooldown: 20

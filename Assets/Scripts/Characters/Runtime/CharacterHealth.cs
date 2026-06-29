@@ -43,6 +43,28 @@ public class CharacterHealth : MonoBehaviour
         Changed?.Invoke(this);
     }
 
+    /// <summary>Áp stats từ EnemyData khi spawn runtime (enemy spawn system).</summary>
+    public void ApplyEnemyStats(EnemyBaseStats stats)
+    {
+        if (stats == null)
+        {
+            return;
+        }
+
+        initializeFromCharacterData = false;
+
+        if (fallbackBaseStats == null)
+        {
+            fallbackBaseStats = new CharacterBaseStats();
+        }
+
+        fallbackBaseStats.maxHP = stats.maxHP;
+        fallbackBaseStats.attack = stats.attack;
+        fallbackBaseStats.defense = stats.defense;
+
+        Initialize();
+    }
+
     public void TakeDamage(float amount)
     {
         if (amount <= 0f || IsDead)
