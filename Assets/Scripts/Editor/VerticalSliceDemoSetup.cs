@@ -94,9 +94,10 @@ public static class VerticalSliceDemoSetup
         EnsureEventSystem();
         SetupShopInHub();
         EnsureItemRegistryOnManagers();
+        GameplayUISetup.InstallGameplayUIInCurrentScene();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-        Debug.Log("[DemoSetup] Beacon_Camp shop setup complete.");
+        Debug.Log("[DemoSetup] Beacon_Camp shop + GameplayUI setup complete.");
     }
 
     [MenuItem("ASTRA EDEN/Demo/4. Wire Player Prefab")]
