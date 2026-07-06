@@ -691,7 +691,8 @@ public class EnemyAIController : MonoBehaviour
 
     void ApplyPoiseDamage(float dmg)
     {
-        // Luôn trừ poise nếu có poise system, để combo cuối cùng vỡ poise.
+        bool interruptingAttack = currentState == AIState.Attack || attackPhase != AttackPhase.None;
+
         if (MaxPoise > 0f)
         {
             currentPoise = Mathf.Max(0f, currentPoise - dmg);
@@ -702,8 +703,22 @@ public class EnemyAIController : MonoBehaviour
             }
         }
 
-        // Với damage rất nhỏ liên tục (chiêu R continuous, DoT) thì bỏ qua hit reaction để tránh spam anim
-        if (dmg < 1f) return;
+        if (currentState == AIState.Stagger || currentState == AIState.Dead)
+        {
+            return;
+        }
+
+        // Đang căn đòn / đang Attack → luôn ưu tiên Hit, bỏ qua cooldown và ngưỡng damage nhỏ.
+        if (interruptingAttack)
+        {
+            EnterState(AIState.Hurt);
+            return;
+        }
+
+        if (dmg < 1f)
+        {
+            return;
+        }
 
         if (currentState == AIState.Hurt)
         {
@@ -714,12 +729,14 @@ public class EnemyAIController : MonoBehaviour
                 PlayHitAnimation();
                 lastHitReactionTime = Time.time;
             }
+
             return;
         }
 
-        if (currentState == AIState.Stagger) return;
-        if (currentState == AIState.Dead) return;
-        if (Time.time < nextHurtAllowedAt) return;
+        if (Time.time < nextHurtAllowedAt)
+        {
+            return;
+        }
 
         nextHurtAllowedAt = Time.time + hurtCooldown;
         lastHitReactionTime = Time.time;
@@ -733,9 +750,20 @@ public class EnemyAIController : MonoBehaviour
         currentAttack = null;
         hitResolvedThisSwing = true;
 
-        if (animator != null && HasParam(AttackHash, AnimatorControllerParameterType.Trigger))
+        if (animator == null)
+        {
+            return;
+        }
+
+        if (HasParam(AttackHash, AnimatorControllerParameterType.Trigger))
         {
             animator.ResetTrigger(AttackHash);
+        }
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        if (state.IsName("Basic Attack") || state.IsName("Attack"))
+        {
+            animator.Play("Hit", 0, 0f);
         }
     }
 
@@ -757,8 +785,8 @@ public class EnemyAIController : MonoBehaviour
             animator.SetTrigger(HitHash);
         }
 
-        // Ưu tiên Hit hơn Attack — ép chạy state Hit ngay, không chờ exit attack clip.
         animator.Play("Hit", 0, 0f);
+        animator.Update(0f);
         lastHitReactionTime = Time.time;
     }
 

@@ -590,18 +590,51 @@ public class EnemyPatrol : MonoBehaviour
 
     private void TriggerHitAnimation()
     {
-        if (!useHitAnimation || animator == null) return;
-        if (!HasAnimatorParameter(HitHash, AnimatorControllerParameterType.Trigger)) return;
+        if (!useHitAnimation || animator == null)
+        {
+            return;
+        }
 
-        // Chống spam animation khi bị damage liên tục (chiêu R, DoT...)
-        if (Time.time - lastHitReactionTime < 0.35f) return;
+        bool interruptingAttack = IsAttacking || swingActive;
+        if (!interruptingAttack && Time.time - lastHitReactionTime < 0.35f)
+        {
+            return;
+        }
 
-        animator.SetTrigger(HitHash);
+        CancelAttackForHit();
+
+        if (HasAnimatorParameter(HitHash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(HitHash);
+            animator.SetTrigger(HitHash);
+        }
+
+        animator.Play("Hit", 0, 0f);
+        animator.Update(0f);
         lastHitReactionTime = Time.time;
 
         if (hitStunDuration > 0f)
         {
             hitStunTimer = Mathf.Max(hitStunTimer, hitStunDuration);
+        }
+    }
+
+    private void CancelAttackForHit()
+    {
+        attackLockTimer = 0f;
+        EndAttackSwing();
+
+        if (animator == null)
+        {
+            return;
+        }
+
+        animator.ResetTrigger(AttackHash);
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+        if (state.IsName("Basic Attack") || state.IsName("Attack"))
+        {
+            animator.Play("Hit", 0, 0f);
         }
     }
 
