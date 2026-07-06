@@ -41,7 +41,7 @@ public class PlayerController : MonoBehaviour
         animatorBridge = GetComponent<PlayerAnimatorBridge>();
         combatController = GetComponent<PlayerCombatController>();
         controller = GetComponent<CharacterController>();
-        cameraTransform = Camera.main != null ? Camera.main.transform : null;
+        ResolveCameraTransform();
     }
 
     private void Awake()
@@ -79,6 +79,11 @@ public class PlayerController : MonoBehaviour
         if (playerHealth == null)
         {
             playerHealth = GetComponent<CharacterHealth>();
+        }
+
+        if (cameraTransform == null)
+        {
+            ResolveCameraTransform();
         }
     }
 
@@ -260,14 +265,18 @@ public class PlayerController : MonoBehaviour
             return Vector3.zero;
         }
 
-        Transform activeCamera = cameraTransform != null ? cameraTransform : Camera.main != null ? Camera.main.transform : null;
-        if (activeCamera == null)
+        if (cameraTransform == null)
+        {
+            ResolveCameraTransform();
+        }
+
+        if (cameraTransform == null)
         {
             return new Vector3(movementInput.x, 0f, movementInput.y).normalized;
         }
 
-        Vector3 cameraForward = activeCamera.forward;
-        Vector3 cameraRight = activeCamera.right;
+        Vector3 cameraForward = cameraTransform.forward;
+        Vector3 cameraRight = cameraTransform.right;
 
         cameraForward.y = 0f;
         cameraRight.y = 0f;
@@ -276,6 +285,26 @@ public class PlayerController : MonoBehaviour
         cameraRight.Normalize();
 
         return (cameraForward * movementInput.y + cameraRight * movementInput.x).normalized;
+    }
+
+    /// <summary>
+    /// Resolve cameraTransform ưu tiên Camera có CameraController (ổn định sau khi load scene qua portal).
+    /// Nếu không có thì fallback Camera.main.
+    /// </summary>
+    private void ResolveCameraTransform()
+    {
+        // Ưu tiên camera đang có CameraController (camera follow player)
+        CameraController camCtrl = FindFirstObjectByType<CameraController>();
+        if (camCtrl != null)
+        {
+            cameraTransform = camCtrl.transform;
+            return;
+        }
+
+        if (Camera.main != null)
+        {
+            cameraTransform = Camera.main.transform;
+        }
     }
 
 }

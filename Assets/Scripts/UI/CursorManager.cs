@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CursorManager : MonoBehaviour
 {
@@ -16,6 +17,17 @@ public class CursorManager : MonoBehaviour
     [SerializeField] private CursorMode cursorMode = CursorMode.Auto;
 
     private Texture2D resizedCursor;
+    private bool hasApplied = false;
+
+    private void Awake()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
 
     private void Start()
     {
@@ -24,6 +36,21 @@ public class CursorManager : MonoBehaviour
 
     private void OnEnable()
     {
+        if (hasApplied) ApplyCursor(); // Re-apply nếu bị disable rồi bật lại
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Bỏ qua Loading scene
+        if (scene.name == "Loading") return;
+
+        // Đợi 1 frame để camera và mọi thứ sẵn sàng sau portal
+        StartCoroutine(ApplyCursorDelayed());
+    }
+
+    private System.Collections.IEnumerator ApplyCursorDelayed()
+    {
+        yield return null; // chờ 1 frame
         ApplyCursor();
     }
 
@@ -31,8 +58,13 @@ public class CursorManager : MonoBehaviour
     {
         if (cursorTexture == null)
         {
-            Debug.LogWarning("Chưa gán ảnh chuột vào Cursor Texture!");
+            Debug.LogWarning("[CursorManager] Chưa gán ảnh chuột vào Cursor Texture!");
             return;
+        }
+
+        if (!cursorTexture.isReadable)
+        {
+            Debug.LogError("[CursorManager] Ảnh cursor BẮT BUỘC phải bật 'Read/Write Enabled = true' trong Import Settings > Advanced!");
         }
 
         resizedCursor = ResizeTexture(cursorTexture, cursorWidth, cursorHeight);
@@ -41,10 +73,18 @@ public class CursorManager : MonoBehaviour
         // hotSpot = new Vector2(cursorWidth / 2f, cursorHeight / 2f);
 
         Cursor.SetCursor(resizedCursor, hotSpot, cursorMode);
+
+        // Ép hiển thị con chuột custom (tránh bị script khác ẩn)
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        hasApplied = true;
     }
 
     private Texture2D ResizeTexture(Texture2D source, int width, int height)
     {
+        if (source == null || width <= 0 || height <= 0) return source;
+
         RenderTexture rt = RenderTexture.GetTemporary(width, height);
         RenderTexture.active = rt;
 

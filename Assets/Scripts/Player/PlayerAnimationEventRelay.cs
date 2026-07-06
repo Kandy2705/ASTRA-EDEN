@@ -28,6 +28,18 @@ public class PlayerAnimationEventRelay : MonoBehaviour
         if (owner != null) owner.OnAttackHit();
     }
 
+    /// <summary>Bắt đầu vùng sát thương chiêu R (có thể gọi thay cho OnAttackHit).</summary>
+    public void OnAreaDamageStart()
+    {
+        if (owner != null) owner.OnAreaDamageStart();
+    }
+
+    /// <summary>Dừng vùng sát thương chiêu R.</summary>
+    public void OnAreaDamageEnd()
+    {
+        if (owner != null) owner.OnAreaDamageEnd();
+    }
+
     /// <summary>Optional: gọi cuối clip để reset swing state.</summary>
     public void OnAttackEnd()
     {

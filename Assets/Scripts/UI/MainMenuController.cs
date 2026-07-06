@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MainMenuController : MonoBehaviour
@@ -22,6 +21,9 @@ public class MainMenuController : MonoBehaviour
             deleteConfirmPanel.SetActive(false);
 
         RefreshContinueButton();
+
+        AudioManager manager = AudioManager.EnsureInstance();
+        manager?.ApplySceneByName("MainMenu");
     }
 
     private void RefreshContinueButton()
@@ -36,7 +38,7 @@ public class MainMenuController : MonoBehaviour
         if (GameDataManager.Instance == null)
         {
             Debug.LogWarning("[MainMenu] Không có GameDataManager trong scene. Load game mới.");
-            SceneManager.LoadScene(newGameSceneName);
+            SceneTransitionService.Load(newGameSceneName);
             return;
         }
 
@@ -44,7 +46,7 @@ public class MainMenuController : MonoBehaviour
         if (!GameDataManager.Instance.HasSave)
         {
             Debug.Log("[MainMenu] Chưa có save -> Start New Game từ Continue.");
-            SceneManager.LoadScene(newGameSceneName);
+            SceneTransitionService.Load(newGameSceneName);
             return;
         }
 
@@ -54,7 +56,7 @@ public class MainMenuController : MonoBehaviour
         GameDataManager.Instance.MarkLoadFromContinue();
 
         Debug.Log($"[MainMenu] Có save -> Continue scene: {sceneName}");
-        SceneManager.LoadScene(sceneName);
+        SceneTransitionService.Load(sceneName);
     }
 
     public void NewGame()
@@ -64,7 +66,7 @@ public class MainMenuController : MonoBehaviour
             GameDataManager.Instance.DeleteSaveData();
         }
 
-        SceneManager.LoadScene(newGameSceneName);
+        SceneTransitionService.Load(newGameSceneName);
     }
 
     public void ShowDeleteConfirmPanel()

@@ -91,13 +91,22 @@ public class CameraController : MonoBehaviour
         distance = Mathf.Clamp(distance, minDistance, maxDistance);
 
         ApplyCursorState(false);
+
+        if (target == null)
+        {
+            TryAutoAcquirePlayerTarget();
+        }
     }
 
     private void LateUpdate()
     {
         if (target == null)
         {
-            return;
+            TryAutoAcquirePlayerTarget();
+            if (target == null)
+            {
+                return;
+            }
         }
 
         SanitizeCameraMode();
@@ -290,6 +299,54 @@ public class CameraController : MonoBehaviour
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
+    }
+
+    /// <summary>
+    /// Tự động tìm Player để gán target cho camera (fix khi reference scene bị mất sau portal/load).
+    /// </summary>
+    private bool TryAutoAcquirePlayerTarget()
+    {
+        if (target != null) return true;
+
+        // Ưu tiên tag Player (được đặt trên player prefab)
+        GameObject playerGO = GameObject.FindWithTag("Player");
+        if (playerGO != null)
+        {
+            target = playerGO.transform;
+            // Force immediate position on first acquire (sau portal player có thể ở vị trí restore)
+            SnapToTargetImmediate();
+            Debug.Log("[CameraController] Auto-acquired target from Player tag.");
+            return true;
+        }
+
+        // Fallback: tìm PlayerController
+        PlayerController pc = FindFirstObjectByType<PlayerController>();
+        if (pc != null)
+        {
+            target = pc.transform;
+            SnapToTargetImmediate();
+            Debug.Log("[CameraController] Auto-acquired target from PlayerController.");
+            return true;
+        }
+
+        return false;
+    }
+
+    private void SnapToTargetImmediate()
+    {
+        if (target == null) return;
+
+        // Tính toán vị trí nhanh giống LateUpdate để camera nhảy ngay lập tức tới player
+        Quaternion cameraRotation = Quaternion.Euler(pitch, yaw, 0f);
+        Quaternion yawRotation = Quaternion.Euler(0f, yaw, 0f);
+        Vector3 focusPoint = target.position + yawRotation * GetActiveTargetOffset();
+        float clampedDistance = Mathf.Clamp(distance, minDistance, maxDistance);
+        Vector3 desired = focusPoint + cameraRotation * new Vector3(0f, 0f, -clampedDistance);
+
+        // Áp dụng ngay, bỏ smooth
+        transform.position = desired;
+        transform.rotation = cameraRotation;
+        currentVelocity = Vector3.zero;
     }
 
     private void ClearTrackedTargets()

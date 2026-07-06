@@ -65,7 +65,7 @@ public class CharacterHealth : MonoBehaviour
         Initialize();
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, bool triggerHitReaction = true)
     {
         if (amount <= 0f || IsDead)
         {
@@ -75,13 +75,21 @@ public class CharacterHealth : MonoBehaviour
         float previousHP = runtimeStats.currentHP;
         runtimeStats.currentHP = Mathf.Max(0f, runtimeStats.currentHP - amount);
         Changed?.Invoke(this);
-        PlayPlayerDamageEffect(previousHP - runtimeStats.currentHP);
+
+        // Chỉ play effect cho player, enemy tự handle visual
+        if (gameObject.CompareTag("Player"))
+        {
+            PlayPlayerDamageEffect(previousHP - runtimeStats.currentHP);
+        }
 
         if (IsDead)
         {
             Die();
         }
     }
+
+    // Giữ overload cũ cho tương thích
+    public void TakeDamage(float amount) => TakeDamage(amount, true);
 
     public void Heal(float amount)
     {

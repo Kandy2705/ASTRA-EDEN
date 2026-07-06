@@ -41,6 +41,7 @@ public class HUDTopStatusController : MonoBehaviour
     private float gameSecondsElapsed;
     private float smoothedFrameMs;
     private float networkUpdateTimer;
+    private int lastDisplayedClockKey = -1;
 
     private void Awake()
     {
@@ -125,8 +126,15 @@ public class HUDTopStatusController : MonoBehaviour
         int totalSeconds = Mathf.FloorToInt(gameSecondsElapsed);
         int hour24 = (totalSeconds / 3600) % 24;
         int minute = (totalSeconds / 60) % 60;
-        int hour12 = hour24 % 12;
+        int clockKey = (hour24 * 60) + minute;
+        if (clockKey == lastDisplayedClockKey)
+        {
+            return;
+        }
 
+        lastDisplayedClockKey = clockKey;
+
+        int hour12 = hour24 % 12;
         if (hour12 == 0)
         {
             hour12 = 12;

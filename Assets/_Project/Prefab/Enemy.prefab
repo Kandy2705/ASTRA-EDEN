@@ -585,7 +585,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01840afc8c09e42da81e209713be12c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimationEventRelay
-  owner: {fileID: 0}
+  aiOwner: {fileID: 3455811534742008690}
+  patrolOwner: {fileID: 0}
 --- !u!114 &4764925750294894083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -607,6 +608,7 @@ MonoBehaviour:
   targetDistance: 3
   faceCamera: 1
   copyCameraRotation: 1
+  rangeCheckInterval: 0.12
 --- !u!114 &7210056597876639204
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -659,6 +661,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootDropSpawner
   lootTable: {fileID: 11400000, guid: b64e4a3a1fcbe4f6381f8ec7bac6ee4b, type: 2}
+  goldMin: 0
+  goldMax: 0
   pickupPrefabOverride: {fileID: 0}
   spawnHeight: 0.6
   scatterRadius: 0.6
@@ -687,6 +691,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  senseInterval: 0.15
   drawGizmos: 1
   sightColor: {r: 1, g: 0.8, b: 0, a: 0.25}
   hearingColor: {r: 0, g: 0.6, b: 1, a: 0.25}
@@ -2664,7 +2669,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 1dd27e2c6a1833d4abbb420edc70ee5b, type: 2}
+  - {fileID: 2100000, guid: 9950eef40ff17384c9df3c0a3803557a, type: 2}
   - {fileID: 2100000, guid: ec5a14d7ed2fca346aff25b22f8e6019, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0

@@ -101789,8 +101789,22 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
+  - time: 2.3333333
+    functionName: OnAttackHit
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
   - time: 2.4
     functionName: StopTrail
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 4.75
+    functionName: OnAttackEnd
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

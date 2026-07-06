@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -10,7 +12,7 @@ public class PlayerCombatController : MonoBehaviour
     [SerializeField] private float attack2MoveDistance = 3f;
     [SerializeField] private float attack2MoveDuration = 1f;
     [SerializeField] private int attackMoveSkillIndex = 1;
-    [SerializeField] private float[] skillLockDurations = new float[4] { 0.75f, 1f, 1f, 1.2f };
+    [SerializeField] private float[] skillLockDurations = new float[4] { 0.75f, 1f, 1f, 3.5f };
 
     [Header("Damage")]
     [SerializeField] private CharacterHealth characterHealth;
@@ -36,6 +38,18 @@ public class PlayerCombatController : MonoBehaviour
     [Tooltip("Dame cho từng skillIndex (0..3). Để 0 = dùng attackDamage chung.")]
     [SerializeField] private float[] perSkillDamage = new float[4] { 0f, 0f, 0f, 0f };
 
+    [Header("Skill R — vùng sát thương (Crystal Burst)")]
+    [SerializeField] private int areaDamageSkillIndex = 3;
+    [SerializeField] private float areaDamageRadius = 5f;
+    [SerializeField, Min(0.02f)] private float areaDamageTickInterval = 0.02f;
+    [Tooltip("Giới hạn an toàn nếu OnAttackEnd không được gọi. 0 = chỉ dừng theo animation.")]
+    [SerializeField, Min(0f)] private float areaDamageMaxDuration = 8f;
+    [Tooltip("Để 0 = tự tính từ attackDamage × damageMultiplier của SkillData R.")]
+    [SerializeField] private float areaDamagePerTick = 0f;
+    [SerializeField] private Transform areaDamageOrigin;
+    [Tooltip("Tâm vùng AOE theo trục Y từ player (khớp VFX).")]
+    [SerializeField] private float areaDamageHeightOffset = 2f;
+
     private float attackLockTimer;
     private float attackMoveRemaining;
     private float swingElapsed;
@@ -43,12 +57,15 @@ public class PlayerCombatController : MonoBehaviour
     private bool swingHitResolved;
     private readonly Collider[] attackHits = new Collider[16];
     private readonly CharacterHealth[] damagedTargets = new CharacterHealth[16];
+    private readonly HashSet<CharacterHealth> areaTickTargets = new HashSet<CharacterHealth>();
+    private Coroutine areaDamageRoutine;
+    private bool areaDamageWindowOpen;
+    private int currentSkillIndex;
 
     public bool IsAttacking => attackLockTimer > 0f;
     public bool IsAttackMoveActive => attackMoveRemaining > 0f;
     public float AttackMoveSpeed => attack2MoveDistance / Mathf.Max(attack2MoveDuration, 0.001f);
     public float AttackDamage => attackDamage;
-    private int currentSkillIndex;
 
     private void Reset()
     {
@@ -79,7 +96,12 @@ public class PlayerCombatController : MonoBehaviour
             skillCooldown = GetComponent<PlayerSkillCooldown>();
         }
 
-        AssignDefaultEnemyLayer();
+        AssignDefaultDamageMask();
+    }
+
+    private void OnDisable()
+    {
+        CloseAreaDamageWindow();
     }
 
     private void Update()
@@ -133,7 +155,7 @@ public class PlayerCombatController : MonoBehaviour
 
         BeginSwing();
 
-        if (!useAnimationEventDamage)
+        if (!useAnimationEventDamage && currentSkillIndex != areaDamageSkillIndex)
         {
             ApplyAttackDamage();
             swingHitResolved = true;
@@ -147,20 +169,50 @@ public class PlayerCombatController : MonoBehaviour
         swingElapsed = 0f;
     }
 
+    /// <summary>Bắt đầu vùng sát thương chiêu R. Gọi từ SpawnMultipleSlashesVFX / OnAttackHit.</summary>
+    public void OnAreaDamageStart()
+    {
+        if (areaDamageRoutine != null)
+        {
+            return;
+        }
+
+        areaDamageWindowOpen = true;
+        areaDamageRoutine = StartCoroutine(AreaDamagePulseRoutine());
+    }
+
+    /// <summary>Dừng vùng sát thương chiêu R. Gọi từ OnAttackEnd.</summary>
+    public void OnAreaDamageEnd()
+    {
+        CloseAreaDamageWindow();
+    }
+
     /// <summary>Gọi từ Animation Event ở frame impact của clip attack.</summary>
     public void OnAttackHit()
     {
+        if (IsAreaSkillActive())
+        {
+            OnAreaDamageStart();
+            return;
+        }
+
         if (!swingActive || swingHitResolved)
         {
             return;
         }
+
         swingHitResolved = true;
         ApplyAttackDamage();
     }
 
-    /// <summary>Optional: gọi cuối clip để chắc chắn reset state.</summary>
+    /// <summary>Gọi cuối clip để dừng vùng damage + reset swing.</summary>
     public void OnAttackEnd()
     {
+        if (areaDamageWindowOpen || areaDamageRoutine != null)
+        {
+            CloseAreaDamageWindow();
+        }
+
         swingActive = false;
         swingHitResolved = false;
         swingElapsed = 0f;
@@ -178,19 +230,100 @@ public class PlayerCombatController : MonoBehaviour
             attackMoveRemaining -= Time.deltaTime;
         }
 
-        if (swingActive)
+        if (!swingActive)
         {
-            swingElapsed += Time.deltaTime;
+            return;
+        }
 
-            if (useAnimationEventDamage && !swingHitResolved && damageEventFallback > 0f && swingElapsed >= damageEventFallback)
+        swingElapsed += Time.deltaTime;
+
+        if (useAnimationEventDamage
+            && !IsAreaSkillActive()
+            && !swingHitResolved
+            && damageEventFallback > 0f
+            && swingElapsed >= damageEventFallback)
+        {
+            OnAttackHit();
+        }
+
+        if (attackLockTimer <= 0f)
+        {
+            swingActive = false;
+            swingHitResolved = false;
+            swingElapsed = 0f;
+
+            if (areaDamageWindowOpen || areaDamageRoutine != null)
             {
-                OnAttackHit();
+                CloseAreaDamageWindow();
+            }
+        }
+    }
+
+    private IEnumerator AreaDamagePulseRoutine()
+    {
+        float interval = Mathf.Max(0.1f, areaDamageTickInterval);
+        float safetyEnd = areaDamageMaxDuration > 0f
+            ? Time.time + areaDamageMaxDuration
+            : float.PositiveInfinity;
+
+        while (areaDamageWindowOpen && Time.time < safetyEnd)
+        {
+            ApplyAreaDamageTick();
+
+            float waited = 0f;
+            while (waited < interval && areaDamageWindowOpen && Time.time < safetyEnd)
+            {
+                waited += Time.deltaTime;
+                yield return null;
+            }
+        }
+
+        areaDamageWindowOpen = false;
+        areaDamageRoutine = null;
+    }
+
+    private void CloseAreaDamageWindow()
+    {
+        areaDamageWindowOpen = false;
+
+        if (areaDamageRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(areaDamageRoutine);
+        areaDamageRoutine = null;
+    }
+
+    private bool IsAreaSkillActive()
+    {
+        return currentSkillIndex == areaDamageSkillIndex && (swingActive || IsAttacking || areaDamageWindowOpen);
+    }
+
+    private void ApplyAreaDamageTick()
+    {
+        float damage = areaDamagePerTick > 0f
+            ? areaDamagePerTick
+            : GetDamageForSkill(areaDamageSkillIndex);
+
+        if (damage <= 0f)
+        {
+            return;
+        }
+
+        Vector3 center = GetAreaDamageCenter();
+        Collider[] hits = Physics.OverlapSphere(center, areaDamageRadius, ~0, QueryTriggerInteraction.Collide);
+        areaTickTargets.Clear();
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            CharacterHealth target = ResolveEnemyHealth(hits[i]);
+            if (target == null || !areaTickTargets.Add(target))
+            {
+                continue;
             }
 
-            if (attackLockTimer <= 0f)
-            {
-                OnAttackEnd();
-            }
+            target.TakeDamage(damage, triggerHitReaction: true);
         }
     }
 
@@ -208,10 +341,11 @@ public class PlayerCombatController : MonoBehaviour
         int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, attackHits, damageMask, QueryTriggerInteraction.Collide);
         int damagedCount = 0;
         float dmg = GetActiveDamage();
+
         for (int i = 0; i < hitCount; i++)
         {
-            CharacterHealth targetHealth = attackHits[i].GetComponentInParent<CharacterHealth>();
-            if (targetHealth == null || targetHealth == characterHealth || HasAlreadyDamaged(targetHealth, damagedCount))
+            CharacterHealth targetHealth = ResolveEnemyHealth(attackHits[i]);
+            if (targetHealth == null || HasAlreadyDamaged(targetHealth, damagedCount))
             {
                 continue;
             }
@@ -223,6 +357,53 @@ public class PlayerCombatController : MonoBehaviour
         }
     }
 
+    private Vector3 GetAreaDamageCenter()
+    {
+        if (areaDamageOrigin != null)
+        {
+            return areaDamageOrigin.position;
+        }
+
+        return transform.position + Vector3.up * areaDamageHeightOffset;
+    }
+
+    private CharacterHealth ResolveEnemyHealth(Collider hitCollider)
+    {
+        if (hitCollider == null || IsSelfCollider(hitCollider))
+        {
+            return null;
+        }
+
+        CharacterHealth targetHealth = hitCollider.GetComponent<CharacterHealth>();
+        if (targetHealth == null)
+        {
+            targetHealth = hitCollider.GetComponentInParent<CharacterHealth>();
+        }
+
+        if (targetHealth == null)
+        {
+            targetHealth = hitCollider.GetComponentInChildren<CharacterHealth>();
+        }
+
+        if (targetHealth == null || targetHealth == characterHealth || targetHealth.IsDead)
+        {
+            return null;
+        }
+
+        if (targetHealth.CompareTag("Player"))
+        {
+            return null;
+        }
+
+        return targetHealth;
+    }
+
+    private bool IsSelfCollider(Collider hitCollider)
+    {
+        Transform hitTransform = hitCollider.transform;
+        return hitTransform == transform || hitTransform.IsChildOf(transform);
+    }
+
     private float GetSkillCooldown(int skillIndex)
     {
         if (skillBindings == null || skillIndex < 0 || skillIndex >= skillBindings.Length) return 0f;
@@ -232,12 +413,31 @@ public class PlayerCombatController : MonoBehaviour
 
     private float GetActiveDamage()
     {
-        if (perSkillDamage != null && currentSkillIndex >= 0 && currentSkillIndex < perSkillDamage.Length)
+        return GetDamageForSkill(currentSkillIndex);
+    }
+
+    private float GetDamageForSkill(int skillIndex)
+    {
+        if (perSkillDamage != null && skillIndex >= 0 && skillIndex < perSkillDamage.Length)
         {
-            float perSkill = perSkillDamage[currentSkillIndex];
-            if (perSkill > 0f) return perSkill;
+            float perSkill = perSkillDamage[skillIndex];
+            if (perSkill > 0f)
+            {
+                return perSkill;
+            }
         }
-        return attackDamage;
+
+        float damage = attackDamage;
+        if (skillBindings != null && skillIndex >= 0 && skillIndex < skillBindings.Length)
+        {
+            SkillData skill = skillBindings[skillIndex];
+            if (skill != null && skill.damageMultiplier > 0f)
+            {
+                damage *= skill.damageMultiplier;
+            }
+        }
+
+        return damage;
     }
 
     private void ApplyKnockback(CharacterHealth targetHealth)
@@ -265,17 +465,10 @@ public class PlayerCombatController : MonoBehaviour
         return false;
     }
 
-    private void AssignDefaultEnemyLayer()
+    private void AssignDefaultDamageMask()
     {
         if (damageMask.value != 0)
         {
-            return;
-        }
-
-        int defaultEnemyLayer = LayerMask.GetMask("Enemy");
-        if (defaultEnemyLayer != 0)
-        {
-            damageMask = defaultEnemyLayer;
             return;
         }
 
@@ -290,5 +483,8 @@ public class PlayerCombatController : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(center, attackRadius);
+
+        Gizmos.color = new Color(0.2f, 0.85f, 1f, 0.9f);
+        Gizmos.DrawWireSphere(GetAreaDamageCenter(), areaDamageRadius);
     }
 }

@@ -218,11 +218,7 @@ public class ScenePortalFade : MonoBehaviour
 
         yield return null; // Chờ 1 frame để player stop animation
 
-        // Pass target scene name vào Loading screen
-        LoadingScreenController.TargetSceneName = targetSceneName;
-
-        // Load Loading scene (sẽ tự động load target scene và update progress bar)
-        SceneManager.LoadScene("Loading");
+        SceneTransitionService.Load(targetSceneName);
     }
 
     /// <summary>

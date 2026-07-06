@@ -9,6 +9,7 @@ public class PlayerInteractController : MonoBehaviour
     [SerializeField] private bool logInteract;
 
     IWorldInteractable currentTarget;
+    static readonly Collider[] OverlapBuffer = new Collider[32];
 
     void Awake()
     {
@@ -37,21 +38,29 @@ public class PlayerInteractController : MonoBehaviour
 
     IWorldInteractable FindBestInteractable()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, scanRadius, interactableMask, QueryTriggerInteraction.Collide);
+        int hitCount = Physics.OverlapSphereNonAlloc(
+            transform.position,
+            scanRadius,
+            OverlapBuffer,
+            interactableMask,
+            QueryTriggerInteraction.Collide);
+
         IWorldInteractable best = null;
         float bestDist = float.MaxValue;
+        Vector3 selfPosition = transform.position;
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            if (hits[i] == null) continue;
+            Collider hit = OverlapBuffer[i];
+            if (hit == null) continue;
 
-            IWorldInteractable interactable = hits[i].GetComponentInParent<IWorldInteractable>();
+            IWorldInteractable interactable = hit.GetComponentInParent<IWorldInteractable>();
             if (interactable == null || !interactable.CanInteract(transform))
             {
                 continue;
             }
 
-            float dist = Vector3.Distance(transform.position, hits[i].transform.position);
+            float dist = Vector3.Distance(selfPosition, hit.transform.position);
             if (dist <= interactable.InteractionRange && dist < bestDist)
             {
                 bestDist = dist;

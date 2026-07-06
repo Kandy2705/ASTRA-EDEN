@@ -124,57 +124,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8347200026482741902, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
   m_PrefabInstance: {fileID: 941688985865746609}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &203000001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 203000002}
-  - component: {fileID: 203000003}
-  m_Layer: 0
-  m_Name: RightHandSwordAttachment
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &203000002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 203000001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &203000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 203000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 88aa0a59b4e14f1691378b5da447e8d9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  characterAnimator: {fileID: 945594891}
-  prop: {fileID: 998685130}
-  characterObjectName: Seeker Prototype Nu URPLit
-  propObjectName: MagicSword_Iron
-  localPositionOffset: {x: 0, y: 0, z: 0}
-  localEulerRotationOffset: {x: 0, y: 0, z: 0}
-  attachOnStart: 1
 --- !u!1001 &203000004
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -547,6 +496,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 6517562008964683273, guid: 80226eded1f014c7aad5a072c21baff0, type: 3}
+      propertyPath: cameraTransform
+      value: 
+      objectReference: {fileID: 330585546}
     - target: {fileID: 7295855208173865608, guid: 80226eded1f014c7aad5a072c21baff0, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.051
@@ -723,6 +676,53 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &421563740
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 421563742}
+  - component: {fileID: 421563741}
+  m_Layer: 0
+  m_Name: SceneAudioBootstrap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &421563741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421563740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66caa6dca7e74a4aa108d12944b0a9fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneAudioBootstrap
+  catalogOverride: {fileID: 11400000, guid: 84fd54e4e1e1340da93561e722a16487, type: 2}
+  profileOverride: {fileID: 0}
+  applyOnStart: 1
+--- !u!4 &421563742
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 421563740}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &424428272
 GameObject:
   m_ObjectHideFlags: 0
@@ -1574,16 +1574,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!95 &945594891 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 7941813899767556, guid: 80226eded1f014c7aad5a072c21baff0, type: 3}
-  m_PrefabInstance: {fileID: 359593277}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &998685130 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4420664804571618, guid: 8fc40ebf5a41b30428929f5ba3697759, type: 3}
-  m_PrefabInstance: {fileID: 203000004}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1226667063
 GameObject:
   m_ObjectHideFlags: 0
@@ -3213,7 +3203,6 @@ SceneRoots:
   - {fileID: 672645143}
   - {fileID: 832575519}
   - {fileID: 203000004}
-  - {fileID: 203000002}
   - {fileID: 1619094496}
   - {fileID: 2048055653}
   - {fileID: 359593277}
@@ -3223,3 +3212,4 @@ SceneRoots:
   - {fileID: 1700191758}
   - {fileID: 1545881470}
   - {fileID: 1566100194}
+  - {fileID: 421563742}

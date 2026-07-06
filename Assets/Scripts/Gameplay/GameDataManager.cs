@@ -59,6 +59,10 @@ public class GameDataManager : MonoBehaviour
 
     private HashSet<string> clearedZones = new HashSet<string>();
 
+    private bool playerPrefsDirty;
+    private float playerPrefsFlushTimer;
+    private const float PlayerPrefsFlushInterval = 10f;
+
     public event Action<int> OnCurrencyChanged;
 
     public int Currency
@@ -111,6 +115,58 @@ public class GameDataManager : MonoBehaviour
         LoadRuntimePositionLists();
         LoadPersistentData();
         LoadZoneProgress();
+    }
+
+    private void Update()
+    {
+        if (!playerPrefsDirty)
+        {
+            return;
+        }
+
+        playerPrefsFlushTimer += Time.unscaledDeltaTime;
+        if (playerPrefsFlushTimer >= PlayerPrefsFlushInterval)
+        {
+            FlushPlayerPrefs();
+        }
+    }
+
+    private void OnApplicationPause(bool pause)
+    {
+        if (pause)
+        {
+            FlushPlayerPrefs();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        FlushPlayerPrefs();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            FlushPlayerPrefs();
+        }
+    }
+
+    private void MarkPlayerPrefsDirty()
+    {
+        playerPrefsDirty = true;
+    }
+
+    public void FlushPlayerPrefs()
+    {
+        if (!playerPrefsDirty)
+        {
+            return;
+        }
+
+        PlayerPrefs.Save();
+        playerPrefsDirty = false;
+        playerPrefsFlushTimer = 0f;
     }
 
     public void MergeItemDatabase(List<ItemData> extraItems)
@@ -195,7 +251,7 @@ public class GameDataManager : MonoBehaviour
         }
 
         PlayerPrefs.SetString(ZoneProgressJsonKey, JsonUtility.ToJson(data));
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
     }
 
     private void LoadZoneProgress()
@@ -265,7 +321,7 @@ public class GameDataManager : MonoBehaviour
         if (!found) data.entries.Add(new InventorySaveEntry { itemId = itemId, quantity = quantity });
 
         PlayerPrefs.SetString(InventoryJsonKey, JsonUtility.ToJson(data));
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
     }
 
     public void SaveInventory(Dictionary<string, int> inventory)
@@ -280,7 +336,7 @@ public class GameDataManager : MonoBehaviour
         string json = JsonUtility.ToJson(data);
         PlayerPrefs.SetString(InventoryJsonKey, json);
         PlayerPrefs.SetInt(HasSaveKey, 1);
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
 
         Debug.Log($"[GameDataManager] Saved inventory ({data.entries.Count} entries).");
     }
@@ -305,7 +361,7 @@ public class GameDataManager : MonoBehaviour
     public void DeleteInventoryData()
     {
         PlayerPrefs.DeleteKey(InventoryJsonKey);
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
     }
 
     public void SavePlayerStats(float hp, float stamina, float energy)
@@ -339,8 +395,7 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetFloat(LastPosZKey, position.z);
 
         SaveAllScenePositionsToPrefs();
-
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
 
         // Debug.Log($"[GameDataManager] Save position scene={sceneName}, pos={position}");
     }
@@ -406,7 +461,7 @@ public class GameDataManager : MonoBehaviour
         SaveScenePosition(sceneName, pos);
 
         PlayerPrefs.SetFloat(LastRotYKey, rotY);
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
 
         // Debug.Log($"[GameDataManager] Save transform scene={sceneName}, pos={pos}, rotY={rotY}");
     }
@@ -438,7 +493,7 @@ public class GameDataManager : MonoBehaviour
     public void MarkLoadFromContinue()
     {
         PlayerPrefs.SetInt(ContinueFlagKey, 1);
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
     }
 
     public bool ShouldLoadFromContinue()
@@ -449,7 +504,7 @@ public class GameDataManager : MonoBehaviour
     public void ClearContinueFlag()
     {
         PlayerPrefs.DeleteKey(ContinueFlagKey);
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
     }
 
     public void DeleteSaveData()
@@ -481,7 +536,8 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_STAMINA");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_ENERGY");
 
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
+        FlushPlayerPrefs();
 
         Debug.Log("[GameDataManager] Delete save data.");
     }
@@ -495,7 +551,7 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetFloat("ASTRA_PLAYER_STAMINA", playerStamina);
         PlayerPrefs.SetFloat("ASTRA_PLAYER_ENERGY", playerEnergy);
 
-        PlayerPrefs.Save();
+        MarkPlayerPrefsDirty();
     }
 
     private void LoadPersistentData()

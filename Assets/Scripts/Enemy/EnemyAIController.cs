@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -115,12 +116,14 @@ public class EnemyAIController : MonoBehaviour
     bool deathSequenceFinished;
     float lastKnownHP = float.NaN;
     float currentPoise;
+    float lastHitReactionTime;
     AttackPatternData currentAttack;
     float attackPhaseTimer;
     enum AttackPhase { None, Windup, Active, Recovery }
     AttackPhase attackPhase = AttackPhase.None;
     bool hitResolvedThisSwing;
     float nextHurtAllowedAt;
+    float effectiveAttackRange = 2f;
 
     public AIState State => currentState;
     public EnemyData Data => enemyData;
@@ -131,6 +134,7 @@ public class EnemyAIController : MonoBehaviour
         if (data != null)
         {
             enemyData = data;
+            RecalculateAttackRange();
         }
 
         if (patrolPts != null && patrolPts.Length > 0)
@@ -141,19 +145,24 @@ public class EnemyAIController : MonoBehaviour
     public float MoveSpeed => enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.moveSpeed : agent != null ? agent.speed : 3f;
     /// <summary>Engage range = max(EnemyData.attackRange, max maxRange của attack patterns).
     /// Tránh case attackRange data nhỏ hơn reach thực của animation → enemy phải chạy sát mới đánh.</summary>
-    public float AttackRange
+    public float AttackRange => effectiveAttackRange;
+
+    void RecalculateAttackRange()
     {
-        get
+        float baseRange = enemyData != null ? enemyData.attackRange : 2f;
+        if (enemyData == null || enemyData.attackPatterns == null)
         {
-            float baseRange = enemyData != null ? enemyData.attackRange : 2f;
-            if (enemyData == null || enemyData.attackPatterns == null) return baseRange;
-            float maxPatternRange = 0f;
-            foreach (var ap in enemyData.attackPatterns)
-            {
-                if (ap != null && ap.maxRange > maxPatternRange) maxPatternRange = ap.maxRange;
-            }
-            return Mathf.Max(baseRange, maxPatternRange);
+            effectiveAttackRange = baseRange;
+            return;
         }
+
+        float maxPatternRange = 0f;
+        foreach (var ap in enemyData.attackPatterns)
+        {
+            if (ap != null && ap.maxRange > maxPatternRange) maxPatternRange = ap.maxRange;
+        }
+
+        effectiveAttackRange = Mathf.Max(baseRange, maxPatternRange);
     }
     public float AggroKeepRange => enemyData != null ? enemyData.aggroKeepRange : 22f;
     public float AttackCooldown => enemyData != null ? enemyData.attackCooldown : 2f;
@@ -168,6 +177,19 @@ public class EnemyAIController : MonoBehaviour
         sensor = GetComponentInChildren<EnemySensor>();
         animator = GetComponentInChildren<Animator>();
         attackHitbox = GetComponentInChildren<EnemyAttackHitbox>();
+    }
+
+    /// Registry cho các hệ thống cần duyệt enemy đang sống (minimap markers, v.v.).
+    public static readonly List<EnemyAIController> Active = new List<EnemyAIController>();
+
+    void OnEnable()
+    {
+        if (!Active.Contains(this)) Active.Add(this);
+    }
+
+    void OnDisable()
+    {
+        Active.Remove(this);
     }
 
     void Awake()
@@ -185,6 +207,7 @@ public class EnemyAIController : MonoBehaviour
 
     void Start()
     {
+        RecalculateAttackRange();
         ApplyEnemyDataToAgent();
         currentPoise = MaxPoise;
 
@@ -194,6 +217,11 @@ public class EnemyAIController : MonoBehaviour
 
         if (health != null)
         {
+            if (initializeFromEnemyData && enemyData != null && enemyData.baseStats != null)
+            {
+                health.ApplyEnemyStats(enemyData.baseStats);
+            }
+
             health.Died -= OnDied;
             health.Died += OnDied;
             health.Changed -= OnHealthChanged;
@@ -203,7 +231,10 @@ public class EnemyAIController : MonoBehaviour
 
         if (sensor != null) sensor.Configure(enemyData);
 
-        Debug.Log($"[AI:{name}] STARTED | enemyData={(enemyData != null ? enemyData.enemyId : "<null>")} agent={(agent != null)} health={(health != null)} sensor={(sensor != null)} hitbox={(attackHitbox != null)} animator={(animator != null)}", this);
+        if (debugLogStateMachine)
+        {
+            Debug.Log($"[AI:{name}] STARTED | enemyData={(enemyData != null ? enemyData.enemyId : "<null>")} agent={(agent != null)} health={(health != null)} sensor={(sensor != null)} hitbox={(attackHitbox != null)} animator={(animator != null)}", this);
+        }
 
         EnterState(AIState.Spawn);
     }
@@ -338,15 +369,19 @@ public class EnemyAIController : MonoBehaviour
                 break;
             case AIState.Hurt:
                 StopAgent();
+                CancelActiveAttack();
                 hitStunTimer = hitStunDuration;
-                if (useHitAnimation && animator != null && HasParam(HitHash, AnimatorControllerParameterType.Trigger))
-                    animator.SetTrigger(HitHash);
+                PlayHitAnimation();
                 break;
             case AIState.Stagger:
                 StopAgent();
+                CancelActiveAttack();
                 staggerTimer = staggerDuration;
                 if (animator != null && HasParam(StaggerHash, AnimatorControllerParameterType.Trigger))
+                {
+                    animator.ResetTrigger(AttackHash);
                     animator.SetTrigger(StaggerHash);
+                }
                 break;
             case AIState.Retreat:
                 if (agent != null) agent.speed = MoveSpeed * retreatSpeedRatio;
@@ -462,9 +497,18 @@ public class EnemyAIController : MonoBehaviour
             attackPhaseTimer = currentAttack != null ? currentAttack.activeTime : 0.2f;
             hitResolvedThisSwing = false;
             if (attackHitbox != null) attackHitbox.BeginSwing();
-            ResolveHit();
         }
-        else if (attackPhase == AttackPhase.Active && attackPhaseTimer <= 0f)
+        else if (attackPhase == AttackPhase.Active && !hitResolvedThisSwing)
+        {
+            float activeDuration = currentAttack != null ? currentAttack.activeTime : 0.2f;
+            float elapsed = activeDuration - attackPhaseTimer;
+            if (elapsed >= activeDuration * 0.55f)
+            {
+                ResolveHit();
+            }
+        }
+
+        if (attackPhase == AttackPhase.Active && attackPhaseTimer <= 0f)
         {
             attackPhase = AttackPhase.Recovery;
             attackPhaseTimer = currentAttack != null ? currentAttack.recovery : 0.4f;
@@ -658,16 +702,64 @@ public class EnemyAIController : MonoBehaviour
             }
         }
 
-        // Flinch (Hurt) chỉ trigger khi không đang attack/hurt/stagger và đã qua hurtCooldown.
-        // Tránh combo nhỏ liên tục đẩy enemy về Hurt mãi → đứng đơ.
-        if (currentState == AIState.Attack) return;
-        if (currentState == AIState.Hurt) return;
+        // Với damage rất nhỏ liên tục (chiêu R continuous, DoT) thì bỏ qua hit reaction để tránh spam anim
+        if (dmg < 1f) return;
+
+        if (currentState == AIState.Hurt)
+        {
+            CancelActiveAttack();
+            hitStunTimer = hitStunDuration;
+            if (Time.time - lastHitReactionTime > 0.35f)
+            {
+                PlayHitAnimation();
+                lastHitReactionTime = Time.time;
+            }
+            return;
+        }
+
         if (currentState == AIState.Stagger) return;
         if (currentState == AIState.Dead) return;
         if (Time.time < nextHurtAllowedAt) return;
 
         nextHurtAllowedAt = Time.time + hurtCooldown;
+        lastHitReactionTime = Time.time;
         EnterState(AIState.Hurt);
+    }
+
+    void CancelActiveAttack()
+    {
+        attackPhase = AttackPhase.None;
+        attackPhaseTimer = 0f;
+        currentAttack = null;
+        hitResolvedThisSwing = true;
+
+        if (animator != null && HasParam(AttackHash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(AttackHash);
+        }
+    }
+
+    void PlayHitAnimation()
+    {
+        if (!useHitAnimation || animator == null)
+        {
+            return;
+        }
+
+        if (HasParam(AttackHash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(AttackHash);
+        }
+
+        if (HasParam(HitHash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(HitHash);
+            animator.SetTrigger(HitHash);
+        }
+
+        // Ưu tiên Hit hơn Attack — ép chạy state Hit ngay, không chờ exit attack clip.
+        animator.Play("Hit", 0, 0f);
+        lastHitReactionTime = Time.time;
     }
 
     void OnDied(CharacterHealth h)
@@ -754,7 +846,18 @@ public class EnemyAIController : MonoBehaviour
         return false;
     }
 
-    // Animation Event hooks (gọi từ animator clip nếu muốn timing chính xác)
+    // Animation Event hooks (gọi từ animator clip hoặc EnemyAnimationEventRelay)
+    public void Anim_OnAttackStart()
+    {
+        if (attackHitbox != null)
+        {
+            if (attackHitbox.TargetLayer.value == 0) attackHitbox.SetTargetLayer(playerLayer);
+            attackHitbox.BeginSwing();
+        }
+
+        hitResolvedThisSwing = false;
+    }
+
     public void Anim_OnAttackHit() => ResolveHit();
     public void Anim_OnAttackEnd()
     {

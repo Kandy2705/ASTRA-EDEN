@@ -211,9 +211,6 @@ public class LootDropSpawner : MonoBehaviour
         }
 
         pickup.Initialize(item, quantity);
-
-        var floating = go.GetComponent<FloatingLootVisual>();
-        if (floating == null) go.AddComponent<FloatingLootVisual>();
     }
 
     private void ApplyPopForce(GameObject go)

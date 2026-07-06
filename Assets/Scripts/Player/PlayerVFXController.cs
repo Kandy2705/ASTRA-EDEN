@@ -3,6 +3,7 @@ using System.Collections;
 
 public class PlayerVFXController : MonoBehaviour
 {
+    [SerializeField] private PlayerCombatController combatController;
     [SerializeField] private Transform playerRoot;
 
     [SerializeField] private GameObject slashFireVFXPrefab;
@@ -26,6 +27,11 @@ public class PlayerVFXController : MonoBehaviour
 
     private void Awake()
     {
+        if (combatController == null)
+        {
+            combatController = GetComponent<PlayerCombatController>();
+        }
+
         if (playerRoot == null)
         {
             playerRoot = transform;
@@ -45,11 +51,21 @@ public class PlayerVFXController : MonoBehaviour
 
     public void SpawnMultipleSlashesVFX()
     {
+        if (combatController != null)
+        {
+            combatController.OnAreaDamageStart();
+        }
+
         SpawnVFX(multipleSlashesVFXPrefab, multipleSlashesYawOffset, false);
     }
 
     public void SpawnMultipleSlashesVFX_X180()
     {
+        if (combatController != null)
+        {
+            combatController.OnAreaDamageStart();
+        }
+
         SpawnVFX(multipleSlashesVFXPrefab, multipleSlashesYawOffset, true);
     }
 

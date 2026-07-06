@@ -20,7 +20,14 @@ public class EnemyHUDRange : MonoBehaviour
     [SerializeField] private bool faceCamera = true;
     [SerializeField] private bool copyCameraRotation = true;
 
+    [Header("Performance")]
+    [Tooltip("Giảm tần suất check khoảng cách + bật/tắt HUD.")]
+    [SerializeField, Min(0.05f)] private float rangeCheckInterval = 0.12f;
+
     private Camera mainCamera;
+    private float showDistanceSqr;
+    private float rangeCheckTimer;
+    private bool hudVisible;
 
     private void Awake()
     {
@@ -30,6 +37,7 @@ public class EnemyHUDRange : MonoBehaviour
         }
 
         mainCamera = Camera.main;
+        showDistanceSqr = showDistance * showDistance;
         FindPlayerIfMissing();
     }
 
@@ -59,29 +67,35 @@ public class EnemyHUDRange : MonoBehaviour
         if (characterHealth != null && characterHealth.IsDead)
         {
             SetHUDVisible(false);
+            hudVisible = false;
             return;
         }
 
-        FindPlayerIfMissing();
+        if (player == null)
+        {
+            FindPlayerIfMissing();
+        }
 
         if (player == null || enemyHUD == null)
         {
             return;
         }
 
-        float distance = Vector3.Distance(transform.position, player.position);
-        bool shouldShow = distance <= showDistance;
-        SetHUDVisible(shouldShow);
+        rangeCheckTimer -= Time.deltaTime;
+        if (rangeCheckTimer <= 0f)
+        {
+            rangeCheckTimer = rangeCheckInterval;
+            Vector3 offset = player.position - transform.position;
+            offset.y = 0f;
+            bool shouldShow = offset.sqrMagnitude <= showDistanceSqr;
+            SetHUDVisible(shouldShow);
+            hudVisible = shouldShow;
+        }
 
-        if (!shouldShow)
+        if (!hudVisible)
         {
             return;
         }
-
-        // if (targetReticle != null)
-        // {
-        //     targetReticle.SetActive(distance <= targetDistance);
-        // }
 
         if (faceCamera)
         {
@@ -175,6 +189,7 @@ public class EnemyHUDRange : MonoBehaviour
 
     private void SetHUDVisible(bool visible)
     {
+        hudVisible = visible;
         if (enemyHUD != null && enemyHUD.activeSelf != visible)
         {
             enemyHUD.SetActive(visible);

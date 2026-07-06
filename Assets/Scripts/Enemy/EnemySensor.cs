@@ -27,6 +27,10 @@ public class EnemySensor : MonoBehaviour
     [Tooltip("Layer của vật cản che tầm nhìn. KHÔNG bao gồm layer Player.")]
     [SerializeField] private LayerMask obstacleMask = ~0;
 
+    [Header("Performance")]
+    [Tooltip("Tối thiểu giữa hai lần raycast LOS. Giảm CPU khi nhiều enemy.")]
+    [SerializeField, Min(0.05f)] private float senseInterval = 0.15f;
+
     [Header("Debug")]
     [SerializeField] private bool drawGizmos = true;
     [SerializeField] private Color sightColor = new Color(1f, 0.8f, 0f, 0.25f);
@@ -36,28 +40,62 @@ public class EnemySensor : MonoBehaviour
     public float SightAngle => enemyData != null ? enemyData.sightAngle : sightAngleOverride;
     public float HearingRange => enemyData != null ? enemyData.hearingRange : hearingRangeOverride;
 
+    Transform cachedTarget;
+    float cachedDistance = float.PositiveInfinity;
+    bool cachedCanSense;
+    float senseTimer;
+
     public void Configure(EnemyData data)
     {
         enemyData = data;
+        InvalidateSenseCache();
+    }
+
+    public void InvalidateSenseCache()
+    {
+        senseTimer = 0f;
+        cachedTarget = null;
     }
 
     /// <summary>Player có nằm trong FOV + LOS hoặc trong tầm nghe không?</summary>
     public bool CanSense(Transform target, out float distance)
     {
+        if (target == null)
+        {
+            distance = float.PositiveInfinity;
+            return false;
+        }
+
+        if (cachedTarget != target)
+        {
+            InvalidateSenseCache();
+            cachedTarget = target;
+        }
+
+        senseTimer -= Time.deltaTime;
+        if (senseTimer <= 0f)
+        {
+            senseTimer = senseInterval;
+            cachedCanSense = EvaluateSense(target, out cachedDistance);
+        }
+
+        distance = cachedDistance;
+        return cachedCanSense;
+    }
+
+    bool EvaluateSense(Transform target, out float distance)
+    {
         distance = float.PositiveInfinity;
-        if (target == null) return false;
 
         Vector3 toTarget = target.position - transform.position;
         toTarget.y = 0f;
         distance = toTarget.magnitude;
 
-        // Hearing — bỏ qua FOV/LOS nếu vào sát.
         if (distance <= HearingRange) return true;
-
         if (distance > SightRange) return false;
 
-        // FOV
-        Vector3 forward = transform.forward; forward.y = 0f;
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
         if (forward.sqrMagnitude < 0.0001f) return false;
         forward.Normalize();
         Vector3 dirFlat = toTarget.sqrMagnitude > 0.0001f ? toTarget.normalized : forward;
@@ -66,7 +104,6 @@ public class EnemySensor : MonoBehaviour
         float angleToTarget = Vector3.Angle(forward, dirFlat);
         if (angleToTarget > halfAngle) return false;
 
-        // LOS
         Vector3 eyePos = eyeSensor != null ? eyeSensor.position : transform.position + Vector3.up * eyeHeight;
         Vector3 targetPos = target.position + Vector3.up * targetChestHeight;
         Vector3 ray = targetPos - eyePos;
@@ -75,9 +112,9 @@ public class EnemySensor : MonoBehaviour
 
         if (Physics.Raycast(eyePos, ray.normalized, out RaycastHit hit, rayDist, obstacleMask, QueryTriggerInteraction.Ignore))
         {
-            // Có vật cản giữa mắt và target → mất LOS.
             if (!hit.transform.IsChildOf(target) && hit.transform != target) return false;
         }
+
         return true;
     }
 

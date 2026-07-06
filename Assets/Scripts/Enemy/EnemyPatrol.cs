@@ -95,6 +95,7 @@ public class EnemyPatrol : MonoBehaviour
     private float lastKnownHP = float.NaN;
     private float lostSightTimer;
     private bool hasLineOfSight;
+    private float lastHitReactionTime;
 
     private enum EnemyState
     {
@@ -592,7 +593,12 @@ public class EnemyPatrol : MonoBehaviour
         if (!useHitAnimation || animator == null) return;
         if (!HasAnimatorParameter(HitHash, AnimatorControllerParameterType.Trigger)) return;
 
+        // Chống spam animation khi bị damage liên tục (chiêu R, DoT...)
+        if (Time.time - lastHitReactionTime < 0.35f) return;
+
         animator.SetTrigger(HitHash);
+        lastHitReactionTime = Time.time;
+
         if (hitStunDuration > 0f)
         {
             hitStunTimer = Mathf.Max(hitStunTimer, hitStunDuration);

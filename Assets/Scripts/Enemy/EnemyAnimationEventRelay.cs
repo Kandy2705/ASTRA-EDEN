@@ -1,36 +1,58 @@
 using UnityEngine;
 
 /// <summary>
-/// Gắn vào GameObject có Animator (thường là model con của enemy) để Animation Event
-/// có thể gọi method ở đây và relay ngược lên EnemyPatrol ở parent.
-/// Trong Animation Event chọn function: OnAttackStart / OnAttackHit.
+/// Gắn vào GameObject có Animator của enemy.
+/// Animation Event gọi OnAttackStart / OnAttackHit → relay lên EnemyAIController hoặc EnemyPatrol.
 /// </summary>
 public class EnemyAnimationEventRelay : MonoBehaviour
 {
-    [SerializeField] private EnemyPatrol owner;
+    [SerializeField] private EnemyAIController aiOwner;
+    [SerializeField] private EnemyPatrol patrolOwner;
 
     private void Reset()
     {
-        owner = GetComponentInParent<EnemyPatrol>();
+        aiOwner = GetComponentInParent<EnemyAIController>();
+        patrolOwner = GetComponentInParent<EnemyPatrol>();
     }
 
     private void Awake()
     {
-        if (owner == null)
+        if (aiOwner == null)
         {
-            owner = GetComponentInParent<EnemyPatrol>();
+            aiOwner = GetComponentInParent<EnemyAIController>();
+        }
+
+        if (patrolOwner == null)
+        {
+            patrolOwner = GetComponentInParent<EnemyPatrol>();
         }
     }
 
-    /// <summary>Gọi từ Animation Event lúc bắt đầu swing (frame trước impact).</summary>
     public void OnAttackStart()
     {
-        if (owner != null) owner.BeginAttackSwing();
+        if (aiOwner != null)
+        {
+            aiOwner.Anim_OnAttackStart();
+            return;
+        }
+
+        if (patrolOwner != null)
+        {
+            patrolOwner.BeginAttackSwing();
+        }
     }
 
-    /// <summary>Gọi từ Animation Event tại frame impact để quét hitbox.</summary>
     public void OnAttackHit()
     {
-        if (owner != null) owner.PerformAttackHit();
+        if (aiOwner != null)
+        {
+            aiOwner.Anim_OnAttackHit();
+            return;
+        }
+
+        if (patrolOwner != null)
+        {
+            patrolOwner.PerformAttackHit();
+        }
     }
 }

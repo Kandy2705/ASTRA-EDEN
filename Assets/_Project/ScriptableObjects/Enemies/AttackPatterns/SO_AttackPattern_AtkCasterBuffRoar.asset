@@ -18,7 +18,7 @@ MonoBehaviour:
   rangeType: 7
   minRange: 0
   maxRange: 10
-  cooldown: 8
+  cooldown: 0
   windup: 0.8
   activeTime: 0.5
   recovery: 1

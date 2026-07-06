@@ -22007,6 +22007,53 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!1 &1493751579
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1493751581}
+  - component: {fileID: 1493751580}
+  m_Layer: 0
+  m_Name: SceneAudioBootstrap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1493751580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1493751579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66caa6dca7e74a4aa108d12944b0a9fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneAudioBootstrap
+  catalogOverride: {fileID: 11400000, guid: 84fd54e4e1e1340da93561e722a16487, type: 2}
+  profileOverride: {fileID: 0}
+  applyOnStart: 1
+--- !u!4 &1493751581
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1493751579}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1499686877
 GameObject:
   m_ObjectHideFlags: 0
@@ -27620,6 +27667,7 @@ MonoBehaviour:
   playerHP: -1
   playerStamina: -1
   playerEnergy: -1
+  itemDatabase: []
   posSceneNames: []
   posValues: []
 --- !u!4 &1962664673
@@ -27647,6 +27695,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1967601447}
   - component: {fileID: 1967601448}
+  - component: {fileID: 1967601449}
   m_Layer: 0
   m_Name: SettingsPanelController
   m_TagString: Untagged
@@ -27689,6 +27738,23 @@ MonoBehaviour:
   lightingContent: {fileID: 1884239348}
   activeButtonColor: {r: 0.078431375, g: 0.3882353, b: 0.29803923, a: 0.7058824}
   inactiveButtonColor: {r: 0.078431375, g: 0.3882353, b: 0.29803923, a: 0}
+--- !u!114 &1967601449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1967601446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be45a4ff123a498e83e0e94cd67b7d6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioSettingsUI
+  masterSlider: {fileID: 0}
+  musicSlider: {fileID: 0}
+  sfxSlider: {fileID: 0}
+  ambientSlider: {fileID: 0}
+  beachSlider: {fileID: 0}
 --- !u!1 &1985607192
 GameObject:
   m_ObjectHideFlags: 0
@@ -29931,3 +29997,4 @@ SceneRoots:
   - {fileID: 2124456237}
   - {fileID: 1962664673}
   - {fileID: 1152320834}
+  - {fileID: 1493751581}

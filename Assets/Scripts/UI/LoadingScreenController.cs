@@ -19,6 +19,7 @@ public class LoadingScreenController : MonoBehaviour
 
     private AsyncOperation asyncLoad;
     private float startTime;
+    private bool targetAudioPrimed;
 
     private void OnEnable()
     {
@@ -44,6 +45,7 @@ public class LoadingScreenController : MonoBehaviour
     private IEnumerator LoadSceneAsync(string sceneName)
     {
         startTime = Time.time;
+        targetAudioPrimed = false;
 
         asyncLoad = SceneManager.LoadSceneAsync(sceneName);
         asyncLoad.allowSceneActivation = false;
@@ -71,6 +73,12 @@ public class LoadingScreenController : MonoBehaviour
             UpdateProgressBar(displayedProgress);
 
             // Khi scene đã load xong và thời gian tối thiểu đã đủ thì cho lên 100%
+            if (!targetAudioPrimed && asyncLoad.progress >= 0.9f && timeProgress >= 0.85f)
+            {
+                targetAudioPrimed = true;
+                AudioManager.EnsureInstance()?.NotifyTargetSceneReady(sceneName);
+            }
+
             if (asyncLoad.progress >= 0.9f && timeProgress >= 1f)
             {
                 break;

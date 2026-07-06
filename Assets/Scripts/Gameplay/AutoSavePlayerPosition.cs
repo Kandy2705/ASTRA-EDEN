@@ -10,7 +10,7 @@ public class AutoSavePlayerPosition : MonoBehaviour
     public bool saveEveryFewSeconds = true;
 
     public float startSaveDelay = 1f;
-    public float saveInterval = 2f;
+    public float saveInterval = 20f;
 
     private float timer;
     private bool isQuitting = false;
@@ -46,6 +46,7 @@ public class AutoSavePlayerPosition : MonoBehaviour
 
         string sceneName = SceneManager.GetActiveScene().name;
         GameDataManager.Instance.SaveLastPlayerTransform(sceneName, transform);
+        GameDataManager.Instance.FlushPlayerPrefs();
 
         // Debug.Log($"[AutoSavePlayerPosition] Saved scene={sceneName}, pos={transform.position}");
     }

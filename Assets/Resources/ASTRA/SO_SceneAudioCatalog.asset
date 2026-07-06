@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d6a8605d3d64b3e96f022912e990be3, type: 3}
+  m_Name: SO_SceneAudioCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::SceneAudioCatalog
+  loadingProfile: {fileID: 11400000, guid: 7aee2c9adc2bc4e2986513d29d5e0a9a, type: 2}
+  sceneProfiles:
+  - {fileID: 11400000, guid: 9701eec0d48f34c75afc0514f57f80f7, type: 2}
+  - {fileID: 11400000, guid: 85f8b43a2e5384656a2d0d299153354f, type: 2}
+  - {fileID: 11400000, guid: 755f5dcb72a644a5d87424ee474bc664, type: 2}
