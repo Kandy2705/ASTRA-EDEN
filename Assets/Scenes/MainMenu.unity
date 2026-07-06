@@ -29337,8 +29337,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 148cb5437a5aa4c95a7846e424168400, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuController
-  newGameSceneName: World_Eden7
-  fallbackContinueSceneName: World_Eden7
+  newGameSceneName: Beacon_Camp
+  fallbackContinueSceneName: Beacon_Camp
   continueButton: {fileID: 581926808}
   settingsPanel: {fileID: 2097821658}
   deleteConfirmPanel: {fileID: 0}

@@ -4,8 +4,8 @@ using UnityEngine.UI;
 public class MainMenuController : MonoBehaviour
 {
     [Header("Scene Names")]
-    public string newGameSceneName = "World_Eden7";
-    public string fallbackContinueSceneName = "World_Eden7";
+    public string newGameSceneName = "Beacon_Camp";
+    public string fallbackContinueSceneName = "Beacon_Camp";
 
     [Header("UI References")]
     public Button continueButton;

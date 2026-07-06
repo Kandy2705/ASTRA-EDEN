@@ -26,6 +26,9 @@ public static class VerticalSliceDemoSetup
     const string CrystalOrePath = "Assets/_Project/ScriptableObjects/Items/Loot/SO_Item_ItemCrystalOre.asset";
     const string CoreDustPath = "Assets/_Project/ScriptableObjects/Items/Loot/SO_Item_ItemCoreDust.asset";
     const string EnemyPrefabPath = "Assets/_Project/Prefab/Enemy.prefab";
+    const string VelociraptorSourcePath = "Assets/Packages/PBRVelociraptor/Prefabs/PBR/15K/PBR_Velociraptor_Orange.prefab";
+    const string MiniBossPrefabPath = "Assets/_Project/Prefab/Enemy_MiniBoss_Velociraptor.prefab";
+    const string PackLeaderDataPath = "Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyRaptorPackLeader.asset";
     const string CompyPrefabPath = "Assets/Prefabs/Enemy/compsognathus-compy-dinosaurs (3).prefab";
     const string CompanionPrefabPath = "Assets/_Project/Prefab/Companion_Compy.prefab";
     const string ShopDataPath = "Assets/_Project/ScriptableObjects/Shop/SO_Shop_BeaconCamp.asset";
@@ -34,13 +37,15 @@ public static class VerticalSliceDemoSetup
     const string PlayerPrefabPath = "Assets/Prefabs/Vroids/Seeker Prototype/Seeker Prototype Nu.prefab";
     const string InventoryUIBootstrapScriptPath = "Assets/Scripts/Inventory/InventoryUIBootstrap.cs";
 
-    [MenuItem("ASTRA EDEN/Demo/0. Run ALL Demo Setup (1→4)")]
+    [MenuItem("ASTRA EDEN/Demo/0. Run ALL Demo Setup (1→5)")]
     public static void RunAllSetup()
     {
         CreateDemoDataAssets();
+        CreateMiniBossVelociraptorPrefab();
         WirePlayerPrefab();
         SetupWorldEden7();
         SetupBeaconCampShop();
+        SetupCampZonePortals();
         Debug.Log("[DemoSetup] ALL steps finished. Save scenes + test theo huong dan.");
     }
 
@@ -74,12 +79,73 @@ public static class VerticalSliceDemoSetup
 
         SetupManagers(pivot);
         SetupEnemySpawnZone(pivot);
+        WireMiniBossSpawn();
         SetupResourceNodes(pivot);
         SetupZoneSystems();
         SetupHudPanels();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         Debug.Log("[DemoSetup] World_Eden7 setup complete. Dời spawn/resource points lên NavMesh nếu cần.");
+    }
+
+    [MenuItem("ASTRA EDEN/Demo/5. Setup Camp <-> Zone Portals")]
+    public static void SetupCampZonePortals()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        {
+            return;
+        }
+
+        SetupPortalInScene(
+            "Assets/Scenes/Beacon_Camp.unity",
+            "Portal_ToZone",
+            "World_Eden7",
+            new Vector3(0f, 0.114f, -9f),
+            true);
+
+        SetupPortalInScene(
+            "Assets/Scenes/World_Eden7.unity",
+            "Portal_ToCamp",
+            "Beacon_Camp",
+            new Vector3(2261.09f, 86.47f, 880f),
+            true);
+
+        Debug.Log("[DemoSetup] Camp <-> Zone portals ready.");
+    }
+
+    [MenuItem("ASTRA EDEN/Demo/Create Mini-Boss Velociraptor Prefab")]
+    public static void CreateMiniBossVelociraptorPrefab()
+    {
+        GameObject sourceRoot = PrefabUtility.LoadPrefabContents(VelociraptorSourcePath);
+        GameObject templateRoot = PrefabUtility.LoadPrefabContents(EnemyPrefabPath);
+        try
+        {
+            sourceRoot.name = "Enemy_MiniBoss_Velociraptor";
+            sourceRoot.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+
+            EnemyData packLeader = LoadEnemyData(PackLeaderDataPath);
+            AddEnemyGameplayComponents(sourceRoot, templateRoot, packLeader);
+
+            EnsureFolder(Path.GetDirectoryName(MiniBossPrefabPath)?.Replace('\\', '/'));
+            PrefabUtility.SaveAsPrefabAsset(sourceRoot, MiniBossPrefabPath);
+
+            if (packLeader != null)
+            {
+                SerializedObject dataSo = new SerializedObject(packLeader);
+                dataSo.FindProperty("enemyPrefab").objectReferenceValue =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(MiniBossPrefabPath);
+                dataSo.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(packLeader);
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[DemoSetup] Created mini-boss prefab at {MiniBossPrefabPath}");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(sourceRoot);
+            PrefabUtility.UnloadPrefabContents(templateRoot);
+        }
     }
 
     [MenuItem("ASTRA EDEN/Demo/3. Setup Beacon_Camp Shop")]
@@ -293,6 +359,179 @@ public static class VerticalSliceDemoSetup
     static void CreateBossSpawnPoint(Transform parent, string name, Vector3 pos, EnemyData data)
     {
         CreateEnemySpawnPoint(parent, name, pos, data, true);
+        WireMiniBossSpawnOnPoint(parent.Find(name));
+    }
+
+    static void WireMiniBossSpawn()
+    {
+        GameObject spawn = GameObject.Find("Spawn_MiniBoss");
+        if (spawn == null)
+        {
+            Debug.LogWarning("[DemoSetup] Không tìm thấy Spawn_MiniBoss trong scene.");
+            return;
+        }
+
+        WireMiniBossSpawnOnPoint(spawn.transform);
+    }
+
+    static void WireMiniBossSpawnOnPoint(Transform spawnTransform)
+    {
+        if (spawnTransform == null)
+        {
+            return;
+        }
+
+        GameObject miniBossPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MiniBossPrefabPath);
+        if (miniBossPrefab == null)
+        {
+            Debug.LogWarning("[DemoSetup] Chưa có Enemy_MiniBoss_Velociraptor — chạy Create Mini-Boss Velociraptor Prefab trước.");
+            return;
+        }
+
+        EnemySpawnPoint point = spawnTransform.GetComponent<EnemySpawnPoint>();
+        if (point == null)
+        {
+            return;
+        }
+
+        SerializedObject so = new SerializedObject(point);
+        so.FindProperty("prefabOverride").objectReferenceValue = miniBossPrefab;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    static void SetupPortalInScene(string scenePath, string portalName, string targetScene, Vector3 position, bool restorePosition)
+    {
+        EditorSceneManager.OpenScene(scenePath);
+        EnsureScenePortal(portalName, targetScene, position, restorePosition);
+        EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+        EditorSceneManager.SaveOpenScenes();
+    }
+
+    static void EnsureScenePortal(string portalName, string targetScene, Vector3 position, bool restorePosition)
+    {
+        GameObject portalObject = GameObject.Find(portalName);
+        if (portalObject == null)
+        {
+            portalObject = new GameObject(portalName);
+            Undo.RegisterCreatedObjectUndo(portalObject, portalName);
+        }
+
+        portalObject.transform.position = position;
+
+        BoxCollider collider = portalObject.GetComponent<BoxCollider>() ?? portalObject.AddComponent<BoxCollider>();
+        collider.isTrigger = true;
+        collider.size = new Vector3(4f, 3f, 4f);
+        collider.center = new Vector3(0f, 1.5f, 0f);
+
+        ScenePortalFade portal = portalObject.GetComponent<ScenePortalFade>() ?? portalObject.AddComponent<ScenePortalFade>();
+        SerializedObject portalSo = new SerializedObject(portal);
+        portalSo.FindProperty("targetSceneName").stringValue = targetScene;
+        portalSo.FindProperty("restoreSavedPositionOnLoad").boolValue = restorePosition;
+        portalSo.FindProperty("showDebugLog").boolValue = true;
+        portalSo.ApplyModifiedPropertiesWithoutUndo();
+
+        Transform visual = portalObject.transform.Find("PortalVisual");
+        if (visual == null)
+        {
+            GameObject visualObject = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            visualObject.name = "PortalVisual";
+            visualObject.transform.SetParent(portalObject.transform, false);
+            visualObject.transform.localPosition = new Vector3(0f, 1.5f, 0f);
+            visualObject.transform.localScale = new Vector3(2.2f, 0.15f, 2.2f);
+            Object.DestroyImmediate(visualObject.GetComponent<Collider>());
+
+            Renderer renderer = visualObject.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.sharedMaterial.color = new Color(0.25f, 0.65f, 1f, 0.85f);
+            }
+        }
+    }
+
+    static void AddEnemyGameplayComponents(GameObject root, GameObject template, EnemyData enemyData)
+    {
+        CapsuleCollider templateCollider = template.GetComponent<CapsuleCollider>();
+        CapsuleCollider collider = root.GetComponent<CapsuleCollider>() ?? root.AddComponent<CapsuleCollider>();
+        if (templateCollider != null)
+        {
+            collider.center = templateCollider.center;
+            collider.radius = templateCollider.radius;
+            collider.height = templateCollider.height;
+            collider.direction = templateCollider.direction;
+        }
+
+        NavMeshAgent templateAgent = template.GetComponent<NavMeshAgent>();
+        NavMeshAgent agent = root.GetComponent<NavMeshAgent>() ?? root.AddComponent<NavMeshAgent>();
+        if (templateAgent != null)
+        {
+            agent.radius = templateAgent.radius;
+            agent.height = templateAgent.height;
+            agent.speed = templateAgent.speed;
+            agent.angularSpeed = templateAgent.angularSpeed;
+            agent.stoppingDistance = templateAgent.stoppingDistance;
+            agent.baseOffset = templateAgent.baseOffset;
+        }
+
+        CharacterHealth health = AddComponentIfMissing<CharacterHealth>(root);
+        EnemySensor sensor = AddComponentIfMissing<EnemySensor>(root);
+        EnemyAIController ai = AddComponentIfMissing<EnemyAIController>(root);
+        CharacterKnockback knockback = AddComponentIfMissing<CharacterKnockback>(root);
+        AddComponentIfMissing<LootDropSpawner>(root);
+        DissolveOnDeath dissolve = AddComponentIfMissing<DissolveOnDeath>(root);
+        EnemyAnimationEventRelay relay = AddComponentIfMissing<EnemyAnimationEventRelay>(root);
+
+        Transform templateHitbox = template.transform.Find("AttackHitbox");
+        if (templateHitbox != null && root.transform.Find("AttackHitbox") == null)
+        {
+            GameObject hitbox = Object.Instantiate(templateHitbox.gameObject, root.transform);
+            hitbox.name = "AttackHitbox";
+        }
+
+        Transform eye = root.transform.Find("EyeSensor");
+        if (eye == null)
+        {
+            var eyeObject = new GameObject("EyeSensor");
+            eyeObject.transform.SetParent(root.transform, false);
+            eyeObject.transform.localPosition = new Vector3(0f, 1.6f, 0.5f);
+            eye = eyeObject.transform;
+        }
+
+        Animator animator = root.GetComponent<Animator>();
+        Animator templateAnimator = template.GetComponent<Animator>();
+        if (animator != null && templateAnimator != null)
+        {
+            animator.runtimeAnimatorController = templateAnimator.runtimeAnimatorController;
+            animator.applyRootMotion = false;
+        }
+
+        EnemyAttackHitbox attackHitbox = root.GetComponentInChildren<EnemyAttackHitbox>(true);
+
+        SerializedObject aiSo = new SerializedObject(ai);
+        aiSo.FindProperty("enemyData").objectReferenceValue = enemyData;
+        aiSo.FindProperty("sensor").objectReferenceValue = sensor;
+        aiSo.FindProperty("health").objectReferenceValue = health;
+        aiSo.FindProperty("knockback").objectReferenceValue = knockback;
+        aiSo.FindProperty("animator").objectReferenceValue = animator;
+        if (attackHitbox != null)
+        {
+            aiSo.FindProperty("attackHitbox").objectReferenceValue = attackHitbox;
+        }
+
+        aiSo.FindProperty("flipForward180").boolValue = true;
+        aiSo.ApplyModifiedPropertiesWithoutUndo();
+
+        SerializedObject sensorSo = new SerializedObject(sensor);
+        sensorSo.FindProperty("enemyData").objectReferenceValue = enemyData;
+        sensorSo.FindProperty("eyeSensor").objectReferenceValue = eye;
+        sensorSo.ApplyModifiedPropertiesWithoutUndo();
+
+        SerializedObject relaySo = new SerializedObject(relay);
+        relaySo.FindProperty("aiOwner").objectReferenceValue = ai;
+        relaySo.ApplyModifiedPropertiesWithoutUndo();
+
+        SerializedObject dissolveSo = new SerializedObject(dissolve);
+        dissolveSo.FindProperty("characterHealth").objectReferenceValue = health;
+        dissolveSo.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static void CreateEnemySpawnPoint(Transform parent, string name, Vector3 pos, EnemyData data, bool isBoss)

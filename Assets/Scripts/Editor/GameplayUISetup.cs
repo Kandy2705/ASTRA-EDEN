@@ -21,6 +21,7 @@ public static class GameplayUISetup
     const string HubScenePath = "Assets/Scenes/Beacon_Camp.unity";
     const string InventoryBootstrapScriptPath = "Assets/Scripts/Inventory/InventoryUIBootstrap.cs";
     const string GameplayBootstrapScriptPath = "Assets/Scripts/UI/GameplayUISceneBootstrap.cs";
+    const string PauseMenuControllerScriptPath = "Assets/Scripts/UI/GameplayPauseMenuController.cs";
 
     [MenuItem("ASTRA EDEN/UI/1. Create GameplayUI_Root Prefab (from World_Eden7)")]
     public static void CreateGameplayUIPrefab()
@@ -140,6 +141,7 @@ public static class GameplayUISetup
 
         EnsureEventSystem();
         EnsureGameplayManagers();
+        EnsurePauseMenuOnMenuCanvas(GameObject.Find("Menu_Canvas"));
         VerticalSliceDemoSetup.FixInventorySceneWiringPublic();
         EnsureMenuCanvasOverlay();
     }
@@ -172,6 +174,7 @@ public static class GameplayUISetup
         }
 
         EnsureBootstrapOnRoot(root);
+        EnsurePauseMenuOnMenuCanvas(menu);
         RemoveMissingScripts(root);
         if (hud != null)
         {
@@ -220,6 +223,25 @@ public static class GameplayUISetup
                     Undo.AddComponent(menu, inventoryType);
                 }
             }
+        }
+    }
+
+    static void EnsurePauseMenuOnMenuCanvas(GameObject menu)
+    {
+        if (menu == null)
+        {
+            menu = GameObject.Find("Menu_Canvas");
+        }
+
+        if (menu == null)
+        {
+            return;
+        }
+
+        RemoveMissingScripts(menu);
+        if (menu.GetComponent<GameplayPauseMenuController>() == null)
+        {
+            Undo.AddComponent<GameplayPauseMenuController>(menu);
         }
     }
 

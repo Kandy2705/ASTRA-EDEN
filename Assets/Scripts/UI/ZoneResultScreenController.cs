@@ -59,12 +59,38 @@ public class ZoneResultScreenController : MonoBehaviour
             root.SetActive(false);
         }
 
+        SavePlayerStateForTransition();
+
         if (GameDataManager.Instance != null)
         {
-            GameDataManager.Instance.SaveLastPlayerTransform(SceneManager.GetActiveScene().name, GameObject.FindGameObjectWithTag("Player")?.transform);
+            GameDataManager.Instance.MarkLoadFromContinue();
+            GameDataManager.Instance.FlushPlayerPrefs();
         }
 
-        SceneManager.LoadScene(returnSceneName);
+        SceneTransitionService.Load(returnSceneName);
+    }
+
+    static void SavePlayerStateForTransition()
+    {
+        if (GameDataManager.Instance == null)
+        {
+            return;
+        }
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            return;
+        }
+
+        GameDataManager.Instance.SaveLastPlayerTransform(SceneManager.GetActiveScene().name, player.transform);
+
+        CharacterHealth health = player.GetComponent<CharacterHealth>();
+        if (health != null && health.RuntimeStats != null)
+        {
+            var stats = health.RuntimeStats;
+            GameDataManager.Instance.SavePlayerStats(stats.currentHP, stats.currentStamina, stats.currentEnergy);
+        }
     }
 
     public void OnClickContinueExplore()

@@ -70,6 +70,12 @@ public class ShopController : MonoBehaviour
         inventory.RemoveItem(currency, entry.price);
         inventory.AddItem(entry.item, entry.quantity);
         Purchased?.Invoke();
+
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.FlushPlayerPrefs();
+        }
+
         return true;
     }
 }
