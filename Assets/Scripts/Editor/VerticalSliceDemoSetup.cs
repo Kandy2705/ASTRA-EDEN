@@ -174,6 +174,7 @@ public static class VerticalSliceDemoSetup
         {
             AddComponentIfMissing<PlayerInventoryService>(root);
             AddComponentIfMissing<PlayerInteractController>(root);
+            AddComponentIfMissing<PlayerKnockbackReceiver>(root);
             AddComponentIfMissing<CompanionSummonController>(root);
 
             CompanionSummonController summon = root.GetComponent<CompanionSummonController>();
@@ -418,12 +419,21 @@ public static class VerticalSliceDemoSetup
 
         portalObject.transform.position = position;
 
-        BoxCollider collider = portalObject.GetComponent<BoxCollider>() ?? portalObject.AddComponent<BoxCollider>();
-        collider.isTrigger = true;
-        collider.size = new Vector3(4f, 3f, 4f);
-        collider.center = new Vector3(0f, 1.5f, 0f);
+        BoxCollider collider = EnsureComponentOnRoot<BoxCollider>(portalObject);
+        if (collider != null)
+        {
+            collider.isTrigger = true;
+            collider.size = new Vector3(4f, 3f, 4f);
+            collider.center = new Vector3(0f, 1.5f, 0f);
+        }
 
-        ScenePortalFade portal = portalObject.GetComponent<ScenePortalFade>() ?? portalObject.AddComponent<ScenePortalFade>();
+        ScenePortalFade portal = EnsureComponentOnRoot<ScenePortalFade>(portalObject);
+        if (portal == null)
+        {
+            Debug.LogWarning($"[DemoSetup] Không thể gắn ScenePortalFade lên '{portalName}'.");
+            return;
+        }
+
         SerializedObject portalSo = new SerializedObject(portal);
         portalSo.FindProperty("targetSceneName").stringValue = targetScene;
         portalSo.FindProperty("restoreSavedPositionOnLoad").boolValue = restorePosition;
@@ -450,19 +460,46 @@ public static class VerticalSliceDemoSetup
 
     static void AddEnemyGameplayComponents(GameObject root, GameObject template, EnemyData enemyData)
     {
-        CapsuleCollider templateCollider = template.GetComponent<CapsuleCollider>();
-        CapsuleCollider collider = root.GetComponent<CapsuleCollider>() ?? root.AddComponent<CapsuleCollider>();
-        if (templateCollider != null)
+        // Body blocking: match Enemy template (BoxCollider + kinematic Rigidbody).
+        // Older mini-boss builds incorrectly used a default CapsuleCollider with no Rigidbody.
+        DestroyComponent<CapsuleCollider>(root);
+
+        BoxCollider templateBox = template != null ? template.GetComponent<BoxCollider>() : null;
+        BoxCollider bodyCollider = EnsureComponentOnRoot<BoxCollider>(root);
+        if (bodyCollider != null)
         {
-            collider.center = templateCollider.center;
-            collider.radius = templateCollider.radius;
-            collider.height = templateCollider.height;
-            collider.direction = templateCollider.direction;
+            if (templateBox != null)
+            {
+                bodyCollider.center = templateBox.center;
+                bodyCollider.size = templateBox.size;
+            }
+            else
+            {
+                // Fallback bounds fitted to PBR Velociraptor local mesh (same as Enemy.prefab).
+                bodyCollider.center = new Vector3(0.052734375f, 0.8257828f, 0.37524414f);
+                bodyCollider.size = new Vector3(1.546875f, 1.9324493f, 3.6594238f);
+            }
+
+            bodyCollider.isTrigger = false;
+            bodyCollider.enabled = true;
+        }
+
+        Rigidbody templateBody = template != null ? template.GetComponent<Rigidbody>() : null;
+        Rigidbody body = EnsureComponentOnRoot<Rigidbody>(root);
+        if (body != null)
+        {
+            body.mass = templateBody != null ? templateBody.mass : 100f;
+            body.linearDamping = templateBody != null ? templateBody.linearDamping : 0f;
+            body.angularDamping = templateBody != null ? templateBody.angularDamping : 0.05f;
+            body.useGravity = false;
+            body.isKinematic = true;
+            body.interpolation = RigidbodyInterpolation.None;
+            body.collisionDetectionMode = CollisionDetectionMode.Discrete;
         }
 
         NavMeshAgent templateAgent = template.GetComponent<NavMeshAgent>();
-        NavMeshAgent agent = root.GetComponent<NavMeshAgent>() ?? root.AddComponent<NavMeshAgent>();
-        if (templateAgent != null)
+        NavMeshAgent agent = EnsureComponentOnRoot<NavMeshAgent>(root);
+        if (templateAgent != null && agent != null)
         {
             agent.radius = templateAgent.radius;
             agent.height = templateAgent.height;
@@ -470,6 +507,14 @@ public static class VerticalSliceDemoSetup
             agent.angularSpeed = templateAgent.angularSpeed;
             agent.stoppingDistance = templateAgent.stoppingDistance;
             agent.baseOffset = templateAgent.baseOffset;
+        }
+        else if (agent != null)
+        {
+            agent.radius = 0.27f;
+            agent.height = 0.52f;
+            agent.speed = 3.5f;
+            agent.angularSpeed = 120f;
+            agent.stoppingDistance = 0.1f;
         }
 
         CharacterHealth health = AddComponentIfMissing<CharacterHealth>(root);
@@ -532,6 +577,9 @@ public static class VerticalSliceDemoSetup
         SerializedObject dissolveSo = new SerializedObject(dissolve);
         dissolveSo.FindProperty("characterHealth").objectReferenceValue = health;
         dissolveSo.ApplyModifiedPropertiesWithoutUndo();
+
+        EnemyTackleSetup.EnsureTacklePushHitboxPublic(root);
+        EnemyTackleSetup.WireAnimationRelayPublic(root);
     }
 
     static void CreateEnemySpawnPoint(Transform parent, string name, Vector3 pos, EnemyData data, bool isBoss)
@@ -854,7 +902,7 @@ public static class VerticalSliceDemoSetup
         col.isTrigger = true;
         if (col is BoxCollider box) box.size = new Vector3(3f, 2f, 3f);
 
-        var interact = shopCounter.GetComponent<ShopInteractable>() ?? shopCounter.AddComponent<ShopInteractable>();
+        ShopInteractable interact = EnsureComponentOnRoot<ShopInteractable>(shopCounter);
         SerializedObject interactSo = new SerializedObject(interact);
         interactSo.FindProperty("shopController").objectReferenceValue = controller;
         interactSo.ApplyModifiedPropertiesWithoutUndo();
@@ -939,9 +987,12 @@ public static class VerticalSliceDemoSetup
             DestroyComponent<EnemyKillTracker>(root);
             DestroyComponent<MiniBossMarker>(root);
 
-            NavMeshAgent agent = root.GetComponent<NavMeshAgent>() ?? root.AddComponent<NavMeshAgent>();
-            agent.speed = 4.5f;
-            agent.stoppingDistance = 2f;
+            NavMeshAgent agent = EnsureComponentOnRoot<NavMeshAgent>(root);
+            if (agent != null)
+            {
+                agent.speed = 4.5f;
+                agent.stoppingDistance = 2f;
+            }
             root.AddComponent<CompanionController>();
 
             EnsureFolder(Path.GetDirectoryName(CompanionPrefabPath)?.Replace('\\', '/'));
@@ -1071,8 +1122,18 @@ public static class VerticalSliceDemoSetup
 
     static T AddComponentIfMissing<T>(GameObject go) where T : Component
     {
+        return EnsureComponentOnRoot<T>(go);
+    }
+
+    static T EnsureComponentOnRoot<T>(GameObject go) where T : Component
+    {
         T comp = go.GetComponent<T>();
-        return comp != null ? comp : Undo.AddComponent<T>(go);
+        if (comp == null)
+        {
+            comp = Undo.AddComponent<T>(go);
+        }
+
+        return comp;
     }
 
     static void DestroyComponent<T>(GameObject go) where T : Component

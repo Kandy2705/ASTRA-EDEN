@@ -2962,6 +2962,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemRegistryInstaller
   allItems:
+  - {fileID: 11400000, guid: 9e6afbd2821f4e2cb720f02c5177ea80, type: 2}
   - {fileID: 11400000, guid: b75ec980718e640de9eacb312f3aae03, type: 2}
   - {fileID: 11400000, guid: c49e84139be99421e868624462b11c14, type: 2}
   - {fileID: 11400000, guid: 7ec117f2838d142a8a3ac65f721d12ef, type: 2}
@@ -2984,7 +2985,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a29e9569a71e54f42a9bc34f83d5680c, type: 2}
   - {fileID: 11400000, guid: fcfd7b09b7a484165a5986eb67a46f54, type: 2}
   - {fileID: 11400000, guid: b887b6f9b76954ec39bd7fe74293a230, type: 2}
-  - {fileID: 11400000, guid: 9e6afbd2821f4e2cb720f02c5177ea80, type: 2}
 --- !u!114 &2048055655
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3019,7 +3019,30 @@ MonoBehaviour:
   playerHP: -1
   playerStamina: -1
   playerEnergy: -1
-  itemDatabase: []
+  itemDatabase:
+  - {fileID: 11400000, guid: 9e6afbd2821f4e2cb720f02c5177ea80, type: 2}
+  - {fileID: 11400000, guid: b75ec980718e640de9eacb312f3aae03, type: 2}
+  - {fileID: 11400000, guid: c49e84139be99421e868624462b11c14, type: 2}
+  - {fileID: 11400000, guid: 7ec117f2838d142a8a3ac65f721d12ef, type: 2}
+  - {fileID: 11400000, guid: 6629eedb60c49473a8231ea98bb84b9b, type: 2}
+  - {fileID: 11400000, guid: 569cf86c588b6406fbc5ffa3898f755c, type: 2}
+  - {fileID: 11400000, guid: fa8ef4215f2e1403a81adc1c1fbdca6d, type: 2}
+  - {fileID: 11400000, guid: 162129b3504824ea6bdb2810831c3ac1, type: 2}
+  - {fileID: 11400000, guid: 4c92bb9413cf2448f8ec0b6197722103, type: 2}
+  - {fileID: 11400000, guid: f3e824254ce6543dcae61d728a571bb7, type: 2}
+  - {fileID: 11400000, guid: 0dacfdb0e72aa400c9052d56ad04186e, type: 2}
+  - {fileID: 11400000, guid: 7450c5fdc0c32472784f80f3032b045d, type: 2}
+  - {fileID: 11400000, guid: 39e740e2e85c3487992140a1ee724e17, type: 2}
+  - {fileID: 11400000, guid: ad7bcc3bd7e4c492cb2988189e25b3a4, type: 2}
+  - {fileID: 11400000, guid: 8429b0c9b99e048e499780407a1c6166, type: 2}
+  - {fileID: 11400000, guid: f8b98512fab68400e8a8ea8af72450d0, type: 2}
+  - {fileID: 11400000, guid: 89fb8d70ffde3493fb785ce2b31c0cca, type: 2}
+  - {fileID: 11400000, guid: a0d63d092e3384c11ba8ff2ba59de1bd, type: 2}
+  - {fileID: 11400000, guid: 9b821c3e553be497b9436647ca51c22f, type: 2}
+  - {fileID: 11400000, guid: 001d221aa3a1242658b34356c65bf141, type: 2}
+  - {fileID: 11400000, guid: a29e9569a71e54f42a9bc34f83d5680c, type: 2}
+  - {fileID: 11400000, guid: fcfd7b09b7a484165a5986eb67a46f54, type: 2}
+  - {fileID: 11400000, guid: b887b6f9b76954ec39bd7fe74293a230, type: 2}
   posSceneNames: []
   posValues: []
 --- !u!4 &2119646365 stripped
@@ -3135,6 +3158,10 @@ PrefabInstance:
       propertyPath: restoreSavedPositionOnLoad
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9135514727732452746, guid: 1eea286b381ee49af9fee01243845b25, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: f6f6fe51e84444d7cad7171583fc170d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

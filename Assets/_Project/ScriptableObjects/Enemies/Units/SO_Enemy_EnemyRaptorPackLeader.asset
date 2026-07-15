@@ -17,7 +17,7 @@ MonoBehaviour:
   archetype: 0
   rank: 1
   zone: 2
-  enemyPrefab: {fileID: 0}
+  enemyPrefab: {fileID: 6399077957897768670, guid: 3ef2f4e92438b40f2bf8ad034e3505e0, type: 3}
   portrait: {fileID: 0}
   icon: {fileID: 0}
   baseStats:

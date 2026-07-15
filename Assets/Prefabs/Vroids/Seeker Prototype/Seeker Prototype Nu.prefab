@@ -6996,6 +6996,7 @@ GameObject:
   - component: {fileID: 7446676202604255623}
   - component: {fileID: 4688957090041989746}
   - component: {fileID: 3849946475836124822}
+  - component: {fileID: 9114661255595054279}
   m_Layer: 6
   m_Name: Seeker Prototype Nu
   m_TagString: Player
@@ -7602,6 +7603,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 897ce85e797cd4406b82bf2e3a0fa8b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerVFXController
+  combatController: {fileID: 0}
   playerRoot: {fileID: 7295855208173865608}
   slashFireVFXPrefab: {fileID: 5313456068782518071, guid: 50f1354827c77ef4b99c4dca0ee3411d, type: 3}
   multipleSlashesVFXPrefab: {fileID: 1116249604692860204, guid: 8a02c4042c68dd244abad8cf394dab42, type: 3}
@@ -7725,6 +7727,20 @@ MonoBehaviour:
     remaining: 0
     total: 0
   combatToCooldownMap: ffffffff000000000100000002000000
+--- !u!114 &9114661255595054279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0de9a6bed3ed544fc862e0f4e372671f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerKnockbackReceiver
+  characterController: {fileID: 1620980194362631026}
+  targetRigidbody: {fileID: 0}
 --- !u!1 &7318886399150952759
 GameObject:
   m_ObjectHideFlags: 0
@@ -9702,7 +9718,7 @@ Transform:
   m_GameObject: {fileID: 8644812069856178217}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.06, y: -0.023, z: 0.148}
+  m_LocalPosition: {x: 0.06, y: -0.023, z: 0.321}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -9720,7 +9736,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3351d65a5e49c64d9002bba88ce89a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: GameUtils::Drakkar.GameUtils.DrakkarTrail
-  Length: 0.8117411
+  Length: 0.639796
   Steps: 10
   StepTime: 0
   EndingSpeed: 7

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// Data-driven enemy AI FSM theo briefing ASTRA EDEN.
@@ -35,6 +36,7 @@ public class EnemyAIController : MonoBehaviour
     static readonly int StaggerHash = Animator.StringToHash("Stagger");
     static readonly int DieHash = Animator.StringToHash("Die");
     static readonly int IsDeadHash = Animator.StringToHash("IsDead");
+    static readonly int TackleHash = Animator.StringToHash("Tackle");
 
     [Header("Data")]
     [SerializeField] private EnemyData enemyData;
@@ -87,6 +89,15 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField, Min(0f)] private float animatorDampTime = 0.1f;
     [SerializeField, Min(0f)] private float movingThreshold = 0.05f;
 
+    [Header("Tackle Push")]
+    [SerializeField] private bool useTackle = true;
+    [Tooltip("Số lần enemy cắn xong trước khi tiếp tục bằng tackle đẩy player.")]
+    [FormerlySerializedAs("hitsRequiredForTackle")]
+    [SerializeField, Min(1)] private int attacksBeforeTackle = 2;
+    [SerializeField, Min(0f)] private float tackleRange = 3.2f;
+    [Tooltip("Cooldown tối thiểu giữa hai lần tackle.")]
+    [SerializeField, Min(0f)] private float tackleCooldown = 6f;
+
     [Header("Targeting")]
     [SerializeField] private LayerMask playerLayer;
 
@@ -123,6 +134,9 @@ public class EnemyAIController : MonoBehaviour
     AttackPhase attackPhase = AttackPhase.None;
     bool hitResolvedThisSwing;
     float nextHurtAllowedAt;
+    float nextTackleTime;
+    int attacksSinceLastTackle;
+    bool isTackling;
     float effectiveAttackRange = 2f;
 
     public AIState State => currentState;
@@ -289,6 +303,21 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
+        if (isTackling && currentState != AIState.Dead)
+        {
+            if (currentState == AIState.Hurt || currentState == AIState.Stagger)
+            {
+                EndTackle();
+            }
+            else
+            {
+                StopAgent();
+                FaceTarget();
+                UpdateAnimatorMovement(0f);
+                return;
+            }
+        }
+
         if (hitStunTimer > 0f) hitStunTimer -= Time.deltaTime;
         if (staggerTimer > 0f) staggerTimer -= Time.deltaTime;
 
@@ -368,6 +397,7 @@ public class EnemyAIController : MonoBehaviour
                 BeginAttackPattern();
                 break;
             case AIState.Hurt:
+                EndTackle();
                 StopAgent();
                 CancelActiveAttack();
                 hitStunTimer = hitStunDuration;
@@ -517,7 +547,7 @@ public class EnemyAIController : MonoBehaviour
         {
             attackPhase = AttackPhase.None;
             attackCooldownTimer = currentAttack != null ? currentAttack.cooldown : AttackCooldown;
-            EnterState(AIState.Chase);
+            RegisterCompletedAttackForTackle();
         }
     }
 
@@ -687,6 +717,24 @@ public class EnemyAIController : MonoBehaviour
             ApplyPoiseDamage(dmg);
         }
         lastKnownHP = current;
+    }
+
+    void RegisterCompletedAttackForTackle()
+    {
+        if (!useTackle || isTackling || currentState == AIState.Dead || currentState == AIState.Stagger)
+        {
+            EnterState(AIState.Chase);
+            return;
+        }
+
+        attacksSinceLastTackle++;
+
+        if (attacksSinceLastTackle >= attacksBeforeTackle && TryStartTackleAfterAttacks())
+        {
+            return;
+        }
+
+        EnterState(AIState.Chase);
     }
 
     void ApplyPoiseDamage(float dmg)
@@ -890,6 +938,72 @@ public class EnemyAIController : MonoBehaviour
     public void Anim_OnAttackEnd()
     {
         if (currentState == AIState.Attack) attackPhaseTimer = 0f;
+    }
+
+    public void Anim_OnTackleFinished()
+    {
+        if (!isTackling)
+        {
+            return;
+        }
+
+        EndTackle();
+
+        if (currentState != AIState.Dead && currentState != AIState.Hurt && currentState != AIState.Stagger)
+        {
+            EnterState(AIState.Chase);
+        }
+    }
+
+    bool TryStartTackleAfterAttacks()
+    {
+        if (!useTackle || isTackling || animator == null || player == null)
+        {
+            return false;
+        }
+
+        if (Time.time < nextTackleTime)
+        {
+            return false;
+        }
+
+        float distance = HorizontalDistance(player.position);
+        if (distance > tackleRange)
+        {
+            return false;
+        }
+
+        if (!HasParam(TackleHash, AnimatorControllerParameterType.Trigger))
+        {
+            return false;
+        }
+
+        attacksSinceLastTackle = 0;
+        nextTackleTime = Time.time + tackleCooldown;
+        isTackling = true;
+        CancelActiveAttack();
+        hitStunTimer = 0f;
+        StopAgent();
+        FaceTarget();
+        animator.ResetTrigger(TackleHash);
+        animator.SetTrigger(TackleHash);
+        return true;
+    }
+
+    void EndTackle()
+    {
+        isTackling = false;
+
+        EnemyPushHitbox pushHitbox = GetComponentInChildren<EnemyPushHitbox>(true);
+        if (pushHitbox != null)
+        {
+            pushHitbox.CloseHitbox();
+        }
+
+        if (animator != null && HasParam(TackleHash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(TackleHash);
+        }
     }
 
     void OnDrawGizmosSelected()

@@ -8,6 +8,7 @@ public class EnemyAnimationEventRelay : MonoBehaviour
 {
     [SerializeField] private EnemyAIController aiOwner;
     [SerializeField] private EnemyPatrol patrolOwner;
+    [SerializeField] private EnemyPushHitbox tacklePushHitbox;
 
     private void Reset()
     {
@@ -25,6 +26,12 @@ public class EnemyAnimationEventRelay : MonoBehaviour
         if (patrolOwner == null)
         {
             patrolOwner = GetComponentInParent<EnemyPatrol>();
+        }
+
+        if (tacklePushHitbox == null)
+        {
+            tacklePushHitbox = GetComponentInParent<EnemyAIController>()
+                .GetComponentInChildren<EnemyPushHitbox>(true);
         }
     }
 
@@ -53,6 +60,32 @@ public class EnemyAnimationEventRelay : MonoBehaviour
         if (patrolOwner != null)
         {
             patrolOwner.PerformAttackHit();
+        }
+    }
+
+    public void OpenTackleHitbox()
+    {
+        if (tacklePushHitbox != null)
+        {
+            tacklePushHitbox.OpenHitbox();
+        }
+    }
+
+    public void CloseTackleHitbox()
+    {
+        if (tacklePushHitbox != null)
+        {
+            tacklePushHitbox.CloseHitbox();
+        }
+    }
+
+    public void OnAttackFinished()
+    {
+        CloseTackleHitbox();
+
+        if (aiOwner != null)
+        {
+            aiOwner.Anim_OnTackleFinished();
         }
     }
 }

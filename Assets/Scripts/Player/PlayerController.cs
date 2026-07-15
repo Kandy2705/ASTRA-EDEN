@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float dashAnimationSpeed = 1.8f;
     [SerializeField] private float dashEnergyCost = 25f;
     [SerializeField] private CharacterHealth playerHealth;
+    [SerializeField] private PlayerKnockbackReceiver knockbackReceiver;
 
     [SerializeField] private float currentSpeedFactor = 0f;
 
@@ -81,6 +82,11 @@ public class PlayerController : MonoBehaviour
             playerHealth = GetComponent<CharacterHealth>();
         }
 
+        if (knockbackReceiver == null)
+        {
+            knockbackReceiver = GetComponent<PlayerKnockbackReceiver>();
+        }
+
         if (cameraTransform == null)
         {
             ResolveCameraTransform();
@@ -91,6 +97,13 @@ public class PlayerController : MonoBehaviour
     {
         inputReader.ReadInput();
         isGrounded = controller.isGrounded;
+
+        if (knockbackReceiver != null && knockbackReceiver.IsKnockedBack)
+        {
+            ApplyGravityAndJump(false);
+            animatorBridge.UpdateLocomotion(0f, Vector2.zero, isGrounded);
+            return;
+        }
 
         Vector2 movementInput = inputReader.MoveInput;
         Vector3 moveDir = GetMoveDirection(movementInput);
