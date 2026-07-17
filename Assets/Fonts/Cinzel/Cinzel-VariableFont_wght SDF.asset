@@ -286,21 +286,6 @@ MonoBehaviour:
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
-  - m_Index: 239
-    m_Metrics:
-      m_Width: 33.5625
-      m_Height: 68.125
-      m_HorizontalBearingX: 5.40625
-      m_HorizontalBearingY: 64.34375
-      m_HorizontalAdvance: 45.265625
-    m_GlyphRect:
-      m_X: 72
-      m_Y: 119
-      m_Width: 34
-      m_Height: 69
-    m_Scale: 1
-    m_AtlasIndex: 0
-    m_ClassDefinitionType: 0
   - m_Index: 241
     m_Metrics:
       m_Width: 33.84375
@@ -313,6 +298,21 @@ MonoBehaviour:
       m_Y: 122
       m_Width: 35
       m_Height: 70
+    m_Scale: 1
+    m_AtlasIndex: 0
+    m_ClassDefinitionType: 0
+  - m_Index: 239
+    m_Metrics:
+      m_Width: 33.5625
+      m_Height: 68.125
+      m_HorizontalBearingX: 5.40625
+      m_HorizontalBearingY: 64.34375
+      m_HorizontalAdvance: 45.265625
+    m_GlyphRect:
+      m_X: 72
+      m_Y: 119
+      m_Width: 34
+      m_Height: 69
     m_Scale: 1
     m_AtlasIndex: 0
     m_ClassDefinitionType: 0
@@ -393,12 +393,12 @@ MonoBehaviour:
     m_GlyphIndex: 245
     m_Scale: 1
   - m_ElementType: 1
-    m_Unicode: 51
-    m_GlyphIndex: 239
-    m_Scale: 1
-  - m_ElementType: 1
     m_Unicode: 53
     m_GlyphIndex: 241
+    m_Scale: 1
+  - m_ElementType: 1
+    m_Unicode: 51
+    m_GlyphIndex: 239
     m_Scale: 1
   - m_ElementType: 1
     m_Unicode: 54
@@ -471,14 +471,14 @@ MonoBehaviour:
     m_Y: 86
     m_Width: 60
     m_Height: 88
-  - m_X: 62
-    m_Y: 109
-    m_Width: 53
-    m_Height: 88
   - m_X: 0
     m_Y: 112
     m_Width: 54
     m_Height: 89
+  - m_X: 62
+    m_Y: 109
+    m_Width: 53
+    m_Height: 88
   - m_X: 175
     m_Y: 86
     m_Width: 60
@@ -508,26 +508,26 @@ MonoBehaviour:
     m_Y: 23
     m_Width: 12
     m_Height: 63
-  - m_X: 62
-    m_Y: 28
-    m_Width: 1
-    m_Height: 81
-  - m_X: 115
-    m_Y: 174
-    m_Width: 908
-    m_Height: 849
-  - m_X: 54
-    m_Y: 112
-    m_Width: 8
-    m_Height: 911
   - m_X: 0
     m_Y: 201
     m_Width: 1023
     m_Height: 822
+  - m_X: 62
+    m_Y: 28
+    m_Width: 1
+    m_Height: 81
+  - m_X: 54
+    m_Y: 112
+    m_Width: 8
+    m_Height: 911
   - m_X: 54
     m_Y: 197
     m_Width: 969
     m_Height: 826
+  - m_X: 115
+    m_Y: 174
+    m_Width: 908
+    m_Height: 849
   - m_X: 235
     m_Y: 86
     m_Width: 89

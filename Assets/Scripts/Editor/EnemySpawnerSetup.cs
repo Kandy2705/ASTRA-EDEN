@@ -8,9 +8,9 @@ using UnityEngine;
 /// </summary>
 public static class EnemySpawnerSetup
 {
-    const string DefaultEnemyPrefabPath = "Assets/_Project/Prefab/Enemy.prefab";
-    const string DefaultMeleeDataPath = "Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyScavengerLizard.asset";
-    const string DefaultRangedDataPath = "Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyYoungSpitter.asset";
+    const string DefaultEnemyPrefabPath = "Assets/_Project/Prefab/Enemy_WildClawRaptor.prefab";
+    const string DefaultMeleeDataPath = "Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyWildClawRaptor.asset";
+    const string DefaultRangedDataPath = "Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyFangRaptor.asset";
     const string DefaultBruteDataPath = "Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyArmoredHerbivoreJuvenile.asset";
 
     [MenuItem("ASTRA EDEN/Spawn/Create Enemy Spawn Zone In Scene")]
@@ -36,11 +36,11 @@ public static class EnemySpawnerSetup
         so.FindProperty("logSpawns").boolValue = true;
         so.ApplyModifiedPropertiesWithoutUndo();
 
-        CreateSpawnPoint(root.transform, "Spawn_Melee_01", pivot + new Vector3(8f, 0f, 6f),
+        CreateSpawnPoint(root.transform, "Spawn_WildClaw_01", pivot + new Vector3(8f, 0f, 6f),
             AssetDatabase.LoadAssetAtPath<EnemyData>(DefaultMeleeDataPath));
-        CreateSpawnPoint(root.transform, "Spawn_Melee_02", pivot + new Vector3(-10f, 0f, 4f),
+        CreateSpawnPoint(root.transform, "Spawn_WildClaw_02", pivot + new Vector3(-10f, 0f, 4f),
             AssetDatabase.LoadAssetAtPath<EnemyData>(DefaultMeleeDataPath));
-        CreateSpawnPoint(root.transform, "Spawn_Ranged_01", pivot + new Vector3(14f, 0f, -8f),
+        CreateSpawnPoint(root.transform, "Spawn_Fang_01", pivot + new Vector3(14f, 0f, -8f),
             AssetDatabase.LoadAssetAtPath<EnemyData>(DefaultRangedDataPath));
         CreateSpawnPoint(root.transform, "Spawn_Tank_01", pivot + new Vector3(-14f, 0f, -10f),
             AssetDatabase.LoadAssetAtPath<EnemyData>(DefaultBruteDataPath));
@@ -49,7 +49,7 @@ public static class EnemySpawnerSetup
         EditorGUIUtility.PingObject(root);
 
         Debug.Log(
-            "[EnemySpawn] Đã tạo EnemySpawnZone với 4 spawn point (2 melee, 1 ranged, 1 tank). " +
+            "[EnemySpawn] Đã tạo EnemySpawnZone với 4 spawn point (2 WildClaw green, 1 Fang sand, 1 tank data). " +
             "Dời các điểm spawn lên NavMesh trong World_Eden7 rồi Play để test.");
     }
 

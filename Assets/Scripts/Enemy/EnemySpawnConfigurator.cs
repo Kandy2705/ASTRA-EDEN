@@ -6,13 +6,18 @@ using UnityEngine.AI;
 /// </summary>
 public static class EnemySpawnConfigurator
 {
+    /// <param name="preferExactSpawnPosition">
+    /// true = spawn tại đúng điểm (At Patrol Points): chỉ snap NavMesh rất gần,
+    /// không kéo ra rìa mesh xa.
+    /// </param>
     public static GameObject Configure(
         GameObject instance,
         EnemyData data,
         Vector3 spawnPosition,
         Quaternion spawnRotation,
         Transform[] patrolPoints,
-        bool isMiniBoss = false)
+        bool isMiniBoss = false,
+        bool preferExactSpawnPosition = false)
     {
         if (instance == null)
         {
@@ -21,7 +26,15 @@ public static class EnemySpawnConfigurator
 
         instance.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
 
-        if (!TryWarpToNavMesh(instance, spawnPosition, out Vector3 navPos))
+        NavMeshAgent agent = instance.GetComponent<NavMeshAgent>();
+
+        // ROOT CAUSE FIX: NavMeshAgent enable/Warp ngoài mesh → Unity hút ra rìa mesh.
+        // At Patrol Points: tắt agent → đặt đúng chỗ → chỉ bật lại nếu mesh nằm ≤0.75m.
+        if (preferExactSpawnPosition)
+        {
+            PlaceExactlyAt(instance, agent, spawnPosition);
+        }
+        else if (!TryWarpToNavMesh(instance, spawnPosition, out Vector3 navPos, preferExactSpawnPosition: false))
         {
             Debug.LogWarning(
                 $"[EnemySpawn] '{instance.name}' spawn ngoài NavMesh tại {spawnPosition}. " +
@@ -106,7 +119,55 @@ public static class EnemySpawnConfigurator
         marker.Configure(displayName, health);
     }
 
-    static bool TryWarpToNavMesh(GameObject instance, Vector3 spawnPosition, out Vector3 navPosition)
+    /// <summary>
+    /// Đặt enemy đúng world position. Chỉ bật NavMeshAgent nếu có mesh sát (≤0.75m).
+    /// Tránh agent auto-snap ra rìa building/terrain.
+    /// </summary>
+    public static void PlaceExactlyAt(GameObject instance, NavMeshAgent agent, Vector3 worldPos)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+
+        if (agent != null)
+        {
+            agent.enabled = false;
+        }
+
+        instance.transform.position = worldPos;
+
+        if (agent == null)
+        {
+            return;
+        }
+
+        const float maxSnap = 0.75f;
+        if (NavMesh.SamplePosition(worldPos, out NavMeshHit hit, maxSnap, NavMesh.AllAreas))
+        {
+            Vector3 flat = hit.position - worldPos;
+            flat.y = 0f;
+            float dy = Mathf.Abs(hit.position.y - worldPos.y);
+            if (flat.magnitude <= maxSnap && dy <= 1.25f)
+            {
+                agent.enabled = true;
+                agent.Warp(hit.position);
+                instance.transform.position = hit.position;
+                return;
+            }
+        }
+
+        // Không có mesh sát: giữ agent TẮT — transform đứng đúng patrol.
+        // AI sẽ bật agent sau nếu tìm được mesh gần, hoặc đi bằng transform.
+        agent.enabled = false;
+        instance.transform.position = worldPos;
+    }
+
+    static bool TryWarpToNavMesh(
+        GameObject instance,
+        Vector3 spawnPosition,
+        out Vector3 navPosition,
+        bool preferExactSpawnPosition)
     {
         navPosition = spawnPosition;
 
@@ -116,18 +177,64 @@ public static class EnemySpawnConfigurator
             return false;
         }
 
-        const float sampleRadius = 4f;
-        if (NavMesh.SamplePosition(spawnPosition, out NavMeshHit hit, sampleRadius, NavMesh.AllAreas))
+        if (preferExactSpawnPosition)
         {
-            navPosition = hit.position;
-            if (agent.enabled)
-            {
-                agent.Warp(navPosition);
-            }
-
-            return true;
+            PlaceExactlyAt(instance, agent, spawnPosition);
+            navPosition = instance.transform.position;
+            return agent.enabled && agent.isOnNavMesh;
         }
 
+        if (!agent.enabled)
+        {
+            agent.enabled = true;
+        }
+
+        float[] radii = { 1.5f, 3f, 6f, 12f, 20f };
+        NavMeshHit best = default;
+        bool found = false;
+        float bestScore = float.MaxValue;
+
+        for (int i = 0; i < radii.Length; i++)
+        {
+            if (!NavMesh.SamplePosition(spawnPosition, out NavMeshHit hit, radii[i], NavMesh.AllAreas))
+            {
+                continue;
+            }
+
+            float dy = Mathf.Abs(hit.position.y - spawnPosition.y);
+            Vector3 flat = hit.position - spawnPosition;
+            flat.y = 0f;
+            float horiz = flat.magnitude;
+
+            if (dy > 2.75f)
+            {
+                continue;
+            }
+
+            float score = horiz + dy * 2f;
+            if (score < bestScore)
+            {
+                bestScore = score;
+                best = hit;
+                found = true;
+            }
+
+            if (horiz <= 0.5f)
+            {
+                break;
+            }
+        }
+
+        if (found)
+        {
+            navPosition = best.position;
+            agent.Warp(navPosition);
+            instance.transform.position = navPosition;
+            return agent.isOnNavMesh;
+        }
+
+        agent.enabled = false;
+        instance.transform.position = spawnPosition;
         return false;
     }
 }

@@ -22,7 +22,7 @@ MonoBehaviour:
   icon: {fileID: 0}
   baseStats:
     maxHP: 560
-    attack: 78
+    attack: 26
     defense: 30
     poise: 40
     moveSpeed: 3

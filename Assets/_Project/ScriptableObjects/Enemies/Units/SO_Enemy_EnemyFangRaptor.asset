@@ -17,12 +17,12 @@ MonoBehaviour:
   archetype: 2
   rank: 0
   zone: 2
-  enemyPrefab: {fileID: 0}
+  enemyPrefab: {fileID: 6399077957897768670, guid: 5ca3a0744e6b4e0b8b93beb1d13a345d, type: 3}
   portrait: {fileID: 0}
   icon: {fileID: 0}
   baseStats:
     maxHP: 420
-    attack: 60
+    attack: 20
     defense: 25
     poise: 35
     moveSpeed: 5.4
@@ -40,4 +40,5 @@ MonoBehaviour:
   goldMin: 12
   goldMax: 20
   mainLootTable: {fileID: 11400000, guid: 1073ea3cc8fd349bab31788ea0d4c8cd, type: 2}
-  description: 
+  description: 'Dune-pack raptor (sand Pattern E skin). Harder melee pressure for Zone 2.'
+

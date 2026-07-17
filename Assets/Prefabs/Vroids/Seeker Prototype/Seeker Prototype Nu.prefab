@@ -7431,6 +7431,7 @@ MonoBehaviour:
   dashAnimationSpeed: 1.8
   dashEnergyCost: 25
   playerHealth: {fileID: 0}
+  knockbackReceiver: {fileID: 0}
   currentSpeedFactor: 0
 --- !u!114 &7520359160473161335
 MonoBehaviour:
@@ -7640,7 +7641,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c95d30ed42eff420cb6208e031f014be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootCollector
-  logToConsole: 1
+  logToConsole: 0
 --- !u!114 &3617732800106431330
 MonoBehaviour:
   m_ObjectHideFlags: 0

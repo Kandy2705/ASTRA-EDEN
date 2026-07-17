@@ -46,12 +46,6 @@ public class EnemySpawner : MonoBehaviour
     [ContextMenu("Spawn All Enemies")]
     public void SpawnAll()
     {
-        if (defaultEnemyPrefab == null)
-        {
-            Debug.LogError($"[EnemySpawn] '{name}' chưa gán defaultEnemyPrefab.", this);
-            return;
-        }
-
         if (spawnPoints == null || spawnPoints.Length == 0)
         {
             Debug.LogWarning($"[EnemySpawn] '{name}' không có EnemySpawnPoint nào.", this);
@@ -79,13 +73,21 @@ public class EnemySpawner : MonoBehaviour
 
     public GameObject SpawnAtPoint(EnemySpawnPoint point)
     {
-        if (point == null || defaultEnemyPrefab == null)
+        if (point == null)
         {
             return null;
         }
 
-        GameObject prefab = point.PrefabOverride != null ? point.PrefabOverride : defaultEnemyPrefab;
         EnemyData data = point.EnemyData != null ? point.EnemyData : defaultEnemyData;
+        GameObject prefab = ResolvePrefab(point, data, defaultEnemyPrefab);
+        if (prefab == null)
+        {
+            Debug.LogError(
+                $"[EnemySpawn] '{name}' không resolve được prefab cho spawn point '{point.name}'. " +
+                "Gán PrefabOverride, EnemyData.enemyPrefab, hoặc defaultEnemyPrefab.",
+                this);
+            return null;
+        }
 
         GameObject instance = Instantiate(prefab, point.SpawnPosition, point.SpawnRotation);
         if (spawnedEnemiesParent != null)
@@ -117,5 +119,23 @@ public class EnemySpawner : MonoBehaviour
         }
 
         spawnedInstances.Clear();
+    }
+
+    /// <summary>
+    /// Priority: spawn-point override → EnemyData.enemyPrefab → spawner default.
+    /// </summary>
+    static GameObject ResolvePrefab(EnemySpawnPoint point, EnemyData data, GameObject fallbackPrefab)
+    {
+        if (point != null && point.PrefabOverride != null)
+        {
+            return point.PrefabOverride;
+        }
+
+        if (data != null && data.enemyPrefab != null)
+        {
+            return data.enemyPrefab;
+        }
+
+        return fallbackPrefab;
     }
 }

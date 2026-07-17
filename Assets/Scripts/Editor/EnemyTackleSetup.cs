@@ -6,6 +6,8 @@ public static class EnemyTackleSetup
 {
     const string EnemyPrefabPath = "Assets/_Project/Prefab/Enemy.prefab";
     const string MiniBossPrefabPath = "Assets/_Project/Prefab/Enemy_MiniBoss_Velociraptor.prefab";
+    const string WildClawPrefabPath = "Assets/_Project/Prefab/Enemy_WildClawRaptor.prefab";
+    const string FangPrefabPath = "Assets/_Project/Prefab/Enemy_FangRaptor.prefab";
     const string PlayerPrefabPath = "Assets/Prefabs/Vroids/Seeker Prototype/Seeker Prototype Nu.prefab";
 
     [MenuItem("ASTRA EDEN/Enemies/Setup Tackle Push (Enemy + Player Prefabs)")]
@@ -13,9 +15,11 @@ public static class EnemyTackleSetup
     {
         SetupEnemyPrefab(EnemyPrefabPath);
         SetupEnemyPrefab(MiniBossPrefabPath);
+        SetupEnemyPrefab(WildClawPrefabPath);
+        SetupEnemyPrefab(FangPrefabPath);
         SetupPlayerPrefab();
         AssetDatabase.SaveAssets();
-        Debug.Log("[TackleSetup] Tackle push hitbox + PlayerKnockbackReceiver wired on Enemy/MiniBoss/Player prefabs.");
+        Debug.Log("[TackleSetup] Tackle push hitbox + PlayerKnockbackReceiver wired on all raptor enemy prefabs + Player.");
     }
 
     [MenuItem("ASTRA EDEN/Enemies/Setup Tackle Push On Selected Enemy")]

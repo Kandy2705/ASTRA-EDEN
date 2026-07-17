@@ -17,12 +17,12 @@ MonoBehaviour:
   archetype: 0
   rank: 0
   zone: 1
-  enemyPrefab: {fileID: 0}
+  enemyPrefab: {fileID: 6399077957897768670, guid: d3374b80ae9b4d73a43d393928a5632e, type: 3}
   portrait: {fileID: 0}
   icon: {fileID: 0}
   baseStats:
     maxHP: 350
-    attack: 45
+    attack: 16
     defense: 20
     poise: 40
     moveSpeed: 7.5
@@ -40,4 +40,5 @@ MonoBehaviour:
   goldMin: 8
   goldMax: 14
   mainLootTable: {fileID: 11400000, guid: fa96205c93a284c9cbb2048da1f6740c, type: 2}
-  description: 
+  description: 'Forest-pack raptor (green Pattern A skin). Fast melee scout for Zone 1.'
+

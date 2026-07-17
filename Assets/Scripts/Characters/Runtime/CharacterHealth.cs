@@ -72,8 +72,9 @@ public class CharacterHealth : MonoBehaviour
             return;
         }
 
+        float finalDamage = ApplyDefenseMitigation(amount);
         float previousHP = runtimeStats.currentHP;
-        runtimeStats.currentHP = Mathf.Max(0f, runtimeStats.currentHP - amount);
+        runtimeStats.currentHP = Mathf.Max(0f, runtimeStats.currentHP - finalDamage);
         Changed?.Invoke(this);
 
         // Chỉ play effect cho player, enemy tự handle visual
@@ -86,6 +87,24 @@ public class CharacterHealth : MonoBehaviour
         {
             Die();
         }
+    }
+
+    /// <summary>
+    /// Giảm dame theo DEF: factor = 100 / (100 + DEF).
+    /// DEF 70 ≈ chặn ~41%; DEF 0 = full. Luôn lọt tối thiểu ~15% raw (trừ đòn 0).
+    /// </summary>
+    float ApplyDefenseMitigation(float rawAmount)
+    {
+        if (runtimeStats == null || rawAmount <= 0f)
+        {
+            return rawAmount;
+        }
+
+        float def = Mathf.Max(0f, runtimeStats.defense);
+        float factor = 100f / (100f + def);
+        float mitigated = rawAmount * factor;
+        // Floor: vẫn nhận ít nhất 15% raw — DEF không tank tuyệt đối.
+        return Mathf.Max(rawAmount * 0.15f, mitigated);
     }
 
     // Giữ overload cũ cho tương thích

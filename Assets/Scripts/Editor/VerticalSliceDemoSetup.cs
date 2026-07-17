@@ -341,15 +341,16 @@ public static class VerticalSliceDemoSetup
         spawnedParent.transform.SetParent(root.transform, false);
 
         SerializedObject so = new SerializedObject(spawner);
-        so.FindProperty("defaultEnemyPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(EnemyPrefabPath);
+        so.FindProperty("defaultEnemyPrefab").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefab/Enemy_WildClawRaptor.prefab");
         so.FindProperty("defaultEnemyData").objectReferenceValue =
-            LoadEnemyData("Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyScavengerLizard.asset");
+            LoadEnemyData("Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyWildClawRaptor.asset");
         so.FindProperty("spawnedEnemiesParent").objectReferenceValue = spawnedParent.transform;
         so.ApplyModifiedPropertiesWithoutUndo();
 
-        CreateEnemySpawnPoint(root.transform, "Spawn_Melee_01", pivot + new Vector3(10f, 0f, 8f),
-            LoadEnemyData("Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyScavengerLizard.asset"), false);
-        CreateEnemySpawnPoint(root.transform, "Spawn_Melee_02", pivot + new Vector3(-12f, 0f, 6f),
+        CreateEnemySpawnPoint(root.transform, "Spawn_WildClaw_01", pivot + new Vector3(10f, 0f, 8f),
+            LoadEnemyData("Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyWildClawRaptor.asset"), false);
+        CreateEnemySpawnPoint(root.transform, "Spawn_Fang_01", pivot + new Vector3(-12f, 0f, 6f),
             LoadEnemyData("Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyFangRaptor.asset"), false);
         CreateEnemySpawnPoint(root.transform, "Spawn_Ranged_01", pivot + new Vector3(16f, 0f, -6f),
             LoadEnemyData("Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyYoungSpitter.asset"), false);

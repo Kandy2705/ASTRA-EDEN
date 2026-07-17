@@ -142,6 +142,35 @@ public class EnemyAIController : MonoBehaviour
     public AIState State => currentState;
     public EnemyData Data => enemyData;
 
+    /// <summary>
+    /// Spawn gắn vào Patrol (child local 0,0,0). Agent chỉ bật khi mesh sát + không teleport.
+    /// </summary>
+    bool spawnPinnedToPatrol;
+    bool agentModeActive;
+    Transform homePatrolPoint;
+    Transform cageParent;
+    Vector3 lockedSpawnPosition;
+    Vector3 lastFrameWorldPos;
+    int pinHoldFrames = 20;
+    int transformPatrolIndex;
+    /// <summary>Hysteresis: đứng trong tầm đánh, chỉ chase lại khi player ra khỏi + buffer.</summary>
+    bool holdingInAttackRange;
+    float nextAgentRecoverTime;
+    /// <summary>Frame này có bước transform (fallback) — dùng cho anim blend.</summary>
+    bool transformMovedThisFrame;
+
+    const float StrictAgentSnap = 0.75f;
+    /// <summary>Chase/combat: cho phép snap NavMesh rộng hơn spawn (vẫn &lt; rìa 12–24m).</summary>
+    const float CombatAgentSnap = 2.5f;
+    const float AntiTeleportDistance = 4f;
+    /// <summary>Stopping distance khi patrol/return — nhỏ, tránh phanh sớm rồi giật.</summary>
+    const float PatrolStoppingDistance = 0.3f;
+    /// <summary>Stopping distance khi chase — range thật do TickChase kiểm soát (hysteresis).</summary>
+    const float ChaseStoppingDistance = 0.15f;
+    /// <summary>Buffer ra khỏi AttackRange mới chạy lại — chống stop/start giựt giựt.</summary>
+    const float AttackRangeHoldExitBuffer = 0.45f;
+    const float AgentRecoverCooldown = 0.35f;
+
     /// <summary>Gọi ngay sau Instantiate, trước Start(), để gán EnemyData + patrol từ spawn point.</summary>
     public void ApplySpawnConfiguration(EnemyData data, Transform[] patrolPts)
     {
@@ -154,6 +183,77 @@ public class EnemyAIController : MonoBehaviour
         if (patrolPts != null && patrolPts.Length > 0)
         {
             patrolPoints = patrolPts;
+        }
+    }
+
+    /// <summary>
+    /// Enemy đang là child của Patrol (local 0,0,0).
+    /// Giữ pin vài frame, rồi unparent ra cage + bật agent (snap chặt) để tuần tra.
+    /// </summary>
+    public void BindSpawnToPatrolPoint(Transform patrolPoint, Transform moveParent, Transform[] allPatrols)
+    {
+        homePatrolPoint = patrolPoint;
+        cageParent = moveParent != null ? moveParent : patrolPoint != null ? patrolPoint.parent : null;
+        spawnPinnedToPatrol = true;
+        pinHoldFrames = 20;
+        agentModeActive = false;
+
+        if (allPatrols != null && allPatrols.Length > 0)
+        {
+            patrolPoints = allPatrols;
+        }
+
+        if (agent == null)
+        {
+            agent = GetComponent<NavMeshAgent>();
+        }
+
+        ForceDisableAgent();
+
+        if (patrolPoint != null)
+        {
+            transform.SetParent(patrolPoint, false);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+        }
+
+        lockedSpawnPosition = transform.position;
+        lastFrameWorldPos = lockedSpawnPosition;
+
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.detectCollisions = true;
+        }
+    }
+
+    /// <summary>Khóa theo world (fallback random spawn).</summary>
+    public void LockSpawnPosition(Vector3 worldPosition)
+    {
+        spawnPinnedToPatrol = false;
+        lockedSpawnPosition = worldPosition;
+        transform.position = worldPosition;
+        if (agent == null)
+        {
+            agent = GetComponent<NavMeshAgent>();
+        }
+
+        agentModeActive = TryActivateAgentStrict(StrictAgentSnap);
+    }
+
+    // Compat cũ
+    public void LockSpawnLocal(Transform parent, Vector3 localPosition)
+    {
+        if (parent != null)
+        {
+            // Tìm patrol gần local này? Fallback: parent + local.
+            transform.SetParent(parent, false);
+            transform.localPosition = localPosition;
+            BindSpawnToPatrolPoint(null, parent, patrolPoints);
+            transform.SetParent(parent, false);
+            transform.localPosition = localPosition;
+            lockedSpawnPosition = transform.position;
         }
     }
     public float MoveSpeed => enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.moveSpeed : agent != null ? agent.speed : 3f;
@@ -225,7 +325,22 @@ public class EnemyAIController : MonoBehaviour
         ApplyEnemyDataToAgent();
         currentPoise = MaxPoise;
 
-        originPosition = transform.position;
+        if (spawnPinnedToPatrol)
+        {
+            // Giữ pin dưới Patrol (local 0) — agent vẫn tắt.
+            PinToHomePatrol();
+            originPosition = transform.position;
+            ForceDisableAgent();
+        }
+        else
+        {
+            EnsureAgentOnNavMesh(logIfFailed: true);
+            agentModeActive = agent != null && agent.enabled && agent.isOnNavMesh;
+            originPosition = transform.position;
+        }
+
+        lastFrameWorldPos = transform.position;
+
         var playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null) player = playerObj.transform;
 
@@ -245,12 +360,240 @@ public class EnemyAIController : MonoBehaviour
 
         if (sensor != null) sensor.Configure(enemyData);
 
-        if (debugLogStateMachine)
-        {
-            Debug.Log($"[AI:{name}] STARTED | enemyData={(enemyData != null ? enemyData.enemyId : "<null>")} agent={(agent != null)} health={(health != null)} sensor={(sensor != null)} hitbox={(attackHitbox != null)} animator={(animator != null)}", this);
-        }
+        Debug.Log(
+            $"[AI:{name}] STARTED | pinned={spawnPinnedToPatrol} parent={(transform.parent != null ? transform.parent.name : "null")} " +
+            $"local={transform.localPosition} world={transform.position} " +
+            $"agentMode={agentModeActive} patrol={(patrolPoints != null ? patrolPoints.Length : 0)}",
+            this);
 
         EnterState(AIState.Spawn);
+    }
+
+    void LateUpdate()
+    {
+        // 1) Giữ pin dưới Patrol vài frame đầu (local = 0,0,0).
+        if (spawnPinnedToPatrol && pinHoldFrames > 0)
+        {
+            pinHoldFrames--;
+            ForceDisableAgent();
+            PinToHomePatrol();
+            lastFrameWorldPos = transform.position;
+            return;
+        }
+
+        // 2) Hết pin hold → unparent ra cage + bật agent (snap chặt) 1 lần.
+        if (spawnPinnedToPatrol && pinHoldFrames <= 0 && !agentModeActive)
+        {
+            ReleasePinAndTryAgent();
+        }
+
+        // 3) Anti-teleport: agent nhảy > 4m / frame → hủy agent, kéo lại.
+        // Không re-pin về Patrol (sẽ đứng giật / bị ép local 0) — chỉ giữ chỗ đang đứng.
+        if (agentModeActive && agent != null && agent.enabled)
+        {
+            float jump = Vector3.Distance(transform.position, lastFrameWorldPos);
+            if (jump > AntiTeleportDistance)
+            {
+                Debug.LogWarning(
+                    $"[AI:{name}] Anti-teleport: nhảy {jump:F1}m → tắt agent, trả về trước đó.",
+                    this);
+                transform.position = lastFrameWorldPos;
+                ForceDisableAgent();
+            }
+        }
+
+        lastFrameWorldPos = transform.position;
+    }
+
+    void PinToHomePatrol()
+    {
+        if (homePatrolPoint == null)
+        {
+            return;
+        }
+
+        if (transform.parent != homePatrolPoint)
+        {
+            transform.SetParent(homePatrolPoint, false);
+        }
+
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+        lockedSpawnPosition = transform.position;
+    }
+
+    /// <summary>
+    /// Bỏ pin khỏi Patrol, parent về cage, bật agent nếu mesh sát.
+    /// </summary>
+    void ReleasePinAndTryAgent()
+    {
+        spawnPinnedToPatrol = false;
+        Vector3 world = transform.position;
+
+        if (cageParent != null)
+        {
+            transform.SetParent(cageParent, true);
+        }
+        else
+        {
+            transform.SetParent(null, true);
+        }
+
+        transform.position = world;
+        lockedSpawnPosition = world;
+        originPosition = world;
+
+        agentModeActive = TryActivateAgentStrict(StrictAgentSnap);
+        if (agentModeActive)
+        {
+            Debug.Log($"[AI:{name}] Released pin → Agent mode ON @ {transform.position}", this);
+        }
+        else
+        {
+            ForceDisableAgent();
+            Debug.LogWarning(
+                $"[AI:{name}] Released pin, không có NavMesh sát → transform patrol.",
+                this);
+        }
+
+        lastFrameWorldPos = transform.position;
+    }
+
+    bool UseTransformOnlyMovement()
+    {
+        return spawnPinnedToPatrol
+               || !agentModeActive
+               || agent == null
+               || !agent.enabled
+               || !agent.isOnNavMesh;
+    }
+
+    /// <summary>
+    /// True only when NavMeshAgent APIs like remainingDistance / pathPending are safe to call.
+    /// </summary>
+    bool IsAgentNavigable()
+    {
+        return agent != null && agent.enabled && agent.isOnNavMesh;
+    }
+
+    void ForceDisableAgent()
+    {
+        if (agent == null)
+        {
+            agent = GetComponent<NavMeshAgent>();
+        }
+
+        if (agent != null && agent.enabled)
+        {
+            agent.enabled = false;
+        }
+
+        agentModeActive = false;
+    }
+
+    /// <summary>Bật agent + Warp chỉ khi mesh lệch ≤ maxSnap. Không sample rộng.</summary>
+    bool TryActivateAgentStrict(float maxSnap, bool startStopped = true)
+    {
+        if (agent == null)
+        {
+            agent = GetComponent<NavMeshAgent>();
+        }
+
+        if (agent == null)
+        {
+            return false;
+        }
+
+        Vector3 world = transform.position;
+        if (!NavMesh.SamplePosition(world, out NavMeshHit hit, maxSnap, NavMesh.AllAreas))
+        {
+            agent.enabled = false;
+            agentModeActive = false;
+            return false;
+        }
+
+        Vector3 flat = hit.position - world;
+        flat.y = 0f;
+        if (flat.magnitude > maxSnap || Mathf.Abs(hit.position.y - world.y) > maxSnap)
+        {
+            agent.enabled = false;
+            agentModeActive = false;
+            return false;
+        }
+
+        agent.enabled = true;
+        agent.Warp(hit.position);
+
+        // Nếu Warp kéo xa → hủy.
+        if (Vector3.Distance(transform.position, world) > maxSnap + 0.1f)
+        {
+            transform.position = world;
+            agent.enabled = false;
+            agentModeActive = false;
+            return false;
+        }
+
+        if (!agent.isOnNavMesh)
+        {
+            agent.enabled = false;
+            agentModeActive = false;
+            return false;
+        }
+
+        agentModeActive = true;
+        agent.isStopped = startStopped;
+        agent.updatePosition = true;
+        // AI tự xoay (FaceTarget / ApplyMovementFacing) — tắt agent rotation để khỏi đụng/giật.
+        agent.updateRotation = false;
+        agent.autoBraking = true;
+        float spd = MoveSpeed;
+        if (spd > 0.01f)
+        {
+            agent.speed = spd;
+        }
+
+        return true;
+    }
+
+    bool TryEnableAgentForCombat(float maxSnap = CombatAgentSnap)
+    {
+        if (spawnPinnedToPatrol)
+        {
+            ReleasePinAndTryAgent();
+        }
+
+        // agentModeActive có thể stale (true nhưng agent đã disable) — luôn check isOnNavMesh.
+        if (IsAgentNavigable())
+        {
+            agentModeActive = true;
+            spawnPinnedToPatrol = false;
+            agent.updatePosition = true;
+            agent.isStopped = false;
+            if (MoveSpeed > 0.01f)
+            {
+                agent.speed = MoveSpeed;
+            }
+
+            return true;
+        }
+
+        bool ok = TryActivateAgentStrict(maxSnap, startStopped: false);
+        if (ok)
+        {
+            spawnPinnedToPatrol = false;
+            agent.isStopped = false;
+            agent.updatePosition = true;
+            if (MoveSpeed > 0.01f)
+            {
+                agent.speed = MoveSpeed;
+            }
+        }
+        else
+        {
+            agentModeActive = false;
+        }
+
+        return ok;
     }
 
     void OnDestroy()
@@ -264,14 +607,45 @@ public class EnemyAIController : MonoBehaviour
 
     void ApplyEnemyDataToAgent()
     {
-        if (!initializeFromEnemyData || enemyData == null || enemyData.baseStats == null || agent == null) return;
+        if (!initializeFromEnemyData || enemyData == null || enemyData.baseStats == null || agent == null)
+        {
+            return;
+        }
+
+        // Không bật agent ở đây — PlaceExactlyAt/LockSpawnPosition quyết định enable.
+        bool wasEnabled = agent.enabled;
         agent.speed = enemyData.baseStats.moveSpeed;
         agent.angularSpeed = enemyData.baseStats.turnSpeed;
-        // Stop earlier hơn AttackRange một chút để enemy đứng trong tầm đánh, không bị "đứng rìa" thoát range khi animation đẩy.
-        agent.stoppingDistance = Mathf.Max(0.1f, AttackRange * 0.9f);
-        if (flipForward180) agent.updateRotation = false;
-        if (debugLogStateMachine)
-            Debug.Log($"[AI:{name}] ApplyEnemyData | speed={agent.speed:F2} angularSpeed={agent.angularSpeed:F0} stopDist={agent.stoppingDistance:F2} effectiveAtkRange={AttackRange:F2} (data.attackRange={enemyData.attackRange:F2}) atkCooldown={AttackCooldown:F2} attackPatterns={(enemyData.attackPatterns != null ? enemyData.attackPatterns.Count : 0)}", this);
+        // KHÔNG set stoppingDistance = AttackRange: agent phanh sớm + TickChase Stop → giựt giựt.
+        agent.stoppingDistance = ChaseStoppingDistance;
+        agent.updateRotation = false;
+        agent.autoBraking = true;
+
+        // Giữ nguyên trạng thái enable (tránh bật lại → snap rìa).
+        agent.enabled = wasEnabled;
+    }
+
+    void ConfigureAgentStoppingForState(AIState state)
+    {
+        if (agent == null)
+        {
+            return;
+        }
+
+        switch (state)
+        {
+            case AIState.Patrol:
+            case AIState.ReturnToOrigin:
+                agent.stoppingDistance = PatrolStoppingDistance;
+                break;
+            case AIState.Chase:
+            case AIState.Retreat:
+                agent.stoppingDistance = ChaseStoppingDistance;
+                break;
+            default:
+                agent.stoppingDistance = ChaseStoppingDistance;
+                break;
+        }
     }
 
     void Update()
@@ -279,6 +653,7 @@ public class EnemyAIController : MonoBehaviour
         debugState = currentState;
         debugPoise = currentPoise;
         debugLastKnownHP = lastKnownHP;
+        transformMovedThisFrame = false;
 
         stateTimer += Time.deltaTime;
         if (attackCooldownTimer > 0f) attackCooldownTimer -= Time.deltaTime;
@@ -343,7 +718,7 @@ public class EnemyAIController : MonoBehaviour
     /// hoặc khi state Patrol/Return/Retreat không có target để FaceTarget.</summary>
     void ApplyMovementFacing()
     {
-        if (agent == null) return;
+        if (!IsAgentNavigable()) return;
         if (agent.velocity.sqrMagnitude <= movingThreshold * movingThreshold) return;
 
         // Khi đang chase/attack/detect → có player, đã có FaceTarget xử lý.
@@ -375,36 +750,70 @@ public class EnemyAIController : MonoBehaviour
         {
             case AIState.Spawn:
                 StopAgent();
+                if (spawnPinnedToPatrol)
+                {
+                    PinToHomePatrol();
+                }
+
                 break;
             case AIState.Idle:
+                holdingInAttackRange = false;
                 StopAgent();
                 idleTimer = idleDuration;
                 break;
             case AIState.Patrol:
-                if (agent != null) agent.speed = MoveSpeed * patrolSpeedRatio;
-                GoToNextPatrolPoint();
+                holdingInAttackRange = false;
+                ConfigureAgentStoppingForState(AIState.Patrol);
+                if (IsAgentNavigable())
+                {
+                    agent.speed = MoveSpeed * patrolSpeedRatio;
+                    agent.isStopped = false;
+                    GoToNextPatrolPoint();
+                }
+                // else: TickPatrolByTransform
                 break;
             case AIState.Detect:
-                StopAgent();
+                holdingInAttackRange = false;
+                TryEnableAgentForCombat(CombatAgentSnap);
+
+                if (IsAgentNavigable())
+                {
+                    StopAgent();
+                }
+
                 FaceTarget();
                 break;
             case AIState.Chase:
-                if (agent != null) agent.speed = MoveSpeed;
+                holdingInAttackRange = false;
+                ConfigureAgentStoppingForState(AIState.Chase);
+                // Luôn thử bật agent (kể cả khi agentModeActive stale).
+                TryEnableAgentForCombat(CombatAgentSnap);
+
+                if (IsAgentNavigable())
+                {
+                    agent.speed = Mathf.Max(0.1f, MoveSpeed);
+                    agent.isStopped = false;
+                    agent.updatePosition = true;
+                }
+
                 lostSightTimer = 0f;
                 break;
             case AIState.Attack:
-                StopAgent();
+                holdingInAttackRange = true;
+                HoldAgentStill();
                 BeginAttackPattern();
                 break;
             case AIState.Hurt:
                 EndTackle();
-                StopAgent();
+                holdingInAttackRange = false;
+                HoldAgentStill();
                 CancelActiveAttack();
                 hitStunTimer = hitStunDuration;
                 PlayHitAnimation();
                 break;
             case AIState.Stagger:
-                StopAgent();
+                holdingInAttackRange = false;
+                HoldAgentStill();
                 CancelActiveAttack();
                 staggerTimer = staggerDuration;
                 if (animator != null && HasParam(StaggerHash, AnimatorControllerParameterType.Trigger))
@@ -414,10 +823,24 @@ public class EnemyAIController : MonoBehaviour
                 }
                 break;
             case AIState.Retreat:
-                if (agent != null) agent.speed = MoveSpeed * retreatSpeedRatio;
+                holdingInAttackRange = false;
+                ConfigureAgentStoppingForState(AIState.Retreat);
+                if (IsAgentNavigable())
+                {
+                    agent.speed = MoveSpeed * retreatSpeedRatio;
+                    agent.isStopped = false;
+                }
                 break;
             case AIState.ReturnToOrigin:
-                if (agent != null)
+                holdingInAttackRange = false;
+                ConfigureAgentStoppingForState(AIState.ReturnToOrigin);
+                if (!IsAgentNavigable() && Time.time >= nextAgentRecoverTime)
+                {
+                    nextAgentRecoverTime = Time.time + AgentRecoverCooldown;
+                    TryEnableAgentForCombat(StrictAgentSnap);
+                }
+
+                if (IsAgentNavigable())
                 {
                     agent.speed = MoveSpeed;
                     SetDestinationSafe(originPosition);
@@ -438,22 +861,135 @@ public class EnemyAIController : MonoBehaviour
     void TickIdle()
     {
         if (CheckDetect()) return;
+
+        // Agent mode: recover snap chặt, throttle — Warp mỗi frame = giựt.
+        if (agentModeActive && agent != null && agent.enabled && !agent.isOnNavMesh
+            && Time.time >= nextAgentRecoverTime)
+        {
+            nextAgentRecoverTime = Time.time + AgentRecoverCooldown;
+            if (!TryActivateAgentStrict(StrictAgentSnap))
+            {
+                agentModeActive = false;
+            }
+        }
+
+        // Idle: giữ đứng yên, không để residual path/velocity kéo.
+        if (IsAgentNavigable() && (!agent.isStopped || agent.hasPath))
+        {
+            StopAgent();
+        }
+
         idleTimer -= Time.deltaTime;
         if (idleTimer <= 0f && patrolPoints != null && patrolPoints.Length > 0)
+        {
             EnterState(AIState.Patrol);
+        }
     }
 
     void TickPatrol()
     {
         if (CheckDetect()) return;
-        if (agent == null || patrolPoints == null || patrolPoints.Length == 0)
+        if (patrolPoints == null || patrolPoints.Length == 0)
         {
             EnterState(AIState.Idle);
             return;
         }
-        if (!agent.pathPending && agent.remainingDistance <= Mathf.Max(agent.stoppingDistance, patrolPointTolerance))
+
+        // Ưu tiên NavMeshAgent khi agentModeActive.
+        if (IsAgentNavigable())
         {
+            float arriveTol = Mathf.Max(agent.stoppingDistance, patrolPointTolerance);
+
+            if (!agent.pathPending
+                && (agent.pathStatus == NavMeshPathStatus.PathInvalid
+                    || (agent.pathStatus == NavMeshPathStatus.PathPartial && agent.remainingDistance < 0.05f)))
+            {
+                GoToNextPatrolPoint();
+                return;
+            }
+
+            if (!agent.pathPending && agent.hasPath
+                && agent.remainingDistance <= arriveTol)
+            {
+                EnterState(AIState.Idle);
+                return;
+            }
+
+            // Hết path / không path nhưng đã gần điểm patrol (transform).
+            if (!agent.pathPending && !agent.hasPath && patrolPoints != null && patrolPoints.Length > 0)
+            {
+                Transform nearest = patrolPoints[(patrolIndex + patrolPoints.Length - 1) % patrolPoints.Length];
+                if (nearest != null && HorizontalDistance(nearest.position) <= arriveTol)
+                {
+                    EnterState(AIState.Idle);
+                }
+            }
+
+            return;
+        }
+
+        // Fallback: transform (không có mesh sát).
+        TickPatrolByTransform();
+    }
+
+    /// <summary>Patrol không cần NavMesh — di chuyển thẳng tới điểm (khi agent off-mesh).</summary>
+    void TickPatrolByTransform()
+    {
+        if (patrolPoints == null || patrolPoints.Length == 0)
+        {
+            return;
+        }
+
+        ForceDisableAgent();
+
+        Transform target = patrolPoints[transformPatrolIndex % patrolPoints.Length];
+        if (target == null)
+        {
+            transformPatrolIndex = (transformPatrolIndex + 1) % patrolPoints.Length;
+            return;
+        }
+
+        // Đi theo world của Patrol (local của enemy sẽ đổi — đúng vì đang di chuyển).
+        Vector3 dest = target.position;
+        Vector3 pos = transform.position;
+        Vector3 flat = dest - pos;
+        flat.y = 0f;
+        float dist = flat.magnitude;
+        float speed = MoveSpeed * Mathf.Max(0.15f, patrolSpeedRatio);
+
+        if (dist <= Mathf.Max(patrolPointTolerance, 0.35f))
+        {
+            // Snap đúng điểm đích (cùng parent hoặc world).
+            if (target.parent == transform.parent)
+            {
+                transform.localPosition = target.localPosition;
+            }
+            else
+            {
+                transform.position = target.position;
+            }
+
+            transformPatrolIndex = (transformPatrolIndex + 1) % patrolPoints.Length;
             EnterState(AIState.Idle);
+            return;
+        }
+
+        Vector3 step = flat.normalized * (speed * Time.deltaTime);
+        if (step.magnitude > dist)
+        {
+            step = flat;
+        }
+
+        transform.position = pos + step;
+        transformMovedThisFrame = step.sqrMagnitude > 0.000001f;
+
+        if (flat.sqrMagnitude > 0.001f)
+        {
+            Vector3 facing = flipForward180 ? -flat : flat;
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                Quaternion.LookRotation(facing.normalized),
+                10f * Time.deltaTime);
         }
     }
 
@@ -472,8 +1008,8 @@ public class EnemyAIController : MonoBehaviour
 
         if (debugLogChaseTick)
         {
-            float rem = (agent != null && !agent.pathPending) ? agent.remainingDistance : -1f;
-            float vel = agent != null ? agent.velocity.magnitude : 0f;
+            float rem = (IsAgentNavigable() && !agent.pathPending) ? agent.remainingDistance : -1f;
+            float vel = IsAgentNavigable() ? agent.velocity.magnitude : 0f;
             bool inRange = distance <= AttackRange;
             bool cdReady = attackCooldownTimer <= 0f;
             Debug.Log($"[AI:{name}] Chase tick | dist={distance:F2} atkRange={AttackRange:F2} inRange={inRange} cdReady={cdReady} cd={attackCooldownTimer:F2} agentVel={vel:F2} remDist={rem:F2} canSee={canSee}", this);
@@ -499,21 +1035,122 @@ public class EnemyAIController : MonoBehaviour
 
         if (CanStartAttack(distance))
         {
+            holdingInAttackRange = false;
             EnterState(AIState.Attack);
             return;
         }
 
-        // Đã trong tầm đánh nhưng cooldown chưa hết → đứng yên face player, không chạy lung tung.
-        // Tránh case "cắn xong chạy thêm vài bước rồi mới cắn tiếp".
-        if (distance <= AttackRange)
+        // Hysteresis: vào hold khi <= AttackRange, chỉ chase lại khi > AttackRange + buffer.
+        // Tránh StopAgent/SetDestination liên tục → giựt giựt như bị ép đứng.
+        float holdExit = AttackRange + AttackRangeHoldExitBuffer;
+        if (holdingInAttackRange)
         {
-            StopAgent();
+            if (distance > holdExit)
+            {
+                holdingInAttackRange = false;
+            }
+            else
+            {
+                HoldAgentStill();
+                FaceTarget();
+                return;
+            }
+        }
+        else if (distance <= AttackRange)
+        {
+            holdingInAttackRange = true;
+            HoldAgentStill();
             FaceTarget();
             return;
         }
 
-        SetDestinationSafe(player.position);
+        // --- Di chuyển thật về phía player ---
+        ChaseMoveTowardPlayer(distance);
         FaceTarget();
+    }
+
+    /// <summary>
+    /// Chase: ưu tiên NavMeshAgent; nếu off-mesh / isStopped kẹt / path hỏng → đi bằng transform.
+    /// Tránh case "chỉ chạy animation, đứng yên".
+    /// </summary>
+    void ChaseMoveTowardPlayer(float distanceToPlayer)
+    {
+        if (player == null)
+        {
+            return;
+        }
+
+        if (!IsAgentNavigable())
+        {
+            if (Time.time >= nextAgentRecoverTime)
+            {
+                nextAgentRecoverTime = Time.time + AgentRecoverCooldown;
+                TryEnableAgentForCombat(CombatAgentSnap);
+            }
+        }
+
+        if (IsAgentNavigable())
+        {
+            agent.updatePosition = true;
+            agent.updateRotation = false;
+            agent.speed = Mathf.Max(0.1f, MoveSpeed);
+            if (agent.isStopped)
+            {
+                agent.isStopped = false;
+            }
+
+            // SetDestination trực tiếp (không throttle fail im lặng).
+            if (!agent.SetDestination(player.position))
+            {
+                // Path fail → transform bước.
+                MoveTransformTowards(player.position, MoveSpeed);
+                return;
+            }
+
+            // Agent on mesh nhưng đứng im + path hỏng: fallback transform.
+            // PathPartial vẫn để agent tự xử lý — không ForceDisable.
+            bool stuck = !agent.pathPending
+                         && agent.velocity.sqrMagnitude < 0.04f
+                         && distanceToPlayer > AttackRange + 0.25f;
+            if (stuck && (!agent.hasPath || agent.pathStatus == NavMeshPathStatus.PathInvalid))
+            {
+                MoveTransformTowards(player.position, MoveSpeed);
+            }
+
+            return;
+        }
+
+        // Không có NavMesh: vẫn dí player bằng transform (anim + vị trí khớp).
+        MoveTransformTowards(player.position, MoveSpeed);
+    }
+
+    /// <summary>Di chuyển thẳng world (không agent). Dùng khi off-mesh hoặc path fail.</summary>
+    void MoveTransformTowards(Vector3 worldTarget, float speed)
+    {
+        // Agent bật + updatePosition sẽ kéo transform về — tắt agent trước khi step.
+        if (agent != null && agent.enabled)
+        {
+            ForceDisableAgent();
+        }
+
+        Vector3 pos = transform.position;
+        Vector3 flat = worldTarget - pos;
+        flat.y = 0f;
+        float dist = flat.magnitude;
+        if (dist < 0.001f)
+        {
+            return;
+        }
+
+        float stepLen = Mathf.Max(0.1f, speed) * Time.deltaTime;
+        Vector3 step = flat.normalized * stepLen;
+        if (step.magnitude > dist)
+        {
+            step = flat;
+        }
+
+        transform.position = pos + step;
+        transformMovedThisFrame = step.sqrMagnitude > 0.000001f;
     }
 
     void TickAttack()
@@ -582,16 +1219,75 @@ public class EnemyAIController : MonoBehaviour
         }
 
         Vector3 away = transform.position + (transform.position - player.position).normalized * 2.5f;
-        SetDestinationSafe(away);
+        if (IsAgentNavigable())
+        {
+            SetDestinationSafe(away, CombatAgentSnap);
+        }
+        else
+        {
+            MoveTransformTowards(away, MoveSpeed * retreatSpeedRatio);
+        }
     }
 
     void TickReturn()
     {
         if (CheckDetect()) return;
-        if (agent == null) { EnterState(AIState.Idle); return; }
-        if (!agent.pathPending && agent.remainingDistance <= Mathf.Max(agent.stoppingDistance, patrolPointTolerance))
+
+        float arriveTol = Mathf.Max(PatrolStoppingDistance, patrolPointTolerance);
+
+        // NavMesh path: only query remainingDistance when agent is active + on mesh.
+        if (IsAgentNavigable())
+        {
+            if (!agent.pathPending
+                && ((!agent.hasPath && HorizontalDistance(originPosition) <= arriveTol)
+                    || (agent.hasPath && agent.remainingDistance <= arriveTol)))
+            {
+                EnterState(AIState.Idle);
+            }
+
+            return;
+        }
+
+        // Off-mesh: throttle re-activate (Warp mỗi frame = giựt), else walk by transform.
+        if (Time.time >= nextAgentRecoverTime)
+        {
+            nextAgentRecoverTime = Time.time + AgentRecoverCooldown;
+            if (TryActivateAgentStrict(StrictAgentSnap))
+            {
+                agent.speed = MoveSpeed;
+                ConfigureAgentStoppingForState(AIState.ReturnToOrigin);
+                SetDestinationSafe(originPosition);
+                return;
+            }
+
+            ForceDisableAgent();
+        }
+
+        Vector3 pos = transform.position;
+        Vector3 flat = originPosition - pos;
+        flat.y = 0f;
+        float dist = flat.magnitude;
+        if (dist <= arriveTol)
         {
             EnterState(AIState.Idle);
+            return;
+        }
+
+        Vector3 step = flat.normalized * (MoveSpeed * Time.deltaTime);
+        if (step.magnitude > dist)
+        {
+            step = flat;
+        }
+
+        transform.position = pos + step;
+        transformMovedThisFrame = step.sqrMagnitude > 0.000001f;
+        if (flat.sqrMagnitude > 0.001f)
+        {
+            Vector3 facing = flipForward180 ? -flat : flat;
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                Quaternion.LookRotation(facing.normalized),
+                10f * Time.deltaTime);
         }
     }
 
@@ -639,6 +1335,13 @@ public class EnemyAIController : MonoBehaviour
     {
         if (player == null || sensor == null) return false;
         if (!sensor.CanSense(player, out _)) return false;
+
+        // Combat: thử bật agent tại chỗ (không kéo xa).
+        if (spawnPinnedToPatrol || !agentModeActive || (agent != null && !agent.enabled))
+        {
+            TryEnableAgentForCombat(1.25f);
+        }
+
         EnterState(AIState.Detect);
         return true;
     }
@@ -846,25 +1549,202 @@ public class EnemyAIController : MonoBehaviour
     // ---------- Movement utilities ----------
     void GoToNextPatrolPoint()
     {
-        if (patrolPoints == null || patrolPoints.Length == 0) return;
-        var target = patrolPoints[patrolIndex];
-        patrolIndex = (patrolIndex + 1) % patrolPoints.Length;
-        if (target != null) SetDestinationSafe(target.position);
+        if (patrolPoints == null || patrolPoints.Length == 0)
+        {
+            return;
+        }
+
+        for (int attempt = 0; attempt < patrolPoints.Length; attempt++)
+        {
+            Transform target = patrolPoints[patrolIndex];
+            patrolIndex = (patrolIndex + 1) % patrolPoints.Length;
+            if (target == null)
+            {
+                continue;
+            }
+
+            // Destination: đúng Patrol, chỉ snap NavMesh rất gần (≤1.25m) — không kéo ra rìa.
+            Vector3 dest = target.position;
+            if (NavMesh.SamplePosition(dest, out NavMeshHit hit, 1.25f, NavMesh.AllAreas))
+            {
+                Vector3 flat = hit.position - dest;
+                flat.y = 0f;
+                if (flat.magnitude <= 1.25f && Mathf.Abs(hit.position.y - dest.y) <= 1.5f)
+                {
+                    dest = hit.position;
+                }
+            }
+
+            if (agentModeActive && agent != null && agent.enabled && agent.isOnNavMesh)
+            {
+                SetDestinationSafe(dest);
+            }
+
+            return;
+        }
     }
 
-    void SetDestinationSafe(Vector3 pos)
+    void SetDestinationSafe(Vector3 pos, float recoverSnap = -1f)
     {
-        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        if (agent == null)
+        {
+            return;
+        }
+
+        if (!IsAgentNavigable())
+        {
+            // Chỉ recover snap chặt — tuyệt đối không sample 12–24m. Throttle để khỏi Warp giật.
+            if (Time.time < nextAgentRecoverTime)
+            {
+                return;
+            }
+
+            nextAgentRecoverTime = Time.time + AgentRecoverCooldown;
+            float snap = recoverSnap > 0f ? recoverSnap : StrictAgentSnap;
+            if (!TryActivateAgentStrict(snap, startStopped: false) || !IsAgentNavigable())
+            {
+                return;
+            }
+        }
+
+        agent.updatePosition = true;
         agent.isStopped = false;
+        if (agent.speed < 0.05f && MoveSpeed > 0.05f)
+        {
+            agent.speed = MoveSpeed;
+        }
+
         agent.SetDestination(pos);
     }
 
+    /// <summary>
+    /// Dừng hẳn + xóa path (Idle / Return xong / Knockback).
+    /// </summary>
     void StopAgent()
     {
-        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
-        agent.ResetPath();
+        if (!IsAgentNavigable())
+        {
+            return;
+        }
+
+        if (agent.hasPath)
+        {
+            agent.ResetPath();
+        }
+
         agent.velocity = Vector3.zero;
         agent.isStopped = true;
+    }
+
+    /// <summary>
+    /// Đứng yên trong combat (Chase hold / Attack) — không ResetPath mỗi frame (gây giựt vị trí).
+    /// </summary>
+    void HoldAgentStill()
+    {
+        if (!IsAgentNavigable())
+        {
+            return;
+        }
+
+        if (!agent.isStopped)
+        {
+            agent.isStopped = true;
+        }
+
+        if (agent.velocity.sqrMagnitude > 0.0001f)
+        {
+            agent.velocity = Vector3.zero;
+        }
+    }
+
+    /// <summary>
+    /// Warp agent lên NavMesh gần nhất. Trả về true nếu isOnNavMesh.
+    /// </summary>
+    public bool EnsureAgentOnNavMesh(bool logIfFailed, float maxHorizontalPull = 3.5f)
+    {
+        if (agent == null)
+        {
+            return false;
+        }
+
+        if (!agent.enabled)
+        {
+            agent.enabled = true;
+        }
+
+        if (agent.isOnNavMesh)
+        {
+            return true;
+        }
+
+        Vector3 origin = transform.position;
+        // Không sample quá rộng — tránh kéo enemy từ Patrol ra rìa nhà/terrain.
+        float[] radii = maxHorizontalPull <= 1.5f
+            ? new[] { 0.5f, 1f, 1.25f }
+            : new[] { 1f, 2f, 3.5f };
+        NavMeshHit best = default;
+        bool found = false;
+        float bestScore = float.MaxValue;
+        float maxVerticalPull = maxHorizontalPull <= 1.5f ? 1.25f : 2f;
+
+        for (int i = 0; i < radii.Length; i++)
+        {
+            if (!NavMesh.SamplePosition(origin, out NavMeshHit hit, radii[i], NavMesh.AllAreas))
+            {
+                continue;
+            }
+
+            float dy = Mathf.Abs(hit.position.y - origin.y);
+            Vector3 flat = hit.position - origin;
+            flat.y = 0f;
+            if (dy > maxVerticalPull || flat.magnitude > maxHorizontalPull)
+            {
+                continue;
+            }
+
+            float score = dy * 4f + flat.magnitude;
+            if (score < bestScore)
+            {
+                bestScore = score;
+                best = hit;
+                found = true;
+            }
+
+            if (flat.magnitude <= 1f)
+            {
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            if (logIfFailed)
+            {
+                Debug.LogWarning(
+                    $"[AI:{name}] Không tìm thấy NavMesh gần {origin} (≤{maxHorizontalPull}m). " +
+                    "Đứng im — bake NavMesh / đặt Patrol trên mesh xanh.",
+                    this);
+            }
+
+            return false;
+        }
+
+        agent.Warp(best.position);
+        transform.position = best.position;
+
+        if (!agent.isOnNavMesh && logIfFailed)
+        {
+            Debug.LogWarning($"[AI:{name}] Warp xong vẫn !isOnNavMesh @ {best.position}.", this);
+        }
+
+        return agent.isOnNavMesh;
+    }
+
+    static float HorizontalDistanceXZ(Vector3 a, Vector3 b)
+    {
+        a.y = 0f;
+        b.y = 0f;
+        return Vector3.Distance(a, b);
     }
 
     void FaceTarget()
@@ -886,14 +1766,31 @@ public class EnemyAIController : MonoBehaviour
 
     float GetTargetBlendForState()
     {
+        // Blend theo vận tốc / bước thật — không fake run khi đứng im.
+        float moving = 0f;
+        if (IsAgentNavigable() && !agent.isStopped)
+        {
+            float spd = Mathf.Max(0.1f, agent.speed);
+            moving = Mathf.Clamp01(agent.velocity.magnitude / spd);
+        }
+        else if (transformMovedThisFrame)
+        {
+            moving = currentState == AIState.Patrol ? 0.55f : 0.9f;
+        }
+
+        if (moving < 0.05f)
+        {
+            return 0f;
+        }
+
         switch (currentState)
         {
             case AIState.Chase:
             case AIState.Retreat:
             case AIState.ReturnToOrigin:
-                return 2f;
+                return Mathf.Lerp(0.5f, 2f, moving);
             case AIState.Patrol:
-                return 1f;
+                return Mathf.Lerp(0.25f, 1f, moving);
             default:
                 return 0f;
         }
@@ -904,7 +1801,8 @@ public class EnemyAIController : MonoBehaviour
         if (animator == null) return;
 
         Vector3 local = Vector3.zero;
-        if (agent != null && agent.velocity.sqrMagnitude > movingThreshold * movingThreshold)
+        if (IsAgentNavigable() && !agent.isStopped
+            && agent.velocity.sqrMagnitude > movingThreshold * movingThreshold)
         {
             local = transform.InverseTransformDirection(agent.velocity.normalized);
             if (flipForward180) { local.x = -local.x; local.z = -local.z; }

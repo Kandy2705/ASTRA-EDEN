@@ -1,6 +1,11 @@
 using UnityEngine;
 using UnityEngine.AI;
 
+/// <summary>
+/// Companion follow player + combat theo lệnh.
+/// Không auto-aggro: chỉ "thấy" enemy khi player bấm lệnh (T attack / G skill)
+/// qua Physics.OverlapSphere tìm CharacterHealth.
+/// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 [DisallowMultipleComponent]
 public class CompanionController : MonoBehaviour
@@ -13,17 +18,22 @@ public class CompanionController : MonoBehaviour
     [SerializeField] private float followSpeed = 4.5f;
 
     [Header("Combat")]
+    [Tooltip("Tầm quét tìm enemy khi bấm lệnh attack (T).")]
     [SerializeField] private float commandAttackDamage = 35f;
     [SerializeField] private float commandAttackRange = 3f;
+    [SerializeField] private float commandDetectRange = 8f;
     [SerializeField] private float commandCooldown = 8f;
     [SerializeField] private float skillDamage = 80f;
     [SerializeField] private float skillRadius = 4f;
     [SerializeField] private float skillCooldown = 20f;
 
+    [Header("State")]
+    [Tooltip("Bật khi đã có owner (player). Prefab để false — Summon/Start sẽ bật.")]
+    [SerializeField] private bool isActive;
+
     NavMeshAgent agent;
     float commandTimer;
     float skillTimer;
-    bool isActive;
 
     public bool IsActive => isActive;
     public float CommandCooldownRemaining => commandTimer;
@@ -38,8 +48,35 @@ public class CompanionController : MonoBehaviour
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
-        agent.speed = followSpeed;
-        agent.stoppingDistance = stopDistance;
+        if (agent != null)
+        {
+            agent.speed = followSpeed;
+            agent.stoppingDistance = stopDistance;
+        }
+    }
+
+    void Start()
+    {
+        // Clone kéo tay vào scene / chưa qua Summon: tự gắn Player.
+        if (!isActive || owner == null)
+        {
+            TryAutoBindPlayer();
+        }
+    }
+
+    void TryAutoBindPlayer()
+    {
+        if (owner != null)
+        {
+            isActive = true;
+            return;
+        }
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            Initialize(player.transform);
+        }
     }
 
     void Update()
@@ -88,7 +125,9 @@ public class CompanionController : MonoBehaviour
             return false;
         }
 
-        Transform target = FindNearestEnemy(commandAttackRange * 2f);
+        // "Thấy" enemy chỉ lúc này — quét collider trong tầm, không có AI look liên tục.
+        float detectRange = Mathf.Max(commandDetectRange, commandAttackRange * 2f);
+        Transform target = FindNearestEnemy(detectRange);
         if (target == null)
         {
             return false;
@@ -101,14 +140,24 @@ public class CompanionController : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(toTarget.normalized);
         }
 
-        CharacterHealth health = target.GetComponentInParent<CharacterHealth>();
-        if (health != null && !health.IsDead)
+        // Tiến gần nếu còn xa hơn attack range
+        float dist = Vector3.Distance(transform.position, target.position);
+        if (dist > commandAttackRange && agent != null && agent.isOnNavMesh)
         {
-            health.TakeDamage(commandAttackDamage);
+            agent.isStopped = false;
+            agent.SetDestination(target.position);
         }
 
-        commandTimer = commandCooldown;
-        return true;
+        CharacterHealth health = target.GetComponentInParent<CharacterHealth>();
+        if (health != null && !health.IsDead && dist <= commandAttackRange + 0.75f)
+        {
+            health.TakeDamage(commandAttackDamage);
+            commandTimer = commandCooldown;
+            return true;
+        }
+
+        // Đã lock target nhưng chưa vào tầm — không tốn full cooldown, cho thử lại.
+        return false;
     }
 
     public bool TryUseSkill()
