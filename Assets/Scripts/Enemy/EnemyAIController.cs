@@ -71,11 +71,11 @@ public class EnemyAIController : MonoBehaviour
     [Header("Hurt / Stagger")]
     [Tooltip("Bật anim Hit khi mất HP nhưng poise còn.")]
     [SerializeField] private bool useHitAnimation = true;
-    [SerializeField, Min(0f)] private float hitStunDuration = 0.25f;
+    [SerializeField, Min(0f)] private float hitStunDuration = 0.1f;
     [Tooltip("Tối thiểu giữa các flinch (Hurt) liên tiếp — chống spam đứng đơ khi bị combo nhỏ.")]
-    [SerializeField, Min(0f)] private float hurtCooldown = 0.6f;
+    [SerializeField, Min(0f)] private float hurtCooldown = 0f;
     [Tooltip("Stagger duration khi poise vỡ.")]
-    [SerializeField, Min(0f)] private float staggerDuration = 1.2f;
+    [SerializeField, Min(0f)] private float staggerDuration = 0.1f;
     [Tooltip("Poise hồi/giây sau khi stagger kết thúc.")]
     [SerializeField, Min(0f)] private float poiseRegenAfterStagger = 0f;
 
@@ -751,15 +751,15 @@ public class EnemyAIController : MonoBehaviour
 
         switch (currentState)
         {
-            case AIState.Spawn:          TickSpawn(); break;
-            case AIState.Idle:           TickIdle(); break;
-            case AIState.Patrol:         TickPatrol(); break;
-            case AIState.Detect:         TickDetect(); break;
-            case AIState.Chase:          TickChase(); break;
-            case AIState.Attack:         TickAttack(); break;
-            case AIState.Hurt:           TickHurt(); break;
-            case AIState.Stagger:        TickStagger(); break;
-            case AIState.Retreat:        TickRetreat(); break;
+            case AIState.Spawn: TickSpawn(); break;
+            case AIState.Idle: TickIdle(); break;
+            case AIState.Patrol: TickPatrol(); break;
+            case AIState.Detect: TickDetect(); break;
+            case AIState.Chase: TickChase(); break;
+            case AIState.Attack: TickAttack(); break;
+            case AIState.Hurt: TickHurt(); break;
+            case AIState.Stagger: TickStagger(); break;
+            case AIState.Retreat: TickRetreat(); break;
             case AIState.ReturnToOrigin: TickReturn(); break;
         }
 
@@ -1451,7 +1451,7 @@ public class EnemyAIController : MonoBehaviour
         else if (attackPhase == AttackPhase.Recovery && attackPhaseTimer <= 0f)
         {
             attackPhase = AttackPhase.None;
-            attackCooldownTimer = currentAttack != null ? currentAttack.cooldown : AttackCooldown;
+            attackCooldownTimer = 0f;
             RegisterCompletedAttackForTackle();
         }
         else if (attackPhase == AttackPhase.None && attackPhaseTimer <= 0f)
@@ -1812,7 +1812,9 @@ public class EnemyAIController : MonoBehaviour
             currentPoise = Mathf.Max(0f, currentPoise - dmg);
             if (currentPoise <= 0f)
             {
-                EnterState(AIState.Stagger);
+                // EnterState(AIState.Stagger);
+                currentPoise = MaxPoise;
+                EnterState(AIState.Hurt);
                 return;
             }
         }
