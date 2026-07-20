@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Enemy_Boss_BeachTyran_CloseCombat_AnimatorOverride
+  m_Controller: {fileID: 9100000, guid: 432fe5071d5bc4055b2dbc710d2ceb6c, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 7130e21f1fe2047d489c99ec27466fa4, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: f8f6f2346cc1e487498aef8b5191d4de, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: c760db02d8a4a444489ce48a6b10d669, type: 2}
+    m_OverrideClip: {fileID: 0}
+  - m_OriginalClip: {fileID: 7400000, guid: 9ff0b33b5956146b39578a646376165b, type: 2}
+    m_OverrideClip: {fileID: 0}
+  - m_OriginalClip: {fileID: 7400000, guid: 97774e74c396c467e9269513ab69ef76, type: 2}
+    m_OverrideClip: {fileID: 0}
+  - m_OriginalClip: {fileID: 7400000, guid: a6000c4b3da944deb976cd1f1982cd10, type: 2}
+    m_OverrideClip: {fileID: 0}
+  - m_OriginalClip: {fileID: 7400000, guid: 9cc52425889ea426f94ff96f8db7ddbf, type: 2}
+    m_OverrideClip: {fileID: 0}
+  - m_OriginalClip: {fileID: -8827493470686405246, guid: 923da24417bde954e8eb93a36c143958, type: 3}
+    m_OverrideClip: {fileID: 0}
+  - m_OriginalClip: {fileID: 8336598853230299985, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
+    m_OverrideClip: {fileID: 0}

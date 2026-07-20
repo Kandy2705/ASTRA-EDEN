@@ -158,6 +158,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EnemySpawnCage (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 1863413219698114506, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3426800213554281284, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.72
@@ -193,7 +197,7 @@ PrefabInstance:
     - target: {fileID: 7152062937984543188, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: entries.Array.data[0].prefabOverride
       value: 
-      objectReference: {fileID: 6399077957897768670, guid: 5ca3a0744e6b4e0b8b93beb1d13a345d, type: 3}
+      objectReference: {fileID: 6399077957897768670, guid: 8f111df3dbae145a78cc3e5b13458810, type: 3}
     - target: {fileID: 9082319659130565630, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2282.4
@@ -1140,6 +1144,10 @@ PrefabInstance:
     - target: {fileID: 1863413219698114506, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: m_Name
       value: EnemySpawnCage
+      objectReference: {fileID: 0}
+    - target: {fileID: 1863413219698114506, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2639971609613377016, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2469,7 +2477,7 @@ PrefabInstance:
     - target: {fileID: 7152062937984543188, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: entries.Array.data[0].prefabOverride
       value: 
-      objectReference: {fileID: 4604233392114813644, guid: 81e9c1418fe174b1d8bef59d15e6f63d, type: 3}
+      objectReference: {fileID: 4604233392114813644, guid: eb48fce3c1f87405887abc1db90e883b, type: 3}
     - target: {fileID: 9082319659130565630, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2262.6985
@@ -2676,6 +2684,10 @@ PrefabInstance:
     - target: {fileID: 1863413219698114506, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: m_Name
       value: EnemySpawnCage (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1863413219698114506, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2639971609613377016, guid: e0eb73403ccdb4b6fa90991742ab934d, type: 3}
       propertyPath: m_LocalPosition.x

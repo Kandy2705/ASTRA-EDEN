@@ -370,7 +370,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: AillieoUtils.LOS2D::AillieoUtils.LOS2D.LOSSource
   fov: 129
-  maxDist: 5.2
+  maxDist: 12
   maskForEvent:
     serializedVersion: 2
     m_Bits: 65
@@ -847,7 +847,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
       propertyPath: m_Name
-      value: Enemy_Boss_BeachTyran
+      value: Enemy_Boss_BeachTyran_CloseCombat
       objectReference: {fileID: 0}
     - target: {fileID: 2760250247188807559, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
       propertyPath: m_LocalScale.x
@@ -929,6 +929,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1363790776221764518}
+    - targetCorrespondingSourceObject: {fileID: -2585578292277107871, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 916239223181458861}
   m_SourcePrefab: {fileID: 100100000, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
 --- !u!4 &3796065323733389430 stripped
 Transform:
@@ -950,7 +953,7 @@ Animator:
   m_GameObject: {fileID: 4604233392114813644}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 432fe5071d5bc4055b2dbc710d2ceb6c, type: 2}
+  m_Controller: {fileID: 22100000, guid: e9e116087441e41be9090564240729bf, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1024,9 +1027,9 @@ NavMeshAgent:
   m_Acceleration: 10
   avoidancePriority: 40
   m_AngularSpeed: 400
-  m_StoppingDistance: 2.2
+  m_StoppingDistance: 0.15
   m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
+  m_AutoBraking: 0
   m_AutoRepath: 1
   m_Height: 5
   m_BaseOffset: 0
@@ -1092,7 +1095,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fed4b9042a32b452fa2aa3bb8eb42402, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySensor
-  enemyData: {fileID: 11400000, guid: 0de28050378147ca9466137a992745dd, type: 2}
+  enemyData: {fileID: 11400000, guid: de66e7f16dc59400d90c9b84265b91b4, type: 2}
   sightRangeOverride: 22
   sightAngleOverride: 130
   hearingRangeOverride: 12
@@ -1133,7 +1136,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5005ebe51867e4605a4f033b95a3c4c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAIController
-  enemyData: {fileID: 11400000, guid: 0de28050378147ca9466137a992745dd, type: 2}
+  enemyData: {fileID: 11400000, guid: de66e7f16dc59400d90c9b84265b91b4, type: 2}
   initializeFromEnemyData: 1
   sensor: {fileID: 946351111358374057}
   health: {fileID: 1288010195568088798}
@@ -1172,7 +1175,7 @@ MonoBehaviour:
   randomWalkRange: 8
   randomWalkArriveDistance: 1
   attackStateTimeout: 6
-  chaseDestinationInterval: 0.12
+  chaseDestinationInterval: 0.05
   debugState: 0
   debugPoise: 0
   debugLastKnownHP: 0
@@ -1335,3 +1338,30 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65
   eyeHeight: 1.2
+--- !u!1 &8014931844429468924 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -2585578292277107871, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
+  m_PrefabInstance: {fileID: 3685330093849442205}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &916239223181458861
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8014931844429468924}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2425923999142490465, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
