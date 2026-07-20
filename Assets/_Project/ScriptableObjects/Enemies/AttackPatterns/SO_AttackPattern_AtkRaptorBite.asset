@@ -17,7 +17,7 @@ MonoBehaviour:
   archetype: 0
   rangeType: 0
   minRange: 0
-  maxRange: 2
+  maxRange: 0
   cooldown: 0
   windup: 0.25
   activeTime: 0.18

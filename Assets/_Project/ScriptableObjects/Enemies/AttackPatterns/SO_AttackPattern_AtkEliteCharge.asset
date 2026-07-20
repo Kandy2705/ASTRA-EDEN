@@ -16,8 +16,8 @@ MonoBehaviour:
   displayName: Charge
   archetype: 6
   rangeType: 5
-  minRange: 4
-  maxRange: 12
+  minRange: 0
+  maxRange: 0
   cooldown: 0
   windup: 0.75
   activeTime: 0.6
