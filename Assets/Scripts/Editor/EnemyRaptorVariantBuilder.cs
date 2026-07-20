@@ -272,6 +272,9 @@ public static class EnemyRaptorVariantBuilder
 
         EnemyTackleSetup.EnsureTacklePushHitboxPublic(root);
         EnemyTackleSetup.WireAnimationRelayPublic(root);
+
+        // World-space HP bar trên đầu — copy pattern prefab Enemy.
+        EnemyHUDBuilder.EnsureHudOnRoot(root, canvasLocalY: 1.7f, canvasScale: 0.01f, showDistance: 6f);
     }
 
     static T EnsureComponent<T>(GameObject go) where T : Component

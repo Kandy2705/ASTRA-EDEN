@@ -20,6 +20,40 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     {
         EnsureEventSystem();
         ApplyHubVisibility();
+        WirePlayerStatusHud();
+    }
+
+    private void Start()
+    {
+        // Player có thể spawn sau UI 1 frame (hub / portal).
+        WirePlayerStatusHud();
+    }
+
+    /// <summary>
+    /// HUD_PlayerStatusPanel / CharacterStatsHUD không serialize CharacterHealth của player
+    /// (khác scene / prefab). Bind runtime theo tag Player — cần cho Beacon_Camp.
+    /// </summary>
+    void WirePlayerStatusHud()
+    {
+        CharacterStatsHUD[] statusHuds = GetComponentsInChildren<CharacterStatsHUD>(true);
+        for (int i = 0; i < statusHuds.Length; i++)
+        {
+            if (statusHuds[i] != null)
+            {
+                statusHuds[i].TryBindPlayerHealth(force: true);
+                statusHuds[i].Refresh();
+            }
+        }
+
+        // Gold HUD re-find inventory khi vào camp.
+        HUDTopStatusController[] topStatus = GetComponentsInChildren<HUDTopStatusController>(true);
+        for (int i = 0; i < topStatus.Length; i++)
+        {
+            if (topStatus[i] != null)
+            {
+                topStatus[i].ForceRefreshCurrency();
+            }
+        }
     }
 
     private void EnsureEventSystem()

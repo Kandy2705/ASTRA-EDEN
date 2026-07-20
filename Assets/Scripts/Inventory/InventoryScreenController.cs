@@ -525,12 +525,18 @@ public class InventoryScreenController : MonoBehaviour
         if (goldAmountText != null)
         {
             int goldAmount = 0;
+            if (inventoryService == null)
+            {
+                inventoryService = PlayerInventoryService.FindForPlayer();
+            }
+
             if (inventoryService != null)
             {
                 goldAmount = inventoryService.GetGoldQuantity(goldItem);
             }
             else if (GameDataManager.Instance != null)
             {
+                // MainMenu / chưa có player: mirror.
                 goldAmount = GameDataManager.Instance.Currency;
             }
 

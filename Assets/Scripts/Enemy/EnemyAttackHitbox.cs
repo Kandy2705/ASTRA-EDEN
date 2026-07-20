@@ -53,6 +53,12 @@ public class EnemyAttackHitbox : MonoBehaviour
 
             CharacterHealth health = col.GetComponentInParent<CharacterHealth>();
             if (health == null || health.IsDead) continue;
+            // Player đã chết (anim death) — không đánh nữa.
+            if (health.CompareTag("Player") || health.transform.root.CompareTag("Player"))
+            {
+                if (PlayerDeathController.IsPlayerDead) continue;
+            }
+
             if (!hitThisSwing.Add(health)) continue;
 
             health.TakeDamage(damage);

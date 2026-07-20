@@ -6997,6 +6997,7 @@ GameObject:
   - component: {fileID: 4688957090041989746}
   - component: {fileID: 3849946475836124822}
   - component: {fileID: 9114661255595054279}
+  - component: {fileID: 1520567275215598051}
   m_Layer: 6
   m_Name: Seeker Prototype Nu
   m_TagString: Player
@@ -7488,7 +7489,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7301337304870583923}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1e9d8269012544bdae5793b14d11166, type: 3}
   m_Name: 
@@ -7545,7 +7546,7 @@ MonoBehaviour:
   disableRootCollider: 1
   deathImpulse: 1.5
   deathTorque: 2.5
-  controlledExternally: 0
+  controlledExternally: 1
   applyRootDeathImpulse: 0
 --- !u!114 &3838790990694105422
 MonoBehaviour:
@@ -7742,6 +7743,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerKnockbackReceiver
   characterController: {fileID: 1620980194362631026}
   targetRigidbody: {fileID: 0}
+--- !u!114 &1520567275215598051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7128259970a8a4dd98897a9239f1d01b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLOSTarget
+  losTarget: {fileID: 0}
 --- !u!1 &7318886399150952759
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.aillieo.los-2d": {
+      "version": "file:com.aillieo.los-2d",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.autodesk.fbx": {
       "version": "5.1.3",
       "depth": 1,

@@ -10,11 +10,13 @@ public class PlayerAnimatorBridge : MonoBehaviour
     private static readonly int AttackHash = Animator.StringToHash("Attack");
     private static readonly int CastSkillHash = Animator.StringToHash("CastSkill");
     private static readonly int SkillIndexHash = Animator.StringToHash("SkillIndex");
+    private static readonly int IsDeadHash = Animator.StringToHash("IsDead");
 
     [SerializeField] private Animator animator;
     [SerializeField] private float animatorDampTime = 0.1f;
 
     private float normalAnimatorSpeed = 1f;
+    private bool isDead;
 
     private void Reset()
     {
@@ -31,7 +33,7 @@ public class PlayerAnimatorBridge : MonoBehaviour
 
     public void UpdateLocomotion(float speedFactor, Vector2 movementInput, bool isGrounded)
     {
-        if (animator == null)
+        if (animator == null || isDead)
         {
             return;
         }
@@ -42,9 +44,31 @@ public class PlayerAnimatorBridge : MonoBehaviour
         animator.SetBool(IsGroundedHash, isGrounded);
     }
 
+    /// <summary>Gọi khi player chết — set bool IsDead, chặn locomotion/attack triggers.</summary>
+    public void SetDead(bool dead)
+    {
+        isDead = dead;
+        if (animator == null)
+        {
+            return;
+        }
+
+        if (HasParameter(IsDeadHash, AnimatorControllerParameterType.Bool))
+        {
+            animator.SetBool(IsDeadHash, dead);
+        }
+
+        if (dead)
+        {
+            animator.SetFloat(BlendHash, 0f);
+            animator.SetFloat(HorizontalHash, 0f);
+            animator.SetFloat(VerticalHash, 0f);
+        }
+    }
+
     public void TriggerJump()
     {
-        if (animator != null)
+        if (animator != null && !isDead)
         {
             animator.SetTrigger(JumpHash);
         }
@@ -52,7 +76,7 @@ public class PlayerAnimatorBridge : MonoBehaviour
 
     public void TriggerAttack()
     {
-        if (animator != null)
+        if (animator != null && !isDead)
         {
             animator.SetTrigger(AttackHash);
         }
@@ -60,7 +84,7 @@ public class PlayerAnimatorBridge : MonoBehaviour
 
     public void TriggerCastSkill(int skillIndex)
     {
-        if (animator == null)
+        if (animator == null || isDead)
         {
             return;
         }

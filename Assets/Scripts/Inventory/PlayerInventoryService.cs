@@ -97,7 +97,11 @@ public class PlayerInventoryService : MonoBehaviour
             }
         }
 
-        Debug.Log($"[Inventory] Loaded {loadedCount} stacks from save (missing={missingCount}, raw={data.Count}).");
+        // Gold nguồn sự thật = inventory item. Migrate legacy ASTRA_CURRENCY → stack gold một lần.
+        MigrateLegacyCurrencyIntoGoldStacks();
+        SyncCurrencyMirrorToGameData();
+
+        Debug.Log($"[Inventory] Loaded {loadedCount} stacks from save (missing={missingCount}, raw={data.Count}, gold={GetGoldQuantity()}).");
         OnInventoryChanged?.Invoke();
     }
 
@@ -117,7 +121,54 @@ public class PlayerInventoryService : MonoBehaviour
         }
 
         GameDataManager.Instance.SaveInventory(data);
-        Debug.Log($"[Inventory] Saved {data.Count} item types to PlayerPrefs.");
+        SyncCurrencyMirrorToGameData();
+        Debug.Log($"[Inventory] Saved {data.Count} item types to PlayerPrefs (gold={GetGoldQuantity()}).");
+    }
+
+    /// <summary>
+    /// Nếu inventory chưa có gold nhưng PlayerPrefs còn ASTRA_CURRENCY cũ → chuyển vào stack gold.
+    /// Inventory là nguồn sự thật sau migrate.
+    /// </summary>
+    void MigrateLegacyCurrencyIntoGoldStacks()
+    {
+        if (GameDataManager.Instance == null)
+        {
+            return;
+        }
+
+        int legacy = GameDataManager.Instance.Currency;
+        if (legacy <= 0)
+        {
+            return;
+        }
+
+        ItemData gold = ResolveGoldItem();
+        if (gold == null)
+        {
+            Debug.LogWarning("[Inventory] Không resolve được SO_Item_Gold để migrate Currency.");
+            return;
+        }
+
+        int invGold = GetQuantity(gold);
+        if (invGold > 0)
+        {
+            // Inventory đã có gold → giữ inventory, bỏ wallet int (không cộng đúp).
+            return;
+        }
+
+        items.Add(new InventoryItemStack(gold, legacy));
+        Debug.Log($"[Inventory] Migrated legacy Currency {legacy} → inventory gold.");
+    }
+
+    /// <summary>Đồng bộ field Currency của GameDataManager chỉ để mirror (UI/API cũ), không phải wallet thứ 2.</summary>
+    void SyncCurrencyMirrorToGameData()
+    {
+        if (GameDataManager.Instance == null)
+        {
+            return;
+        }
+
+        GameDataManager.Instance.SetCurrencyMirror(GetGoldQuantity());
     }
 
     public bool AddItem(ItemData itemData, int amount)
@@ -201,15 +252,32 @@ public class PlayerInventoryService : MonoBehaviour
         return ItemRegistry.Get("gold");
     }
 
+    /// <summary>Gold = số lượng item gold trong inventory (không đọc wallet int riêng).</summary>
     public int GetGoldQuantity(ItemData assignedGold = null)
     {
         ItemData gold = ResolveGoldItem(assignedGold);
         if (gold == null)
         {
-            return GameDataManager.Instance != null ? GameDataManager.Instance.Currency : 0;
+            return 0;
         }
 
         return GetQuantity(gold);
+    }
+
+    public bool TrySpendGold(int amount, ItemData assignedGold = null)
+    {
+        if (amount <= 0)
+        {
+            return true;
+        }
+
+        ItemData gold = ResolveGoldItem(assignedGold);
+        if (gold == null)
+        {
+            return false;
+        }
+
+        return RemoveItem(gold, amount);
     }
 
     public bool HasItem(ItemData itemData, int amount)

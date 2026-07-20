@@ -61,8 +61,24 @@ public class ShopUIController : MonoBehaviour
 
     public void TryBuy(int index)
     {
-        if (activeShop == null || activeShop.Data == null || inventory == null)
+        if (activeShop == null || activeShop.Data == null)
         {
+            return;
+        }
+
+        // Tìm lại inventory mỗi lần mua — phòng camp load player trễ / scene swap.
+        if (inventory == null)
+        {
+            inventory = FindPlayerInventory();
+        }
+
+        if (inventory == null)
+        {
+            if (statusText != null)
+            {
+                statusText.text = "No player inventory.";
+            }
+
             return;
         }
 
@@ -72,13 +88,32 @@ public class ShopUIController : MonoBehaviour
         }
 
         ShopEntry entry = activeShop.Data.entries[index];
-        bool ok = activeShop.TryPurchase(entry, inventory);
+        bool ok = activeShop.TryPurchase(entry, inventory, out ShopController.PurchaseFailReason reason);
         RefreshStatus();
         if (statusText != null)
         {
             statusText.text = ok
                 ? $"Purchased {entry.item.displayName} x{entry.quantity}"
-                : "Not enough Gold.";
+                : FailMessage(reason, entry);
+        }
+    }
+
+    static string FailMessage(ShopController.PurchaseFailReason reason, ShopEntry entry)
+    {
+        switch (reason)
+        {
+            case ShopController.PurchaseFailReason.NotEnoughGold:
+                return "Not enough Gold.";
+            case ShopController.PurchaseFailReason.NoInventory:
+                return "No player inventory.";
+            case ShopController.PurchaseFailReason.NoCurrencyItem:
+                return "Shop currency not configured.";
+            case ShopController.PurchaseFailReason.InvalidEntry:
+                return "Invalid shop entry.";
+            default:
+                return entry != null && entry.item != null
+                    ? $"Cannot buy {entry.item.displayName}."
+                    : "Purchase failed.";
         }
     }
 
@@ -108,21 +143,37 @@ public class ShopUIController : MonoBehaviour
 
     void RefreshStatus()
     {
-        if (statusText == null || activeShop == null || activeShop.Data == null || inventory == null)
+        if (statusText == null || activeShop == null)
         {
             return;
         }
 
-        int gold = activeShop.Data.currencyItem != null
-            ? inventory.GetQuantity(activeShop.Data.currencyItem)
-            : 0;
+        if (inventory == null)
+        {
+            inventory = FindPlayerInventory();
+        }
+
+        if (inventory == null)
+        {
+            statusText.text = "Gold: —";
+            return;
+        }
+
+        ItemData currency = activeShop.Data != null
+            ? (activeShop.Data.currencyItem != null
+                ? activeShop.Data.currencyItem
+                : PlayerInventoryService.ResolveGoldItem())
+            : PlayerInventoryService.ResolveGoldItem();
+
+        int gold = currency != null
+            ? inventory.GetQuantity(currency)
+            : inventory.GetGoldQuantity();
         statusText.text = $"Gold: {gold}";
     }
 
     static PlayerInventoryService FindPlayerInventory()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        return player != null ? player.GetComponent<PlayerInventoryService>() : null;
+        return PlayerInventoryService.FindForPlayer();
     }
 
     static void RestoreGameplayCursor()

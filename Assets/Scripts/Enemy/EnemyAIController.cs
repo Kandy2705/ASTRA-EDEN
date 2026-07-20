@@ -100,6 +100,22 @@ public class EnemyAIController : MonoBehaviour
 
     [Header("Targeting")]
     [SerializeField] private LayerMask playerLayer;
+    [Tooltip("Tìm lại Player định kỳ nếu reference bị mất (scene load / respawn).")]
+    [SerializeField, Min(0.25f)] private float playerResolveInterval = 0.75f;
+    [Tooltip("Dùng Physics.CheckSphere (kiểu tutorial) làm fallback khi EnemySensor null hoặc player sát.")]
+    [SerializeField] private bool useProximitySphereFallback = true;
+
+    [Header("Free Patrol (khi không có patrol points)")]
+    [Tooltip("Khi không gán patrol points, tuần tra random quanh origin giống tutorial walkPoint.")]
+    [SerializeField] private bool enableRandomWalkWhenNoPatrol = true;
+    [SerializeField, Min(1f)] private float randomWalkRange = 8f;
+    [SerializeField, Min(0.5f)] private float randomWalkArriveDistance = 1f;
+
+    [Header("Stability")]
+    [Tooltip("Timeout cứng cho state Attack — tránh kẹt animation/phase.")]
+    [SerializeField, Min(1f)] private float attackStateTimeout = 6f;
+    [Tooltip("Khoảng cách tối thiểu giữa 2 lần SetDestination khi chase (giảm giật NavMesh).")]
+    [SerializeField, Min(0.05f)] private float chaseDestinationInterval = 0.12f;
 
     [Header("Debug")]
     [SerializeField] private AIState debugState;
@@ -138,6 +154,12 @@ public class EnemyAIController : MonoBehaviour
     int attacksSinceLastTackle;
     bool isTackling;
     float effectiveAttackRange = 2f;
+    float nextPlayerResolveTime;
+    float nextChaseDestinationTime;
+    Vector3 randomWalkPoint;
+    bool randomWalkPointSet;
+    bool playerInSightRange;
+    bool playerInAttackRange;
 
     public AIState State => currentState;
     public EnemyData Data => enemyData;
@@ -341,8 +363,7 @@ public class EnemyAIController : MonoBehaviour
 
         lastFrameWorldPos = transform.position;
 
-        var playerObj = GameObject.FindGameObjectWithTag("Player");
-        if (playerObj != null) player = playerObj.transform;
+        TryResolvePlayer(force: true);
 
         if (health != null)
         {
@@ -358,7 +379,19 @@ public class EnemyAIController : MonoBehaviour
             lastKnownHP = health.RuntimeStats != null ? health.RuntimeStats.currentHP : float.NaN;
         }
 
-        if (sensor != null) sensor.Configure(enemyData);
+        if (sensor != null)
+        {
+            sensor.Configure(enemyData);
+            // Model -Z forward: sensor FOV + Aillieo LOS2D facing phải cùng hướng nhìn thực tế.
+            sensor.SetFlipForward(flipForward180);
+        }
+
+        // Optional Aillieo package bridge (if present / enabled on sensor).
+        EnemyLOS2DBridge los2d = GetComponent<EnemyLOS2DBridge>();
+        if (los2d != null)
+        {
+            los2d.ConfigureFromSensor(sensor, flipForward180);
+        }
 
         Debug.Log(
             $"[AI:{name}] STARTED | pinned={spawnPinnedToPatrol} parent={(transform.parent != null ? transform.parent.name : "null")} " +
@@ -658,6 +691,9 @@ public class EnemyAIController : MonoBehaviour
         stateTimer += Time.deltaTime;
         if (attackCooldownTimer > 0f) attackCooldownTimer -= Time.deltaTime;
 
+        TryResolvePlayer(force: false);
+        RefreshRangeFlags();
+
         if (currentState == AIState.Dead)
         {
             TickDead();
@@ -668,6 +704,22 @@ public class EnemyAIController : MonoBehaviour
         {
             EnterState(AIState.Dead);
             return;
+        }
+
+        // Player chết → ngừng combat (attack/chase/detect/retreat/tackle).
+        if (IsPlayerDeadForAi()
+            && currentState != AIState.Dead
+            && currentState != AIState.Hurt
+            && currentState != AIState.Stagger
+            && currentState != AIState.Idle
+            && currentState != AIState.Patrol
+            && currentState != AIState.ReturnToOrigin
+            && currentState != AIState.Spawn)
+        {
+            EndTackle();
+            CancelActiveAttack();
+            holdingInAttackRange = false;
+            EnterState(AIState.Idle);
         }
 
         // Knockback override: chỉ để physics đẩy, không update AI.
@@ -686,7 +738,8 @@ public class EnemyAIController : MonoBehaviour
             }
             else
             {
-                StopAgent();
+                // Giống tutorial AttackPlayer: đứng yên + quay về player trong lúc tackle.
+                HoldAgentStill();
                 FaceTarget();
                 UpdateAnimatorMovement(0f);
                 return;
@@ -712,6 +765,79 @@ public class EnemyAIController : MonoBehaviour
 
         ApplyMovementFacing();
         UpdateAnimatorMovement(GetTargetBlendForState());
+    }
+
+    /// <summary>Tìm Player theo tag. Tutorial dùng Find("PlayerObj") — project dùng tag "Player".</summary>
+    void TryResolvePlayer(bool force)
+    {
+        // Unity overloaded == handles destroyed objects as null.
+        if (!force && player != null)
+        {
+            if (!player.gameObject.activeInHierarchy)
+            {
+                player = null;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        if (!force && Time.time < nextPlayerResolveTime)
+        {
+            return;
+        }
+
+        nextPlayerResolveTime = Time.time + playerResolveInterval;
+
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            player = playerObj.transform;
+        }
+    }
+
+    /// <summary>
+    /// Cập nhật flag sight/attack range kiểu tutorial (CheckSphere + distance).
+    /// Dùng cho debug gizmo + fallback detect.
+    /// </summary>
+    void RefreshRangeFlags()
+    {
+        playerInSightRange = false;
+        playerInAttackRange = false;
+
+        if (player == null)
+        {
+            return;
+        }
+
+        float distance = HorizontalDistance(player.position);
+        playerInAttackRange = distance <= AttackRange;
+        playerInSightRange = distance <= SightRangeForDetection();
+
+        // Sphere layer check (tutorial): chính xác hơn khi player có collider trên layer Player.
+        if (useProximitySphereFallback && playerLayer.value != 0)
+        {
+            if (Physics.CheckSphere(transform.position, AttackRange, playerLayer, QueryTriggerInteraction.Ignore))
+            {
+                playerInAttackRange = true;
+                playerInSightRange = true;
+            }
+            else if (Physics.CheckSphere(transform.position, SightRangeForDetection(), playerLayer, QueryTriggerInteraction.Ignore))
+            {
+                playerInSightRange = true;
+            }
+        }
+    }
+
+    float SightRangeForDetection()
+    {
+        if (sensor != null)
+        {
+            return Mathf.Max(sensor.SightRange, sensor.HearingRange);
+        }
+
+        return enemyData != null ? enemyData.sightRange : 14f;
     }
 
     /// <summary>Xoay model theo hướng velocity của agent. Cần khi flipForward180 = true (đã tắt agent.updateRotation),
@@ -763,14 +889,18 @@ public class EnemyAIController : MonoBehaviour
                 break;
             case AIState.Patrol:
                 holdingInAttackRange = false;
+                randomWalkPointSet = false;
                 ConfigureAgentStoppingForState(AIState.Patrol);
                 if (IsAgentNavigable())
                 {
                     agent.speed = MoveSpeed * patrolSpeedRatio;
                     agent.isStopped = false;
-                    GoToNextPatrolPoint();
+                    if (patrolPoints != null && patrolPoints.Length > 0)
+                    {
+                        GoToNextPatrolPoint();
+                    }
                 }
-                // else: TickPatrolByTransform
+                // else: TickPatrolByTransform / TickRandomWalkPatrol
                 break;
             case AIState.Detect:
                 holdingInAttackRange = false;
@@ -860,6 +990,7 @@ public class EnemyAIController : MonoBehaviour
 
     void TickIdle()
     {
+        // Tutorial: !sight && !attack → Patrol; sight → Chase/Detect.
         if (CheckDetect()) return;
 
         // Agent mode: recover snap chặt, throttle — Warp mỗi frame = giựt.
@@ -880,18 +1011,37 @@ public class EnemyAIController : MonoBehaviour
         }
 
         idleTimer -= Time.deltaTime;
-        if (idleTimer <= 0f && patrolPoints != null && patrolPoints.Length > 0)
+        if (idleTimer > 0f)
+        {
+            return;
+        }
+
+        bool hasPatrolPoints = patrolPoints != null && patrolPoints.Length > 0;
+        if (hasPatrolPoints || enableRandomWalkWhenNoPatrol)
         {
             EnterState(AIState.Patrol);
+        }
+        else
+        {
+            // Không có điểm tuần tra → idle lại, tránh spam transition.
+            idleTimer = idleDuration;
         }
     }
 
     void TickPatrol()
     {
         if (CheckDetect()) return;
-        if (patrolPoints == null || patrolPoints.Length == 0)
+
+        bool hasPatrolPoints = patrolPoints != null && patrolPoints.Length > 0;
+        if (!hasPatrolPoints)
         {
-            EnterState(AIState.Idle);
+            if (!enableRandomWalkWhenNoPatrol)
+            {
+                EnterState(AIState.Idle);
+                return;
+            }
+
+            TickRandomWalkPatrol();
             return;
         }
 
@@ -930,6 +1080,73 @@ public class EnemyAIController : MonoBehaviour
 
         // Fallback: transform (không có mesh sát).
         TickPatrolByTransform();
+    }
+
+    /// <summary>
+    /// Patrol random quanh origin (tutorial SearchWalkPoint) khi không có waypoint.
+    /// </summary>
+    void TickRandomWalkPatrol()
+    {
+        if (!randomWalkPointSet)
+        {
+            SearchRandomWalkPoint();
+        }
+
+        if (!randomWalkPointSet)
+        {
+            EnterState(AIState.Idle);
+            return;
+        }
+
+        float dist = HorizontalDistance(randomWalkPoint);
+        if (dist <= randomWalkArriveDistance)
+        {
+            randomWalkPointSet = false;
+            EnterState(AIState.Idle);
+            return;
+        }
+
+        if (IsAgentNavigable())
+        {
+            if (agent.isStopped)
+            {
+                agent.isStopped = false;
+            }
+
+            agent.speed = MoveSpeed * patrolSpeedRatio;
+            SetDestinationSafe(randomWalkPoint);
+            return;
+        }
+
+        MoveTransformTowards(randomWalkPoint, MoveSpeed * patrolSpeedRatio);
+    }
+
+    void SearchRandomWalkPoint()
+    {
+        Vector3 center = originPosition.sqrMagnitude > 0.01f ? originPosition : transform.position;
+        for (int i = 0; i < 8; i++)
+        {
+            float randomZ = Random.Range(-randomWalkRange, randomWalkRange);
+            float randomX = Random.Range(-randomWalkRange, randomWalkRange);
+            Vector3 candidate = new Vector3(center.x + randomX, center.y, center.z + randomZ);
+
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+            {
+                randomWalkPoint = hit.position;
+                randomWalkPointSet = true;
+                return;
+            }
+
+            // Fallback raycast xuống ground (tutorial style).
+            if (Physics.Raycast(candidate + Vector3.up * 2f, Vector3.down, out RaycastHit groundHit, 6f))
+            {
+                randomWalkPoint = groundHit.point;
+                randomWalkPointSet = true;
+                return;
+            }
+        }
+
+        randomWalkPointSet = false;
     }
 
     /// <summary>Patrol không cần NavMesh — di chuyển thẳng tới điểm (khi agent off-mesh).</summary>
@@ -1001,25 +1218,38 @@ public class EnemyAIController : MonoBehaviour
 
     void TickChase()
     {
-        if (player == null) { EnterState(AIState.ReturnToOrigin); return; }
+        if (player == null)
+        {
+            EnterState(AIState.ReturnToOrigin);
+            return;
+        }
 
         float distance = HorizontalDistance(player.position);
-        bool canSee = sensor != null && sensor.CanSense(player, out _);
+        bool canSee = CanSensePlayer(out _);
 
         if (debugLogChaseTick)
         {
             float rem = (IsAgentNavigable() && !agent.pathPending) ? agent.remainingDistance : -1f;
             float vel = IsAgentNavigable() ? agent.velocity.magnitude : 0f;
-            bool inRange = distance <= AttackRange;
+            bool inRange = distance <= AttackRange || playerInAttackRange;
             bool cdReady = attackCooldownTimer <= 0f;
-            Debug.Log($"[AI:{name}] Chase tick | dist={distance:F2} atkRange={AttackRange:F2} inRange={inRange} cdReady={cdReady} cd={attackCooldownTimer:F2} agentVel={vel:F2} remDist={rem:F2} canSee={canSee}", this);
+            Debug.Log($"[AI:{name}] Chase tick | dist={distance:F2} atkRange={AttackRange:F2} inRange={inRange} cdReady={cdReady} cd={attackCooldownTimer:F2} agentVel={vel:F2} remDist={rem:F2} canSee={canSee} sphereSight={playerInSightRange}", this);
         }
 
-        if (canSee) lostSightTimer = 0f;
+        // Chỉ reset lost-sight khi sensor thật sự còn thấy (FOV+LOS / hearing+LOS / contact).
+        // Không dùng sphere range — tránh “nhớ” player sau tường.
+        if (canSee)
+        {
+            lostSightTimer = 0f;
+        }
         else
         {
             lostSightTimer += Time.deltaTime;
-            if (lostSightTimer >= loseTargetTime || distance > AggroKeepRange)
+            // Mất LOS (núp tường): quên nhanh hơn full loseTargetTime (tối đa 1.25s hoặc 35% lose time).
+            float loseBehindCover = Mathf.Min(loseTargetTime, Mathf.Max(0.75f, loseTargetTime * 0.35f));
+            bool losBlocked = sensor != null && !sensor.HasLineOfSightTo(player);
+            float limit = losBlocked ? loseBehindCover : loseTargetTime;
+            if (lostSightTimer >= limit || distance > AggroKeepRange)
             {
                 EnterState(AIState.ReturnToOrigin);
                 return;
@@ -1033,7 +1263,8 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
-        if (CanStartAttack(distance))
+        // Tutorial: playerInAttackRange && playerInSightRange → Attack.
+        if (CanStartAttack(distance) || (playerInAttackRange && attackCooldownTimer <= 0f && distance <= AttackRange + 0.35f))
         {
             holdingInAttackRange = false;
             EnterState(AIState.Attack);
@@ -1042,6 +1273,7 @@ public class EnemyAIController : MonoBehaviour
 
         // Hysteresis: vào hold khi <= AttackRange, chỉ chase lại khi > AttackRange + buffer.
         // Tránh StopAgent/SetDestination liên tục → giựt giựt như bị ép đứng.
+        // Khi đang cooldown: đứng + LookAt player (giống alreadyAttacked trong tutorial).
         float holdExit = AttackRange + AttackRangeHoldExitBuffer;
         if (holdingInAttackRange)
         {
@@ -1056,7 +1288,7 @@ public class EnemyAIController : MonoBehaviour
                 return;
             }
         }
-        else if (distance <= AttackRange)
+        else if (distance <= AttackRange || playerInAttackRange)
         {
             holdingInAttackRange = true;
             HoldAgentStill();
@@ -1099,12 +1331,19 @@ public class EnemyAIController : MonoBehaviour
                 agent.isStopped = false;
             }
 
-            // SetDestination trực tiếp (không throttle fail im lặng).
-            if (!agent.SetDestination(player.position))
+            // Throttle SetDestination — gọi mỗi frame dễ giật path / velocity reset.
+            bool needNewPath = !agent.hasPath
+                               || agent.pathStatus == NavMeshPathStatus.PathInvalid
+                               || Time.time >= nextChaseDestinationTime;
+            if (needNewPath)
             {
-                // Path fail → transform bước.
-                MoveTransformTowards(player.position, MoveSpeed);
-                return;
+                nextChaseDestinationTime = Time.time + chaseDestinationInterval;
+                if (!agent.SetDestination(player.position))
+                {
+                    // Path fail → transform bước.
+                    MoveTransformTowards(player.position, MoveSpeed);
+                    return;
+                }
             }
 
             // Agent on mesh nhưng đứng im + path hỏng: fallback transform.
@@ -1155,7 +1394,36 @@ public class EnemyAIController : MonoBehaviour
 
     void TickAttack()
     {
-        if (player != null) FaceTarget();
+        // Tutorial AttackPlayer: agent đứng yên + LookAt player suốt swing.
+        HoldAgentStill();
+        if (player != null)
+        {
+            FaceTarget();
+        }
+
+        // Failsafe: kẹt Attack quá lâu (anim event mất / phase timer lỗi).
+        if (stateTimer >= attackStateTimeout)
+        {
+            if (debugLogStateMachine)
+            {
+                Debug.LogWarning($"[AI:{name}] Attack timeout ({attackStateTimeout:F1}s) → force Chase.", this);
+            }
+
+            CancelActiveAttack();
+            attackCooldownTimer = Mathf.Max(attackCooldownTimer, AttackCooldown * 0.5f);
+            EnterState(AIState.Chase);
+            return;
+        }
+
+        // Mất player giữa đòn → kết thúc sớm, không spam.
+        if (player == null)
+        {
+            CancelActiveAttack();
+            attackCooldownTimer = AttackCooldown;
+            EnterState(AIState.ReturnToOrigin);
+            return;
+        }
+
         attackPhaseTimer -= Time.deltaTime;
 
         if (attackPhase == AttackPhase.Windup && attackPhaseTimer <= 0f)
@@ -1185,6 +1453,12 @@ public class EnemyAIController : MonoBehaviour
             attackPhase = AttackPhase.None;
             attackCooldownTimer = currentAttack != null ? currentAttack.cooldown : AttackCooldown;
             RegisterCompletedAttackForTackle();
+        }
+        else if (attackPhase == AttackPhase.None && attackPhaseTimer <= 0f)
+        {
+            // Pattern null / phase hỏng → không đứng Attack mãi.
+            attackCooldownTimer = Mathf.Max(attackCooldownTimer, AttackCooldown * 0.35f);
+            EnterState(AIState.Chase);
         }
     }
 
@@ -1331,10 +1605,96 @@ public class EnemyAIController : MonoBehaviour
     }
 
     // ---------- Helpers ----------
+    /// <summary>
+    /// Perception: chỉ tin EnemySensor (FOV + LOS tường + hearing có LOS).
+    /// Không CheckSphere xuyên tường.
+    /// </summary>
+    bool IsPlayerDeadForAi()
+    {
+        if (PlayerDeathController.IsPlayerDead)
+        {
+            return true;
+        }
+
+        if (player == null)
+        {
+            return false;
+        }
+
+        CharacterHealth ph = player.GetComponent<CharacterHealth>();
+        if (ph == null)
+        {
+            ph = player.GetComponentInParent<CharacterHealth>();
+        }
+
+        return ph != null && ph.IsDead;
+    }
+
+    bool CanSensePlayer(out float distance)
+    {
+        distance = float.PositiveInfinity;
+        if (player == null)
+        {
+            return false;
+        }
+
+        // Không target player đã chết.
+        if (IsPlayerDeadForAi())
+        {
+            return false;
+        }
+
+        distance = HorizontalDistance(player.position);
+
+        if (sensor != null)
+        {
+            return sensor.CanSense(player, out distance);
+        }
+
+        // Sensor thiếu: chỉ contact + LOS ray đơn giản (không sphere full sight).
+        if (distance <= 1.35f)
+        {
+            return true;
+        }
+
+        if (distance > SightRangeForDetection())
+        {
+            return false;
+        }
+
+        Vector3 eye = transform.position + Vector3.up * 1.4f;
+        Vector3 aim = player.position + Vector3.up * 1f;
+        Vector3 delta = aim - eye;
+        float rayDist = delta.magnitude;
+        if (rayDist <= 0.01f)
+        {
+            return true;
+        }
+
+        if (Physics.Raycast(eye, delta.normalized, out RaycastHit hit, rayDist, ~0, QueryTriggerInteraction.Ignore))
+        {
+            if (hit.transform == player || hit.transform.IsChildOf(player) || player.IsChildOf(hit.transform))
+            {
+                return true;
+            }
+
+            return false; // tường chặn
+        }
+
+        return true;
+    }
+
     bool CheckDetect()
     {
-        if (player == null || sensor == null) return false;
-        if (!sensor.CanSense(player, out _)) return false;
+        if (player == null)
+        {
+            return false;
+        }
+
+        if (!CanSensePlayer(out _))
+        {
+            return false;
+        }
 
         // Combat: thử bật agent tại chỗ (không kéo xa).
         if (spawnPinnedToPatrol || !agentModeActive || (agent != null && !agent.enabled))
@@ -1348,8 +1708,11 @@ public class EnemyAIController : MonoBehaviour
 
     bool CanStartAttack(float distance)
     {
+        if (IsPlayerDeadForAi()) return false;
         if (attackCooldownTimer > 0f) return false;
-        if (distance > AttackRange) return false;
+        // Nhẹ nhàng nới range (hitbox/body size) — tránh đứng sát mà không đánh.
+        float range = AttackRange + 0.2f;
+        if (distance > range && !playerInAttackRange) return false;
         return true;
     }
 
@@ -1907,9 +2270,24 @@ public class EnemyAIController : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         if (!drawAttackGizmo) return;
+
+        // Tutorial style: attack = red, sight = yellow, aggro keep = dark red.
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, AttackRange);
+
+        Gizmos.color = Color.yellow;
+        float sight = Application.isPlaying ? SightRangeForDetection()
+            : (enemyData != null ? enemyData.sightRange : 14f);
+        Gizmos.DrawWireSphere(transform.position, sight);
+
         Gizmos.color = new Color(1f, 0.3f, 0.3f, 0.6f);
         Gizmos.DrawWireSphere(transform.position, AggroKeepRange);
+
+        if (randomWalkPointSet)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawSphere(randomWalkPoint, 0.25f);
+            Gizmos.DrawLine(transform.position, randomWalkPoint);
+        }
     }
 }

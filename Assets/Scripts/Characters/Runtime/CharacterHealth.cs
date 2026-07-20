@@ -26,6 +26,12 @@ public class CharacterHealth : MonoBehaviour
     {
         Initialize();
         RestoreFromGameData();
+
+        // Player: đảm bảo có death controller (anim IsDead, không ragdoll).
+        if (IsPlayerHealth() && GetComponent<PlayerDeathController>() == null)
+        {
+            gameObject.AddComponent<PlayerDeathController>();
+        }
     }
 
     private void OnValidate()
@@ -201,9 +207,23 @@ public class CharacterHealth : MonoBehaviour
         if (!IsPlayerHealth() || GameDataManager.Instance == null || !GameDataManager.Instance.HasPlayerData)
             return;
 
-        runtimeStats.currentHP = Mathf.Min(runtimeStats.maxHP, GameDataManager.Instance.PlayerHP);
-        runtimeStats.currentStamina = Mathf.Min(runtimeStats.staminaMax, GameDataManager.Instance.PlayerStamina);
-        runtimeStats.currentEnergy = Mathf.Min(runtimeStats.energyMax, GameDataManager.Instance.PlayerEnergy);
+        ApplySavedVitals(
+            GameDataManager.Instance.PlayerHP,
+            GameDataManager.Instance.PlayerStamina,
+            GameDataManager.Instance.PlayerEnergy);
+    }
+
+    /// <summary>Gọi từ PlayerPositionRestore / scene load để áp HP-Stamina-Energy đã save.</summary>
+    public void ApplySavedVitals(float hp, float stamina, float energy)
+    {
+        if (runtimeStats == null)
+        {
+            return;
+        }
+
+        runtimeStats.currentHP = Mathf.Clamp(hp, 0f, runtimeStats.maxHP);
+        runtimeStats.currentStamina = Mathf.Clamp(stamina, 0f, runtimeStats.staminaMax);
+        runtimeStats.currentEnergy = Mathf.Clamp(energy, 0f, runtimeStats.energyMax);
         Changed?.Invoke(this);
     }
 

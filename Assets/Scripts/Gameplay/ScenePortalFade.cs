@@ -159,6 +159,12 @@ public class ScenePortalFade : MonoBehaviour
             var s = health.RuntimeStats;
             GameDataManager.Instance.SavePlayerStats(s.currentHP, s.currentStamina, s.currentEnergy);
         }
+
+        PlayerInventoryService inventory = player.GetComponent<PlayerInventoryService>();
+        if (inventory != null)
+        {
+            inventory.SaveToGameData();
+        }
     }
 
     private void DisablePlayerMovement(GameObject player)

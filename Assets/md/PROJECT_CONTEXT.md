@@ -5,6 +5,8 @@
 >
 > **Last verified against repo:** 2026-06-16  
 > **Sections marked "snapshot"** = đối chiếu trực tiếp với code/manifest; **các section khác** = direction/design, không phải state.
+>
+> **Changelog kỹ thuật gần đây:** xem `Assets/md/WORK_LOG.md` (đọc trước khi sửa tiếp sau reset/clone).
 
 ---
 
@@ -949,6 +951,8 @@ ASTRA EDEN should first become a polished small third-person dinosaur action ver
 
 Keep these design files near the repo or documentation folder if possible:
 
+- `Assets/md/WORK_LOG.md` — **nhật ký sửa code / quyết định kỹ thuật** (mới nhất trên cùng). AI phải append sau mỗi batch thay đổi lớn.
+- `Assets/md/VERTICAL_SLICE_SETUP_GUIDE.md` — setup + checklist test vertical slice.
 - `Kịch bản Game.docx`
 - `Kịch bản Game (1).docx`
 - `astra_eden_master_task_breakdown_detailed.xlsx`

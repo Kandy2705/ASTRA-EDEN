@@ -38,14 +38,14 @@ public class LootCollector : MonoBehaviour
             inventoryService = ResolveInventoryService();
         }
 
+        // Gold và mọi item đều vào inventory (single source). Không cộng GameDataManager.Currency riêng.
         if (inventoryService != null)
         {
             inventoryService.AddItem(item, quantity);
         }
-
-        if (item.type == ItemType.Currency && GameDataManager.Instance != null)
+        else
         {
-            GameDataManager.Instance.AddCurrency(quantity);
+            Debug.LogWarning("[LootCollector] Không tìm thấy PlayerInventoryService — loot bị mất.", this);
         }
 
         Collected?.Invoke(item, quantity);

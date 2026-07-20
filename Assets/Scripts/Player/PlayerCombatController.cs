@@ -106,6 +106,13 @@ public class PlayerCombatController : MonoBehaviour
 
     private void Update()
     {
+        if (PlayerDeathController.IsPlayerDead || (characterHealth != null && characterHealth.IsDead))
+        {
+            CloseAreaDamageWindow();
+            attackLockTimer = 0f;
+            return;
+        }
+
         TickAttackLock();
 
         if (inputReader == null || animatorBridge == null)

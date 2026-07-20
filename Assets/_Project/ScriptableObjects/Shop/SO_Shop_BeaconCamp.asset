@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShopData
   shopId: shop_beacon_camp
   shopName: Beacon Supply
-  currencyItem: {fileID: 0}
+  currencyItem: {fileID: 11400000, guid: 9e6afbd2821f4e2cb720f02c5177ea80, type: 2}
   entries:
   - item: {fileID: 11400000, guid: ad7bcc3bd7e4c492cb2988189e25b3a4, type: 2}
     price: 25

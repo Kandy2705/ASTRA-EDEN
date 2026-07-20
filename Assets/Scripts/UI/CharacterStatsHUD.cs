@@ -2,10 +2,17 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// HUD_PlayerStatusPanel: HP / Stamina / Energy + name.
+/// Prefab không serialize được CharacterHealth của player → tự tìm theo tag "Player".
+/// </summary>
 public class CharacterStatsHUD : MonoBehaviour
 {
     [Header("Source")]
+    [Tooltip("Để trống = tự tìm CharacterHealth trên object tag Player.")]
     [SerializeField] private CharacterHealth characterHealth;
+    [SerializeField] private bool autoFindPlayer = true;
+    [SerializeField, Min(0.1f)] private float rebindInterval = 0.5f;
 
     [Header("Bars")]
     [SerializeField] private Image hpFill;
@@ -23,8 +30,16 @@ public class CharacterStatsHUD : MonoBehaviour
     [SerializeField] private TMP_Text moveSpeedText;
     [SerializeField] private TMP_Text attackSpeedText;
 
+    float rebindTimer;
+
+    private void Awake()
+    {
+        TryBindPlayerHealth(force: true);
+    }
+
     private void OnEnable()
     {
+        TryBindPlayerHealth(force: false);
         Subscribe();
         Refresh();
     }
@@ -34,12 +49,80 @@ public class CharacterStatsHUD : MonoBehaviour
         Unsubscribe();
     }
 
+    private void Update()
+    {
+        if (!autoFindPlayer)
+        {
+            return;
+        }
+
+        // Player spawn trễ / đổi scene / DontDestroy → rebind.
+        if (characterHealth == null || !characterHealth.isActiveAndEnabled)
+        {
+            rebindTimer -= Time.unscaledDeltaTime;
+            if (rebindTimer <= 0f)
+            {
+                rebindTimer = rebindInterval;
+                if (TryBindPlayerHealth(force: true))
+                {
+                    Refresh();
+                }
+            }
+        }
+    }
+
     public void SetCharacterHealth(CharacterHealth newCharacterHealth)
     {
         Unsubscribe();
         characterHealth = newCharacterHealth;
         Subscribe();
         Refresh();
+    }
+
+    /// <summary>Trả về true nếu đã có / vừa bind được CharacterHealth.</summary>
+    public bool TryBindPlayerHealth(bool force)
+    {
+        if (!force && characterHealth != null)
+        {
+            return true;
+        }
+
+        if (!autoFindPlayer && characterHealth == null)
+        {
+            return false;
+        }
+
+        CharacterHealth found = FindPlayerCharacterHealth();
+        if (found == null)
+        {
+            return characterHealth != null;
+        }
+
+        if (characterHealth == found)
+        {
+            return true;
+        }
+
+        SetCharacterHealth(found);
+        return true;
+    }
+
+    static CharacterHealth FindPlayerCharacterHealth()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            return null;
+        }
+
+        CharacterHealth health = player.GetComponent<CharacterHealth>();
+        if (health != null)
+        {
+            return health;
+        }
+
+        return player.GetComponentInChildren<CharacterHealth>(true)
+               ?? player.GetComponentInParent<CharacterHealth>();
     }
 
     public void Refresh()
@@ -54,7 +137,10 @@ public class CharacterStatsHUD : MonoBehaviour
         SetFill(staminaFill, stats.currentStamina, stats.staminaMax);
         SetFill(energyFill, stats.currentEnergy, stats.energyMax);
 
-        SetText(nameText, characterHealth.CharacterData != null ? characterHealth.CharacterData.displayName : characterHealth.name);
+        string displayName = characterHealth.CharacterData != null
+            ? characterHealth.CharacterData.displayName
+            : characterHealth.name;
+        SetText(nameText, displayName);
         SetText(hpText, $"{Mathf.CeilToInt(stats.currentHP)} / {Mathf.CeilToInt(stats.maxHP)}");
         SetText(attackText, $"ATK {stats.attack:0}");
         SetText(defenseText, $"DEF {stats.defense:0}");
@@ -69,6 +155,7 @@ public class CharacterStatsHUD : MonoBehaviour
     {
         if (characterHealth != null)
         {
+            characterHealth.Changed -= HandleHealthChanged;
             characterHealth.Changed += HandleHealthChanged;
         }
     }

@@ -282,10 +282,57 @@ public class GameDataManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Cộng/trừ gold qua inventory item (single source).
+    /// Fallback wallet int chỉ khi chưa có player inventory trong scene.
+    /// </summary>
     public void AddCurrency(int delta)
     {
+        if (delta == 0)
+        {
+            return;
+        }
+
+        PlayerInventoryService inventory = PlayerInventoryService.FindForPlayer();
+        ItemData gold = PlayerInventoryService.ResolveGoldItem();
+        if (inventory != null && gold != null)
+        {
+            if (delta > 0)
+            {
+                inventory.AddItem(gold, delta);
+            }
+            else
+            {
+                inventory.RemoveItem(gold, -delta);
+            }
+
+            return;
+        }
+
+        // MainMenu / chưa có player: mirror int tạm (sẽ migrate vào inventory khi load player).
         Currency = currency + delta;
         SavePersistentData();
+    }
+
+    /// <summary>
+    /// Mirror số gold inventory → field Currency (HUD main menu / API cũ).
+    /// Không dùng làm wallet độc lập.
+    /// </summary>
+    public void SetCurrencyMirror(int goldFromInventory)
+    {
+        int newValue = Mathf.Max(0, goldFromInventory);
+        if (newValue == currency)
+        {
+            // Vẫn persist để ASTRA_CURRENCY khớp inventory sau migrate.
+            PlayerPrefs.SetInt("ASTRA_CURRENCY", currency);
+            MarkPlayerPrefsDirty();
+            return;
+        }
+
+        currency = newValue;
+        OnCurrencyChanged?.Invoke(currency);
+        PlayerPrefs.SetInt("ASTRA_CURRENCY", currency);
+        MarkPlayerPrefsDirty();
     }
 
     /// <summary>UI/HUD subscribe vao day, va goi ngay 1 lan voi gia tri hien tai de sync khi enable.</summary>

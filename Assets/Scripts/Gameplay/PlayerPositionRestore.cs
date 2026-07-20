@@ -43,8 +43,6 @@ public class PlayerPositionRestore : MonoBehaviour
                 if (agent != null) agent.enabled = true;
                 if (cc != null) cc.enabled = true;
 
-                RestorePlayerStatsIfPossible();
-
                 if (showDebugLog)
                 {
                     Debug.Log($"[PlayerPositionRestore] Restored scene={currentScene}, pos={savedPos}, rotY={savedRotY}");
@@ -64,9 +62,12 @@ public class PlayerPositionRestore : MonoBehaviour
         {
             if (showDebugLog)
             {
-                Debug.Log("[PlayerPositionRestore] Không có cờ Continue/Restore nên không restore.");
+                Debug.Log("[PlayerPositionRestore] Không có cờ Continue/Restore nên không restore position.");
             }
         }
+
+        // Stats luôn restore nếu đã có save (Awake CharacterHealth cũng restore — gọi lại để chắc sau 1 frame).
+        RestorePlayerStatsIfPossible();
 
         // QUAN TRỌNG:
         // Sau khi vào scene hiện tại, lưu scene này thành scene mới nhất để Continue biết.
@@ -83,17 +84,17 @@ public class PlayerPositionRestore : MonoBehaviour
         CharacterHealth health = GetComponent<CharacterHealth>();
         if (health == null) return;
         if (health.RuntimeStats == null) return;
-        if (!GameDataManager.Instance.HasPlayerData) return;
+        if (GameDataManager.Instance == null || !GameDataManager.Instance.HasPlayerData) return;
 
-        var s = health.RuntimeStats;
+        health.ApplySavedVitals(
+            GameDataManager.Instance.PlayerHP,
+            GameDataManager.Instance.PlayerStamina,
+            GameDataManager.Instance.PlayerEnergy);
 
-        s.currentHP = GameDataManager.Instance.PlayerHP;
-        s.currentStamina = GameDataManager.Instance.PlayerStamina;
-        s.currentEnergy = GameDataManager.Instance.PlayerEnergy;
-
-        if (showDebugLog)
+        if (showDebugLog && health.RuntimeStats != null)
         {
-            Debug.Log($"[PlayerPositionRestore] Restored stats HP={s.currentHP}, Stamina={s.currentStamina}, Energy={s.currentEnergy}");
+            var s = health.RuntimeStats;
+            Debug.Log($"[PlayerPositionRestore] Restored stats HP={s.currentHP}/{s.maxHP}, Stamina={s.currentStamina}/{s.staminaMax}, Energy={s.currentEnergy}/{s.energyMax}");
         }
     }
 }

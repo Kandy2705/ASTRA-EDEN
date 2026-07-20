@@ -40,4 +40,4 @@ MonoBehaviour:
   goldMin: 40
   goldMax: 70
   mainLootTable: {fileID: 11400000, guid: ae98599bb8c6a432c8b22b252c1d0360, type: 2}
-  description: Stage 1 Beach apex boss (a_tyran_01). Slow heavy melee pressure.
+  description: Stage 1 Beach apex boss (a_tyran_01). Slow, heavy melee pressure.

@@ -130,13 +130,18 @@ public static class EnemyAIMigrator
         var ai = EnsureComponent<EnemyAIController>(root);
         EnsureComponent<CharacterKnockback>(root);
 
-        // 3b) Migrate flipForward180 từ EnemyPatrol cũ sang EnemyAIController.
+        // 3b) Migrate flipForward180 từ EnemyPatrol cũ sang AI + Sensor (FOV cùng hướng).
         if (hasOldPatrol)
         {
             var soAI = new SerializedObject(ai);
             var flipNew = soAI.FindProperty("flipForward180");
             if (flipNew != null) flipNew.boolValue = oldFlipForward180;
             soAI.ApplyModifiedPropertiesWithoutUndo();
+
+            var soSensorFlip = new SerializedObject(sensor);
+            var flipSensor = soSensorFlip.FindProperty("flipForward180");
+            if (flipSensor != null) flipSensor.boolValue = oldFlipForward180;
+            soSensorFlip.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // 4) Match EnemyData → gán vào AI + Sensor.
@@ -149,6 +154,8 @@ public static class EnemyAIMigrator
 
             var soSensor = new SerializedObject(sensor);
             soSensor.FindProperty("enemyData").objectReferenceValue = enemyData;
+            // Optional multi-ray FOV (eoger) — off by default for pack enemies (CPU).
+            // Bật trên boss/elite trong Inspector: useMultiRayFov = true.
             soSensor.ApplyModifiedPropertiesWithoutUndo();
             return true;
         }

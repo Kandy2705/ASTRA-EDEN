@@ -331,7 +331,38 @@ public static class EnemyBossBeachTyranBuilder
         SerializedObject sensorSo = new SerializedObject(sensor);
         sensorSo.FindProperty("enemyData").objectReferenceValue = enemyData;
         sensorSo.FindProperty("eyeSensor").objectReferenceValue = eye;
+        sensorSo.FindProperty("flipForward180").boolValue = false;
+        // Multi-ray FOV (eoger-style). Mesh off by default — bật Generate Vision Mesh trên Inspector để debug.
+        sensorSo.FindProperty("useMultiRayFov").boolValue = true;
+        sensorSo.FindProperty("generateVisionMesh").boolValue = false;
+        // Obstacle: Default + Environment-ish; không ray-block bởi trigger.
+        // Giữ mask rộng; Player sẽ pass vì hit gần target vẫn count as clear.
         sensorSo.ApplyModifiedPropertiesWithoutUndo();
+
+        // Ensure LoS component exists when multi-ray is on.
+        EnemyLineOfSight los = root.GetComponent<EnemyLineOfSight>();
+        if (los == null)
+        {
+            los = root.AddComponent<EnemyLineOfSight>();
+        }
+
+        SerializedObject losSo = new SerializedObject(los);
+        losSo.FindProperty("maxRange").floatValue = enemyData != null ? enemyData.sightRange : 22f;
+        losSo.FindProperty("fovAngle").floatValue = enemyData != null ? enemyData.sightAngle : 130f;
+        losSo.FindProperty("eye").objectReferenceValue = eye;
+        losSo.FindProperty("eyeHeight").floatValue = 0.12f;
+        losSo.FindProperty("subdivisions").intValue = 16;
+        losSo.FindProperty("maxIterations").intValue = 2;
+        losSo.FindProperty("generateMesh").boolValue = false;
+        losSo.FindProperty("flipForward180").boolValue = false;
+        losSo.ApplyModifiedPropertiesWithoutUndo();
+
+        sensorSo = new SerializedObject(sensor);
+        sensorSo.FindProperty("lineOfSight").objectReferenceValue = los;
+        sensorSo.ApplyModifiedPropertiesWithoutUndo();
+
+        // World-space HP bar (giống Enemy.prefab). Boss root scale lớn → localY/scale nhỏ hơn.
+        EnemyHUDBuilder.EnsureHudOnRoot(root, canvasLocalY: 0.22f, canvasScale: 0.004f, showDistance: 18f);
 
         SerializedObject relaySo = new SerializedObject(relay);
         relaySo.FindProperty("aiOwner").objectReferenceValue = ai;

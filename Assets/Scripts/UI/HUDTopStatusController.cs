@@ -154,11 +154,28 @@ public class HUDTopStatusController : MonoBehaviour
         networkText.text = $"{Mathf.RoundToInt(smoothedFrameMs)}ms";
     }
 
+    /// <summary>Gọi từ GameplayUISceneBootstrap khi vào hub/camp (player spawn trễ).</summary>
+    public void ForceRefreshCurrency()
+    {
+        RefreshCurrency();
+    }
+
     private void RefreshCurrency()
     {
         if (currencyText == null)
         {
             return;
+        }
+
+        // Luôn ưu tiên inventory gold (SO_Item_Gold). Tìm lại service nếu scene camp load trễ.
+        if (inventoryService == null)
+        {
+            inventoryService = PlayerInventoryService.FindForPlayer();
+            if (inventoryService != null)
+            {
+                inventoryService.OnInventoryChanged -= RefreshCurrency;
+                inventoryService.OnInventoryChanged += RefreshCurrency;
+            }
         }
 
         if (inventoryService != null)
@@ -167,6 +184,7 @@ public class HUDTopStatusController : MonoBehaviour
             return;
         }
 
+        // Chưa có player/inventory trong scene (MainMenu) → mirror cũ hoặc 0.
         if (GameDataManager.Instance != null)
         {
             currencyText.text = GameDataManager.Instance.Currency.ToString("N0");

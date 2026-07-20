@@ -21,7 +21,7 @@ using TMPro;
 /// </summary>
 public static class VerticalSliceDemoSetup
 {
-    const string GoldPath = "Assets/_Project/ScriptableObjects/Items/SO_Item_Gold.asset";
+    const string GoldPath = "Assets/_Project/ScriptableObjects/Items/Loot/SO_Item_Gold.asset";
     const string PotionPath = "Assets/_Project/ScriptableObjects/Items/Loot/SO_Item_ItemHealthPotionSmall.asset";
     const string CrystalOrePath = "Assets/_Project/ScriptableObjects/Items/Loot/SO_Item_ItemCrystalOre.asset";
     const string CoreDustPath = "Assets/_Project/ScriptableObjects/Items/Loot/SO_Item_ItemCoreDust.asset";

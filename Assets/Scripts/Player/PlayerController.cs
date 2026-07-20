@@ -95,6 +95,19 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (PlayerDeathController.IsPlayerDead || (playerHealth != null && playerHealth.IsDead))
+        {
+            // Chết: chỉ giữ gravity nhẹ nếu CC còn bật; không move/dash/jump.
+            if (controller != null && controller.enabled && !controller.isGrounded)
+            {
+                verticalVelocity.y += gravity * Time.deltaTime;
+                controller.Move(verticalVelocity * Time.deltaTime);
+            }
+
+            animatorBridge?.UpdateLocomotion(0f, Vector2.zero, controller != null && controller.isGrounded);
+            return;
+        }
+
         inputReader.ReadInput();
         isGrounded = controller.isGrounded;
 

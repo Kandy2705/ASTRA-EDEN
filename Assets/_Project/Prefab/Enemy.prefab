@@ -245,6 +245,7 @@ GameObject:
   - component: {fileID: 3123532282307196420}
   - component: {fileID: 3455811534742008690}
   - component: {fileID: 1865802368170393328}
+  - component: {fileID: 1061208173799570704}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -274,6 +275,7 @@ Transform:
   - {fileID: 6148987435208408004}
   - {fileID: 9012345678901234568}
   - {fileID: 8012345678901234568}
+  - {fileID: 9221404951843576032}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &5128329752096485701
@@ -678,13 +680,24 @@ MonoBehaviour:
   eyeSensor: {fileID: 9012345678901234568}
   eyeHeight: 1.6
   targetChestHeight: 1
+  flipForward180: 1
   obstacleMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  contactRange: 1.35
+  hearingRequiresLineOfSight: 1
+  useAillieoLos2D: 1
+  aillieoBridge: {fileID: 1061208173799570704}
+  aillieoDrawMesh: 0
+  lineOfSight: {fileID: 0}
+  useMultiRayFov: 0
+  generateVisionMesh: 0
   senseInterval: 0.15
   drawGizmos: 1
   sightColor: {r: 1, g: 0.8, b: 0, a: 0.25}
   hearingColor: {r: 0, g: 0.6, b: 1, a: 0.25}
+  losBlockedColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
+  losClearColor: {r: 0.2, g: 1, b: 0.3, a: 0.8}
 --- !u!114 &3455811534742008690
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -732,6 +745,13 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
+  playerResolveInterval: 0.75
+  useProximitySphereFallback: 1
+  enableRandomWalkWhenNoPatrol: 1
+  randomWalkRange: 8
+  randomWalkArriveDistance: 1
+  attackStateTimeout: 6
+  chaseDestinationInterval: 0.12
   debugState: 0
   debugPoise: 0
   debugLastKnownHP: 0
@@ -751,6 +771,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterKnockback
   defaultDuration: 0.18
+--- !u!114 &1061208173799570704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 559586043958926079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47a9fb4838faa4399b16ae6d358737c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyLOS2DBridge
+  losSource: {fileID: 5658975925999812687}
+  losMesh: {fileID: 0}
+  createMeshVisual: 0
+  meshResolution: 36
+  drawSightMesh: 0
+  drawHiddenMesh: 0
+  flipForward180: 1
+  losFacingRoot: {fileID: 9221404951843576032}
+  maskForEvent:
+    serializedVersion: 2
+    m_Bits: 65
+  maskForRender:
+    serializedVersion: 2
+    m_Bits: 65
+  eyeHeight: 1.2
 --- !u!1 &662367532558970698
 GameObject:
   m_ObjectHideFlags: 0
@@ -2820,6 +2867,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3285925915593127289}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4659908915344277063
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9221404951843576032}
+  - component: {fileID: 5658975925999812687}
+  m_Layer: 0
+  m_Name: LOS2D_Facing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9221404951843576032
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4659908915344277063}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5343734790877912174}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5658975925999812687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4659908915344277063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2caf1d20a8914184a8973ddca72dbcd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: AillieoUtils.LOS2D::AillieoUtils.LOS2D.LOSSource
+  fov: 110
+  maxDist: 14
+  maskForEvent:
+    serializedVersion: 2
+    m_Bits: 65
+  maskForRender:
+    serializedVersion: 2
+    m_Bits: 65
+  eyeHeight: 1.2
 --- !u!1 &4683745627709642754
 GameObject:
   m_ObjectHideFlags: 0
@@ -3258,7 +3358,7 @@ GameObject:
   - component: {fileID: 8570527745009075538}
   - component: {fileID: 1112144199160268115}
   m_Layer: 0
-  m_Name: Canvas_EnemyHUD (1)
+  m_Name: Canvas_EnemyHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

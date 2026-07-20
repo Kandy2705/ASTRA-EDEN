@@ -46,6 +46,21 @@ public class AutoSavePlayerPosition : MonoBehaviour
 
         string sceneName = SceneManager.GetActiveScene().name;
         GameDataManager.Instance.SaveLastPlayerTransform(sceneName, transform);
+
+        // Lưu HP/Stamina/Energy mỗi lần auto-save — portal/camp vẫn giữ đúng máu.
+        CharacterHealth health = GetComponent<CharacterHealth>();
+        if (health != null && health.RuntimeStats != null)
+        {
+            var s = health.RuntimeStats;
+            GameDataManager.Instance.SavePlayerStats(s.currentHP, s.currentStamina, s.currentEnergy);
+        }
+
+        PlayerInventoryService inventory = GetComponent<PlayerInventoryService>();
+        if (inventory != null)
+        {
+            inventory.SaveToGameData();
+        }
+
         GameDataManager.Instance.FlushPlayerPrefs();
 
         // Debug.Log($"[AutoSavePlayerPosition] Saved scene={sceneName}, pos={transform.position}");
