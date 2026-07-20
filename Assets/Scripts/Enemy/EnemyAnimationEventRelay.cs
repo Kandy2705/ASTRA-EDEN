@@ -9,6 +9,7 @@ public class EnemyAnimationEventRelay : MonoBehaviour
     [SerializeField] private EnemyAIController aiOwner;
     [SerializeField] private EnemyPatrol patrolOwner;
     [SerializeField] private EnemyPushHitbox tacklePushHitbox;
+    [SerializeField] private DinosaurVocalAudio vocalAudio;
 
     private void Reset()
     {
@@ -30,13 +31,26 @@ public class EnemyAnimationEventRelay : MonoBehaviour
 
         if (tacklePushHitbox == null)
         {
-            tacklePushHitbox = GetComponentInParent<EnemyAIController>()
-                .GetComponentInChildren<EnemyPushHitbox>(true);
+            EnemyAIController controller = GetComponentInParent<EnemyAIController>();
+            if (controller != null)
+            {
+                tacklePushHitbox = controller.GetComponentInChildren<EnemyPushHitbox>(true);
+            }
+        }
+
+        if (vocalAudio == null)
+        {
+            vocalAudio = GetComponentInParent<DinosaurVocalAudio>();
         }
     }
 
     public void OnAttackStart()
     {
+        if (vocalAudio != null)
+        {
+            vocalAudio.PlayAttack();
+        }
+
         if (aiOwner != null)
         {
             aiOwner.Anim_OnAttackStart();
