@@ -160218,8 +160218,8 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 3.2666667
-    functionName: OnAttackHit
+  - time: 2.6
+    functionName: PlayBark
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
@@ -160227,6 +160227,13 @@ AnimationClip:
     messageOptions: 0
   - time: 3.2666667
     functionName: Anim_OnAttackEnd
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 3.2666667
+    functionName: OnAttackHit
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
