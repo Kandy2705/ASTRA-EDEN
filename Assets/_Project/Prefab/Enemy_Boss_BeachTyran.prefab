@@ -1086,9 +1086,9 @@ MonoBehaviour:
   flipForward180: 0
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 193
   contactRange: 1.35
-  hearingRequiresLineOfSight: 1
+  hearingRequiresLineOfSight: 0
   useAillieoLos2D: 1
   aillieoBridge: {fileID: 1363790776221764518}
   aillieoDrawMesh: 1
