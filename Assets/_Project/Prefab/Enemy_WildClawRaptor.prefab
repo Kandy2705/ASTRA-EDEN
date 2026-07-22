@@ -4216,8 +4216,12 @@ MonoBehaviour:
   useMultiRayFov: 0
   generateVisionMesh: 0
   senseInterval: 0.15
+  showRuntimeVision: 1
+  runtimeVisionRays: 28
+  runtimeVisionHeight: 0.15
   drawGizmos: 1
   sightColor: {r: 1, g: 0.8, b: 0, a: 0.25}
+  sightAlertColor: {r: 1, g: 0.25, b: 0.15, a: 0.95}
   hearingColor: {r: 0, g: 0.6, b: 1, a: 0.25}
   losBlockedColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
   losClearColor: {r: 0.2, g: 1, b: 0.3, a: 0.8}
@@ -4326,7 +4330,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DissolveOnDeath
   characterHealth: {fileID: 5327314098521213196}
-  dissolveMaterialTemplate: {fileID: 0}
+  dissolveMaterialTemplate: {fileID: 2100000, guid: c237ff2d5c950430d855d925ee9c7cbf, type: 2}
   dissolveProperty: _Dissolve
   baseMapProperty: _BaseMap
   baseColorProperty: _BaseColor
@@ -4355,6 +4359,7 @@ MonoBehaviour:
   aiOwner: {fileID: 4030525004140749626}
   patrolOwner: {fileID: 0}
   tacklePushHitbox: {fileID: 8022345678901234570}
+  vocalAudio: {fileID: 0}
 --- !u!114 &2460261467791670677
 MonoBehaviour:
   m_ObjectHideFlags: 0
