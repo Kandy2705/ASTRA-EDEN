@@ -1156,8 +1156,22 @@ MonoBehaviour:
   loseTargetTime: 6
   returnDistance: 24.8
   patrolSpeedRatio: 0.45
-  retreatSpeedRatio: 1.1
+  retreatSpeedRatio: 2
   retreatMinRange: 4
+  enablePressureEvade: 1
+  hitsToEvade: 3
+  hitPressureWindow: 1.1
+  evadeChance: 0.7
+  evadeDistance: 2.8
+  evadeDuration: 0.55
+  evadeCooldown: 2.5
+  evadeSpeedRatio: 1.35
+  enableLowHealthRetreat: 1
+  lowHealthThreshold: 0.25
+  lowHealthRetreatDistance: 6
+  lowHealthRetreatDuration: 2
+  lowHealthRetreatCooldown: 8
+  lowHealthRetreatOnlyOnce: 1
   useHitAnimation: 1
   hitStunDuration: 0.25
   hurtCooldown: 0.6
@@ -1188,6 +1202,7 @@ MonoBehaviour:
   drawAttackGizmo: 1
   debugLogStateMachine: 0
   debugLogChaseTick: 0
+  debugLogCombatResponse: 0
 --- !u!114 &5031118478018109776
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1366,7 +1381,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 110
   DopplerLevel: 1.1
-  MinDistance: 8
+  MinDistance: 6.206387
   MaxDistance: 120
   Pan2D: 0
   rolloffMode: 0

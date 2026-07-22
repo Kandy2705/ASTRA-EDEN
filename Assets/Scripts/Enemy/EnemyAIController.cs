@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 
 /// <summary>
 /// Data-driven enemy AI FSM theo briefing ASTRA EDEN.
-/// State: Spawn → Idle → Patrol → Detect → Chase → Attack → Hurt → Stagger → Retreat → ReturnToOrigin → Dead.
+/// State: Spawn → Idle → Patrol → Detect → Chase → Attack → Hurt → Stagger → Retreat/Evade → ReturnToOrigin → Dead.
 /// Cấu hình lấy từ EnemyData SO. Hợp tác với CharacterHealth, EnemyAttackHitbox, EnemySensor.
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
@@ -26,6 +26,8 @@ public class EnemyAIController : MonoBehaviour
         Retreat,
         ReturnToOrigin,
         Dead,
+        // Append only: giữ nguyên numeric value của các state cũ đã serialize.
+        Evade,
     }
 
     static readonly int BlendHash = Animator.StringToHash("Blend");
@@ -67,6 +69,25 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField, Range(0.5f, 2f)] private float retreatSpeedRatio = 1.1f;
     [Tooltip("Ngưỡng kích hoạt Retreat — Ranged/Caster khi player gần hơn min của max attack range.")]
     [SerializeField, Min(0f)] private float retreatMinRange = 4f;
+
+    [Header("Combat Response")]
+    [Tooltip("Bị combo đủ số hit trong một cửa sổ ngắn thì xếp hàng né sau Hurt/Stagger.")]
+    [SerializeField] private bool enablePressureEvade = true;
+    [SerializeField, Min(1)] private int hitsToEvade = 3;
+    [SerializeField, Min(0.05f)] private float hitPressureWindow = 1.1f;
+    [SerializeField, Range(0f, 1f)] private float evadeChance = 0.7f;
+    [SerializeField, Min(0.25f)] private float evadeDistance = 2.8f;
+    [SerializeField, Min(0.1f)] private float evadeDuration = 0.55f;
+    [SerializeField, Min(0f)] private float evadeCooldown = 2.5f;
+    [SerializeField, Range(0.5f, 2.5f)] private float evadeSpeedRatio = 1.35f;
+
+    [Tooltip("HP thấp thì rút ra xa, quan sát một lúc rồi quay lại chiến đấu.")]
+    [SerializeField] private bool enableLowHealthRetreat = true;
+    [SerializeField, Range(0.01f, 0.95f)] private float lowHealthThreshold = 0.25f;
+    [SerializeField, Min(1f)] private float lowHealthRetreatDistance = 6f;
+    [SerializeField, Min(0.1f)] private float lowHealthRetreatDuration = 2f;
+    [SerializeField, Min(0f)] private float lowHealthRetreatCooldown = 8f;
+    [SerializeField] private bool lowHealthRetreatOnlyOnce = true;
 
     [Header("Hurt / Stagger")]
     [Tooltip("Bật anim Hit khi mất HP nhưng poise còn.")]
@@ -126,6 +147,8 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField] private bool debugLogStateMachine = false;
     [Tooltip("Bật để log distance, cooldown, agent.remainingDistance mỗi frame trong Chase. Spam nhiều — chỉ bật khi cần.")]
     [SerializeField] private bool debugLogChaseTick = false;
+    [Tooltip("Log đếm combo, quyết định né và retreat HP thấp.")]
+    [SerializeField] private bool debugLogCombatResponse = false;
 
     NavMeshAgent agent;
     Transform player;
@@ -160,6 +183,24 @@ public class EnemyAIController : MonoBehaviour
     bool randomWalkPointSet;
     bool playerInSightRange;
     bool playerInAttackRange;
+
+    // Combat response runtime state.
+    int pressureHitCount;
+    float pressureWindowExpiresAt;
+    bool evadeQueued;
+    float nextEvadeAllowedAt;
+    Vector3 evadeDestination;
+    bool evadeDestinationValid;
+
+    bool lowHealthRetreatActive;
+    bool lowHealthRetreatCompleted;
+    bool lowHealthRetreatHolding;
+    float lowHealthRetreatHoldUntil;
+    float lowHealthRetreatStartedAt;
+    float nextLowHealthRetreatAllowedAt;
+    float nextRetreatDestinationRefreshAt;
+    Vector3 lowHealthRetreatDestination;
+    bool lowHealthRetreatDestinationValid;
 
     public AIState State => currentState;
     public EnemyData Data => enemyData;
@@ -673,6 +714,7 @@ public class EnemyAIController : MonoBehaviour
                 break;
             case AIState.Chase:
             case AIState.Retreat:
+            case AIState.Evade:
                 agent.stoppingDistance = ChaseStoppingDistance;
                 break;
             default:
@@ -760,6 +802,7 @@ public class EnemyAIController : MonoBehaviour
             case AIState.Hurt: TickHurt(); break;
             case AIState.Stagger: TickStagger(); break;
             case AIState.Retreat: TickRetreat(); break;
+            case AIState.Evade: TickEvade(); break;
             case AIState.ReturnToOrigin: TickReturn(); break;
         }
 
@@ -848,7 +891,10 @@ public class EnemyAIController : MonoBehaviour
         if (agent.velocity.sqrMagnitude <= movingThreshold * movingThreshold) return;
 
         // Khi đang chase/attack/detect → có player, đã có FaceTarget xử lý.
-        bool wantsFaceTarget = currentState == AIState.Chase || currentState == AIState.Attack || currentState == AIState.Detect;
+        bool wantsFaceTarget = currentState == AIState.Chase
+                               || currentState == AIState.Attack
+                               || currentState == AIState.Detect
+                               || currentState == AIState.Evade;
         if (wantsFaceTarget && player != null) return;
 
         Vector3 dir = agent.velocity;
@@ -955,11 +1001,15 @@ public class EnemyAIController : MonoBehaviour
             case AIState.Retreat:
                 holdingInAttackRange = false;
                 ConfigureAgentStoppingForState(AIState.Retreat);
+                TryEnableAgentForCombat(CombatAgentSnap);
                 if (IsAgentNavigable())
                 {
                     agent.speed = MoveSpeed * retreatSpeedRatio;
                     agent.isStopped = false;
                 }
+                break;
+            case AIState.Evade:
+                EnterEvade();
                 break;
             case AIState.ReturnToOrigin:
                 holdingInAttackRange = false;
@@ -977,6 +1027,10 @@ public class EnemyAIController : MonoBehaviour
                 }
                 break;
             case AIState.Dead:
+                evadeQueued = false;
+                evadeDestinationValid = false;
+                lowHealthRetreatActive = false;
+                lowHealthRetreatDestinationValid = false;
                 EnterDead();
                 break;
         }
@@ -1465,7 +1519,10 @@ public class EnemyAIController : MonoBehaviour
     void TickHurt()
     {
         // Hard timeout — phòng trường hợp hitStunTimer bị reset bởi knockback/dame liên tiếp.
-        if (hitStunTimer <= 0f || stateTimer >= hitStunDuration + 0.1f) EnterState(AIState.Chase);
+        if (hitStunTimer <= 0f || stateTimer >= hitStunDuration + 0.1f)
+        {
+            EnterPostHitResponse();
+        }
     }
 
     void TickStagger()
@@ -1473,7 +1530,7 @@ public class EnemyAIController : MonoBehaviour
         if (staggerTimer <= 0f)
         {
             currentPoise = MaxPoise;
-            EnterState(AIState.Chase);
+            EnterPostHitResponse();
         }
         else if (poiseRegenAfterStagger > 0f)
         {
@@ -1483,24 +1540,425 @@ public class EnemyAIController : MonoBehaviour
 
     void TickRetreat()
     {
-        if (player == null) { EnterState(AIState.ReturnToOrigin); return; }
-        float distance = HorizontalDistance(player.position);
+        if (lowHealthRetreatActive)
+        {
+            TickLowHealthRetreat();
+            return;
+        }
 
+        TickStandardRetreat();
+    }
+
+    void TickStandardRetreat()
+    {
+        if (player == null)
+        {
+            EnterState(AIState.ReturnToOrigin);
+            return;
+        }
+
+        float distance = HorizontalDistance(player.position);
         if (distance >= AttackRange * 0.9f)
         {
             EnterState(CanStartAttack(distance) ? AIState.Attack : AIState.Chase);
             return;
         }
 
-        Vector3 away = transform.position + (transform.position - player.position).normalized * 2.5f;
+        Vector3 awayDirection = transform.position - player.position;
+        awayDirection.y = 0f;
+        if (awayDirection.sqrMagnitude <= 0.0001f)
+        {
+            awayDirection = -transform.forward;
+        }
+
+        Vector3 away = transform.position + awayDirection.normalized * 2.5f;
         if (IsAgentNavigable())
         {
             SetDestinationSafe(away, CombatAgentSnap);
         }
-        else
+        else if (IsDirectMovementClear(away))
         {
             MoveTransformTowards(away, MoveSpeed * retreatSpeedRatio);
         }
+
+        FaceTarget();
+    }
+
+    void TickEvade()
+    {
+        if (player == null)
+        {
+            EnterState(AIState.ReturnToOrigin);
+            return;
+        }
+
+        FaceTarget();
+
+        bool arrived = evadeDestinationValid && HorizontalDistance(evadeDestination) <= 0.25f;
+        if (!arrived && IsAgentNavigable() && evadeDestinationValid && !agent.pathPending)
+        {
+            arrived = !agent.hasPath || agent.remainingDistance <= Mathf.Max(0.25f, agent.stoppingDistance + 0.1f);
+        }
+
+        if (stateTimer >= evadeDuration || arrived)
+        {
+            if (debugLogCombatResponse)
+            {
+                Debug.Log($"[AI:{name}] Evade hoàn tất → Chase.", this);
+            }
+
+            evadeDestinationValid = false;
+            EnterState(AIState.Chase);
+            return;
+        }
+
+        if (!evadeDestinationValid)
+        {
+            return;
+        }
+
+        if (IsAgentNavigable())
+        {
+            agent.speed = Mathf.Max(0.1f, MoveSpeed * evadeSpeedRatio);
+            if (agent.isStopped) agent.isStopped = false;
+        }
+        else if (IsDirectMovementClear(evadeDestination))
+        {
+            MoveTransformTowards(evadeDestination, MoveSpeed * evadeSpeedRatio);
+        }
+    }
+
+    void EnterEvade()
+    {
+        EndTackle();
+        holdingInAttackRange = false;
+        CancelActiveAttack();
+        ConfigureAgentStoppingForState(AIState.Evade);
+        TryEnableAgentForCombat(CombatAgentSnap);
+
+        if (IsAgentNavigable())
+        {
+            agent.speed = Mathf.Max(0.1f, MoveSpeed * evadeSpeedRatio);
+            agent.isStopped = false;
+        }
+
+        evadeDestinationValid = TryChooseEvadeDestination(out evadeDestination);
+        if (evadeDestinationValid && IsAgentNavigable())
+        {
+            SetDestinationSafe(evadeDestination, CombatAgentSnap);
+        }
+
+        if (debugLogCombatResponse)
+        {
+            string destination = evadeDestinationValid ? evadeDestination.ToString("F2") : "không tìm thấy điểm hợp lệ";
+            Debug.Log($"[AI:{name}] Evade bắt đầu | destination={destination}", this);
+        }
+    }
+
+    bool TryChooseEvadeDestination(out Vector3 destination)
+    {
+        destination = transform.position;
+        if (player == null) return false;
+
+        Vector3 toPlayer = player.position - transform.position;
+        toPlayer.y = 0f;
+        if (toPlayer.sqrMagnitude <= 0.0001f)
+        {
+            toPlayer = flipForward180 ? -transform.forward : transform.forward;
+        }
+        toPlayer.Normalize();
+
+        Vector3 away = -toPlayer;
+        Vector3 right = Vector3.Cross(Vector3.up, toPlayer).normalized;
+        float sideSign = Random.value < 0.5f ? -1f : 1f;
+
+        Vector3[] directions =
+        {
+            (right * sideSign * 0.85f + away * 0.35f).normalized,
+            (right * -sideSign * 0.85f + away * 0.35f).normalized,
+            (right * sideSign * 0.45f + away * 0.75f).normalized,
+            away,
+        };
+
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector3 candidate = ClampDestinationToCombatLeash(transform.position + directions[i] * evadeDistance);
+            if (TryGetSafeCombatDestination(candidate, 1.25f, out destination))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void EnterPostHitResponse()
+    {
+        if (health != null && health.IsDead)
+        {
+            EnterState(AIState.Dead);
+            return;
+        }
+
+        if (player == null)
+        {
+            EnterState(AIState.ReturnToOrigin);
+            return;
+        }
+
+        // Retreat HP thấp đang chạy mà bị đánh tiếp thì tiếp tục retreat.
+        if (lowHealthRetreatActive)
+        {
+            EnterState(AIState.Retreat);
+            return;
+        }
+
+        if (ShouldStartLowHealthRetreat())
+        {
+            StartLowHealthRetreat();
+            return;
+        }
+
+        if (enablePressureEvade && evadeQueued)
+        {
+            evadeQueued = false;
+            EnterState(AIState.Evade);
+            return;
+        }
+
+        EnterState(AIState.Chase);
+    }
+
+    bool ShouldStartLowHealthRetreat()
+    {
+        if (!enableLowHealthRetreat || lowHealthRetreatActive || player == null || isTackling) return false;
+        if (health == null || health.IsDead || health.RuntimeStats == null) return false;
+        if (lowHealthRetreatOnlyOnce && lowHealthRetreatCompleted) return false;
+        if (Time.time < nextLowHealthRetreatAllowedAt) return false;
+
+        float maxHp = Mathf.Max(0.01f, health.RuntimeStats.maxHP);
+        float hpRatio = Mathf.Clamp01(health.RuntimeStats.currentHP / maxHp);
+        return hpRatio <= lowHealthThreshold;
+    }
+
+    void StartLowHealthRetreat()
+    {
+        lowHealthRetreatActive = true;
+        lowHealthRetreatHolding = false;
+        lowHealthRetreatDestinationValid = false;
+        lowHealthRetreatStartedAt = Time.time;
+        nextRetreatDestinationRefreshAt = 0f;
+        nextLowHealthRetreatAllowedAt = Time.time + lowHealthRetreatCooldown;
+        evadeQueued = false;
+
+        if (debugLogCombatResponse)
+        {
+            float maxHp = health != null && health.RuntimeStats != null ? Mathf.Max(0.01f, health.RuntimeStats.maxHP) : 1f;
+            float hpRatio = health != null && health.RuntimeStats != null ? health.RuntimeStats.currentHP / maxHp : 0f;
+            Debug.Log($"[AI:{name}] Low-health Retreat kích hoạt | HP={hpRatio:P0}", this);
+        }
+
+        EnterState(AIState.Retreat);
+    }
+
+    void TickLowHealthRetreat()
+    {
+        if (player == null)
+        {
+            FinishLowHealthRetreat(AIState.ReturnToOrigin);
+            return;
+        }
+
+        float distance = HorizontalDistance(player.position);
+        float resumeDistance = Mathf.Max(0.5f, lowHealthRetreatDistance - 0.75f);
+
+        if (lowHealthRetreatHolding && distance < resumeDistance)
+        {
+            lowHealthRetreatHolding = false;
+            lowHealthRetreatDestinationValid = false;
+            nextRetreatDestinationRefreshAt = 0f;
+        }
+
+        if (!lowHealthRetreatHolding && distance >= lowHealthRetreatDistance)
+        {
+            lowHealthRetreatHolding = true;
+            lowHealthRetreatHoldUntil = Time.time + lowHealthRetreatDuration;
+            lowHealthRetreatDestinationValid = false;
+            HoldAgentStill();
+
+            if (debugLogCombatResponse)
+            {
+                Debug.Log($"[AI:{name}] Đã tạo khoảng cách {distance:F1}m, chờ {lowHealthRetreatDuration:F1}s.", this);
+            }
+        }
+
+        if (lowHealthRetreatHolding)
+        {
+            HoldAgentStill();
+            FaceTarget();
+            if (Time.time >= lowHealthRetreatHoldUntil)
+            {
+                FinishLowHealthRetreat(AIState.Chase);
+            }
+            return;
+        }
+
+        // Failsafe: địa hình không cho lùi đủ xa thì không kẹt Retreat mãi.
+        float hardTimeout = Mathf.Max(4f, lowHealthRetreatDuration + 4f);
+        if (Time.time >= lowHealthRetreatStartedAt + hardTimeout)
+        {
+            FinishLowHealthRetreat(AIState.Chase);
+            return;
+        }
+
+        bool needsDestination = !lowHealthRetreatDestinationValid || Time.time >= nextRetreatDestinationRefreshAt;
+        if (!needsDestination && IsAgentNavigable() && !agent.pathPending)
+        {
+            needsDestination = agent.pathStatus == NavMeshPathStatus.PathInvalid
+                               || (!agent.hasPath && HorizontalDistance(lowHealthRetreatDestination) > 0.35f)
+                               || HorizontalDistance(lowHealthRetreatDestination) <= 0.35f;
+        }
+
+        if (needsDestination)
+        {
+            nextRetreatDestinationRefreshAt = Time.time + 0.4f;
+            lowHealthRetreatDestinationValid = TryChooseLowHealthRetreatDestination(distance, out lowHealthRetreatDestination);
+            if (lowHealthRetreatDestinationValid && IsAgentNavigable())
+            {
+                agent.speed = Mathf.Max(0.1f, MoveSpeed * retreatSpeedRatio);
+                SetDestinationSafe(lowHealthRetreatDestination, CombatAgentSnap);
+            }
+        }
+
+        if (lowHealthRetreatDestinationValid)
+        {
+            if (IsAgentNavigable())
+            {
+                agent.speed = Mathf.Max(0.1f, MoveSpeed * retreatSpeedRatio);
+                if (agent.isStopped) agent.isStopped = false;
+            }
+            else if (IsDirectMovementClear(lowHealthRetreatDestination))
+            {
+                MoveTransformTowards(lowHealthRetreatDestination, MoveSpeed * retreatSpeedRatio);
+            }
+        }
+    }
+
+    bool TryChooseLowHealthRetreatDestination(float currentDistance, out Vector3 destination)
+    {
+        destination = transform.position;
+        if (player == null) return false;
+
+        Vector3 away = transform.position - player.position;
+        away.y = 0f;
+        if (away.sqrMagnitude <= 0.0001f) away = -transform.forward;
+        away.Normalize();
+
+        float needed = Mathf.Max(2.5f, lowHealthRetreatDistance - currentDistance + 1f);
+        float travel = Mathf.Min(lowHealthRetreatDistance, needed);
+        Vector3[] directions =
+        {
+            away,
+            Quaternion.Euler(0f, 30f, 0f) * away,
+            Quaternion.Euler(0f, -30f, 0f) * away,
+            Quaternion.Euler(0f, 60f, 0f) * away,
+            Quaternion.Euler(0f, -60f, 0f) * away,
+        };
+
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector3 candidate = ClampDestinationToCombatLeash(transform.position + directions[i] * travel);
+            if (TryGetSafeCombatDestination(candidate, 1.75f, out destination))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void FinishLowHealthRetreat(AIState nextState)
+    {
+        lowHealthRetreatActive = false;
+        lowHealthRetreatHolding = false;
+        lowHealthRetreatDestinationValid = false;
+        lowHealthRetreatCompleted = true;
+
+        if (debugLogCombatResponse)
+        {
+            Debug.Log($"[AI:{name}] Low-health Retreat hoàn tất → {nextState}.", this);
+        }
+
+        EnterState(nextState);
+    }
+
+    Vector3 ClampDestinationToCombatLeash(Vector3 candidate)
+    {
+        float leash = Mathf.Min(Mathf.Max(2f, returnDistance), Mathf.Max(2f, AggroKeepRange));
+        float safeRadius = Mathf.Max(2f, leash * 0.85f);
+        Vector3 fromOrigin = candidate - originPosition;
+        fromOrigin.y = 0f;
+        if (fromOrigin.magnitude > safeRadius)
+        {
+            Vector3 clamped = originPosition + fromOrigin.normalized * safeRadius;
+            clamped.y = candidate.y;
+            return clamped;
+        }
+
+        return candidate;
+    }
+
+    bool TryGetSafeCombatDestination(Vector3 desired, float sampleRadius, out Vector3 destination)
+    {
+        destination = transform.position;
+        if (!NavMesh.SamplePosition(desired, out NavMeshHit hit, sampleRadius, NavMesh.AllAreas))
+        {
+            return false;
+        }
+
+        if (HorizontalDistanceXZ(transform.position, hit.position) < 0.2f)
+        {
+            return false;
+        }
+
+        // Né là bước ngắn: không chọn điểm nằm xuyên qua collider/tường động.
+        if (!IsDirectMovementClear(hit.position))
+        {
+            return false;
+        }
+
+        if (IsAgentNavigable())
+        {
+            NavMeshPath path = new NavMeshPath();
+            if (!agent.CalculatePath(hit.position, path) || path.status != NavMeshPathStatus.PathComplete)
+            {
+                return false;
+            }
+        }
+
+        destination = hit.position;
+        return true;
+    }
+
+    bool IsDirectMovementClear(Vector3 destination)
+    {
+        Vector3 origin = transform.position + Vector3.up * 0.5f;
+        Vector3 target = destination + Vector3.up * 0.5f;
+        Vector3 delta = target - origin;
+        float distance = delta.magnitude;
+        if (distance <= 0.05f) return true;
+
+        RaycastHit[] hits = Physics.RaycastAll(origin, delta.normalized, distance, ~0, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Transform hitTransform = hits[i].collider != null ? hits[i].collider.transform : null;
+            if (hitTransform == null) continue;
+            if (hitTransform == transform || hitTransform.IsChildOf(transform)) continue;
+            if (player != null && (hitTransform == player || hitTransform.IsChildOf(player) || player.IsChildOf(hitTransform))) continue;
+            return false;
+        }
+
+        return true;
     }
 
     void TickReturn()
@@ -1780,9 +2238,63 @@ public class EnemyAIController : MonoBehaviour
         if (!float.IsNaN(lastKnownHP) && current < lastKnownHP - 0.001f && currentState != AIState.Dead && !h.IsDead)
         {
             float dmg = lastKnownHP - current;
+            RegisterPressureHit();
             ApplyPoiseDamage(dmg);
         }
         lastKnownHP = current;
+    }
+
+    void RegisterPressureHit()
+    {
+        if (!enablePressureEvade || health == null || health.IsDead) return;
+
+        if (Time.time > pressureWindowExpiresAt)
+        {
+            pressureHitCount = 0;
+        }
+
+        pressureHitCount++;
+        pressureWindowExpiresAt = Time.time + hitPressureWindow;
+
+        if (debugLogCombatResponse)
+        {
+            Debug.Log($"[AI:{name}] Pressure hit {pressureHitCount}/{Mathf.Max(1, hitsToEvade)}", this);
+        }
+
+        if (pressureHitCount < Mathf.Max(1, hitsToEvade)) return;
+
+        pressureHitCount = 0;
+        pressureWindowExpiresAt = 0f;
+
+        if (evadeQueued)
+        {
+            return;
+        }
+
+        if (Time.time < nextEvadeAllowedAt)
+        {
+            if (debugLogCombatResponse)
+            {
+                Debug.Log($"[AI:{name}] Evade bị từ chối: cooldown còn {nextEvadeAllowedAt - Time.time:F1}s.", this);
+            }
+            return;
+        }
+
+        if (Random.value > evadeChance)
+        {
+            if (debugLogCombatResponse)
+            {
+                Debug.Log($"[AI:{name}] Evade bị từ chối bởi chance ({evadeChance:P0}).", this);
+            }
+            return;
+        }
+
+        evadeQueued = true;
+        nextEvadeAllowedAt = Time.time + evadeCooldown;
+        if (debugLogCombatResponse)
+        {
+            Debug.Log($"[AI:{name}] Evade đã được xếp hàng sau Hurt/Stagger.", this);
+        }
     }
 
     void RegisterCompletedAttackForTackle()
@@ -2152,6 +2664,7 @@ public class EnemyAIController : MonoBehaviour
         {
             case AIState.Chase:
             case AIState.Retreat:
+            case AIState.Evade:
             case AIState.ReturnToOrigin:
                 return Mathf.Lerp(0.5f, 2f, moving);
             case AIState.Patrol:

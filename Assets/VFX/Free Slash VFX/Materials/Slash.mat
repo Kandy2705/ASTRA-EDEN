@@ -87,7 +87,7 @@ Material:
     - _ZWrite: 0
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 8.574187, g: 8.574187, b: 8.574187, a: 1}
+    - _Color: {r: 0.5856394, g: 0.0084051015, b: 0.0084051015, a: 1}
     - _DissolveScroll: {r: -1, g: 0, b: 0, a: 0}
     - _MainColor: {r: 1, g: 1, b: 1, a: 1}
     - _MaskSpeed: {r: 1, g: 0, b: 0, a: 0}
