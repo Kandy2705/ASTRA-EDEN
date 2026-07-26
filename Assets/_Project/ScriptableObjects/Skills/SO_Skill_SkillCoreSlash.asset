@@ -25,5 +25,5 @@ MonoBehaviour:
   element: 1
   animationTrigger: 
   vfxPrefab: {fileID: 0}
-  sfx: {fileID: 0}
+  sfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
   statusEffect: {fileID: 0}

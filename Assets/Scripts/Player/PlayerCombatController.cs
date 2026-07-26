@@ -38,6 +38,9 @@ public class PlayerCombatController : MonoBehaviour
     [Tooltip("Dame cho từng skillIndex (0..3). Để 0 = dùng attackDamage chung.")]
     [SerializeField] private float[] perSkillDamage = new float[4] { 0f, 0f, 0f, 0f };
 
+    [Header("Audio")]
+    [SerializeField] private PlayerAudioController audioController;
+
     [Header("Skill R — vùng sát thương (Crystal Burst)")]
     [SerializeField] private int areaDamageSkillIndex = 3;
     [SerializeField] private float areaDamageRadius = 5f;
@@ -94,6 +97,11 @@ public class PlayerCombatController : MonoBehaviour
         if (skillCooldown == null)
         {
             skillCooldown = GetComponent<PlayerSkillCooldown>();
+        }
+
+        if (audioController == null)
+        {
+            audioController = GetComponent<PlayerAudioController>();
         }
 
         AssignDefaultDamageMask();
@@ -162,6 +170,12 @@ public class PlayerCombatController : MonoBehaviour
 
         BeginSwing();
 
+        // Phát âm thanh khi bắt đầu attack
+        if (audioController != null)
+        {
+            audioController.OnAttackStarted(currentSkillIndex);
+        }
+
         if (!useAnimationEventDamage && currentSkillIndex != areaDamageSkillIndex)
         {
             ApplyAttackDamage();
@@ -210,6 +224,12 @@ public class PlayerCombatController : MonoBehaviour
 
         swingHitResolved = true;
         ApplyAttackDamage();
+
+        // Phát âm thanh khi trúng (OnAttackHit)
+        if (audioController != null)
+        {
+            audioController.OnAttackHitSound();
+        }
     }
 
     /// <summary>Gọi cuối clip để dừng vùng damage + reset swing.</summary>
@@ -223,6 +243,12 @@ public class PlayerCombatController : MonoBehaviour
         swingActive = false;
         swingHitResolved = false;
         swingElapsed = 0f;
+
+        // Phát âm thanh kết thúc attack
+        if (audioController != null)
+        {
+            audioController.OnAttackEndSound();
+        }
     }
 
     private void TickAttackLock()

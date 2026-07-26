@@ -37,11 +37,11 @@ MonoBehaviour:
     companionSynergy: 1
     statusResistance: 0
   defaultWeaponType: 0
-  normalAttack: {fileID: 0}
-  heavyAttack: {fileID: 0}
-  skill1: {fileID: 0}
-  skill2: {fileID: 0}
-  ultimate: {fileID: 0}
+  normalAttack: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
+  heavyAttack: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
+  skill1: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
+  skill2: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
+  ultimate: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
   animatorController: {fileID: 0}
   unlockType: 0
   description: Default starter Seeker. Baseline Sword Fighter data for exploration
