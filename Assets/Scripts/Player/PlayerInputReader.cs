@@ -48,16 +48,20 @@ public class PlayerInputReader : MonoBehaviour
         }
 
         MoveInput = ReadMovementInput(keyboard);
-        JumpPressed = keyboard[jumpKey].wasPressedThisFrame;
-        DashPressed = keyboard[dashKey].wasPressedThisFrame;
-        RunHeld = keyboard[runKey].isPressed;
-        AttackPressed = keyboard[attackKey].wasPressedThisFrame || IsMouseLeftAttackPressed();
-        Skill1Pressed = keyboard[skill1Key].wasPressedThisFrame;
-        Skill2Pressed = keyboard[skill2Key].wasPressedThisFrame;
-        Skill3Pressed = keyboard[skill3Key].wasPressedThisFrame;
-        InteractPressed = keyboard[interactKey].wasPressedThisFrame;
-        CompanionCommandPressed = keyboard[companionCommandKey].wasPressedThisFrame;
-        CompanionSkillPressed = keyboard[companionSkillKey].wasPressedThisFrame;
+        JumpPressed = keyboard[GetKey(GameControlAction.Jump, jumpKey)].wasPressedThisFrame;
+        DashPressed = keyboard[GetKey(GameControlAction.Dash, dashKey)].wasPressedThisFrame;
+        RunHeld = keyboard[GetKey(GameControlAction.Run, runKey)].isPressed;
+        AttackPressed =
+            keyboard[GetKey(GameControlAction.Attack, attackKey)].wasPressedThisFrame ||
+            IsMouseLeftAttackPressed();
+        Skill1Pressed = keyboard[GetKey(GameControlAction.Skill1, skill1Key)].wasPressedThisFrame;
+        Skill2Pressed = keyboard[GetKey(GameControlAction.Skill2, skill2Key)].wasPressedThisFrame;
+        Skill3Pressed = keyboard[GetKey(GameControlAction.Skill3, skill3Key)].wasPressedThisFrame;
+        InteractPressed = keyboard[GetKey(GameControlAction.Interact, interactKey)].wasPressedThisFrame;
+        CompanionCommandPressed =
+            keyboard[GetKey(GameControlAction.CompanionCommand, companionCommandKey)].wasPressedThisFrame;
+        CompanionSkillPressed =
+            keyboard[GetKey(GameControlAction.CompanionSkill, companionSkillKey)].wasPressedThisFrame;
         SkillIndexPressed = Skill1Pressed ? 1 : Skill2Pressed ? 2 : Skill3Pressed ? 3 : -1;
     }
 
@@ -97,26 +101,32 @@ public class PlayerInputReader : MonoBehaviour
         float h = 0f;
         float v = 0f;
 
-        if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
+        if (keyboard[GetKey(GameControlAction.MoveLeft, Key.A)].isPressed)
         {
             h -= 1f;
         }
 
-        if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
+        if (keyboard[GetKey(GameControlAction.MoveRight, Key.D)].isPressed)
         {
             h += 1f;
         }
 
-        if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
+        if (keyboard[GetKey(GameControlAction.MoveBackward, Key.S)].isPressed)
         {
             v -= 1f;
         }
 
-        if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
+        if (keyboard[GetKey(GameControlAction.MoveForward, Key.W)].isPressed)
         {
             v += 1f;
         }
 
         return new Vector2(h, v).normalized;
+    }
+
+    private static Key GetKey(GameControlAction action, Key fallback)
+    {
+        Key configured = GameSettingsManager.GetBinding(action);
+        return configured != Key.None ? configured : fallback;
     }
 }
