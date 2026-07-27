@@ -1806,7 +1806,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9950eef40ff17384c9df3c0a3803557a, type: 2}
+  - {fileID: 2100000, guid: 04badedb008d855459188e87e43b5fe9, type: 2}
   - {fileID: 2100000, guid: ec5a14d7ed2fca346aff25b22f8e6019, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
@@ -4253,6 +4253,20 @@ MonoBehaviour:
   patrolSpeedRatio: 0.5
   retreatSpeedRatio: 1.1
   retreatMinRange: 4
+  enablePressureEvade: 1
+  hitsToEvade: 3
+  hitPressureWindow: 1.1
+  evadeChance: 0.7
+  evadeDistance: 2.8
+  evadeDuration: 0.55
+  evadeCooldown: 2.5
+  evadeSpeedRatio: 1.35
+  enableLowHealthRetreat: 1
+  lowHealthThreshold: 0.25
+  lowHealthRetreatDistance: 6
+  lowHealthRetreatDuration: 2
+  lowHealthRetreatCooldown: 8
+  lowHealthRetreatOnlyOnce: 1
   useHitAnimation: 1
   hitStunDuration: 0.25
   hurtCooldown: 0.6
@@ -4283,6 +4297,7 @@ MonoBehaviour:
   drawAttackGizmo: 1
   debugLogStateMachine: 0
   debugLogChaseTick: 0
+  debugLogCombatResponse: 0
 --- !u!114 &8578823923300559423
 MonoBehaviour:
   m_ObjectHideFlags: 0
