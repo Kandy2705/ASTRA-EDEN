@@ -20,6 +20,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Companion_Compy
       objectReference: {fileID: 0}
+    - target: {fileID: 5053360894976517098, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5578539752889301328, guid: c82e139dd66cc4c128ee3512417c060b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2263.26
@@ -93,7 +97,9 @@ MonoBehaviour:
   followSpeed: 4.5
   commandAttackDamage: 35
   commandAttackRange: 3
+  commandDetectRange: 8
   commandCooldown: 8
   skillDamage: 80
   skillRadius: 4
   skillCooldown: 20
+  isActive: 0

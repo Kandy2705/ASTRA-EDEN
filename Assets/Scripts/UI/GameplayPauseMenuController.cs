@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// Pause menu + nút quay Main Menu trên Menu_Canvas (dùng PopUp_Pause và Sub_Menu có sẵn).
+/// Pause menu dùng SettingsPanel prefab, mở/đóng bằng phím P.
 /// </summary>
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(-150)]
@@ -18,12 +18,13 @@ public class GameplayPauseMenuController : MonoBehaviour
     [Header("UI (auto-resolve nếu trống)")]
     [SerializeField] private Button mainMenuButton;
     [SerializeField] private GameObject pausePanelRoot;
+    [SerializeField] private GameObject settingsPanelPrefab;
     [SerializeField] private GameObject gameplayHudCanvas;
 
     [SerializeField] private string mainMenuButtonObjectName = "Button_Main Menu";
 
     [Header("Input")]
-    [SerializeField] private bool allowEscapeToggle = true;
+    [SerializeField] private bool allowPauseToggle = true;
 
     [Header("Options")]
     [SerializeField] private bool pauseTimeWhenOpen = true;
@@ -32,10 +33,15 @@ public class GameplayPauseMenuController : MonoBehaviour
 
     private bool isPauseOpen;
     private float previousTimeScale = 1f;
+    private bool previousCursorVisible;
+    private CursorLockMode previousCursorLockMode;
+    private PopupTween pauseTween;
+    private GameObject legacyPausePanel;
 
     private void Awake()
     {
         ResolveReferences();
+        CreateSettingsPausePanel();
         SetPauseOpen(false, force: true);
     }
 
@@ -47,18 +53,19 @@ public class GameplayPauseMenuController : MonoBehaviour
 
     private void Update()
     {
-        if (!allowEscapeToggle || !CanUsePauseMenu())
+        if (!allowPauseToggle || !CanUsePauseMenu())
         {
             return;
         }
 
-        if (!TryGetEscapePressed())
+        if (!TryGetPausePressed())
         {
             return;
         }
 
-        InventoryToggleController inventory = FindFirstObjectByType<InventoryToggleController>(FindObjectsInactive.Include);
-        if (inventory != null && inventory.IsOpen)
+        InventoryToggleController inventory =
+            FindFirstObjectByType<InventoryToggleController>(FindObjectsInactive.Include);
+        if (!isPauseOpen && inventory != null && inventory.IsOpen)
         {
             return;
         }
@@ -112,45 +119,60 @@ public class GameplayPauseMenuController : MonoBehaviour
             return;
         }
 
-        isPauseOpen = open;
-
-        if (pausePanelRoot != null)
+        if (open)
         {
-            if (isPauseOpen)
+            isPauseOpen = true;
+
+            if (pausePanelRoot != null)
             {
                 EnsureAncestorsActive(pausePanelRoot);
+                pauseTween ??= GetOrCreateTween(pausePanelRoot);
+                pauseTween.Show();
             }
 
-            pausePanelRoot.SetActive(isPauseOpen);
-        }
+            if (gameplayHudCanvas != null)
+            {
+                gameplayHudCanvas.SetActive(false);
+            }
 
-        if (gameplayHudCanvas != null && isPauseOpen)
-        {
-            gameplayHudCanvas.SetActive(false);
-        }
-        else if (gameplayHudCanvas != null && !isPauseOpen)
-        {
-            gameplayHudCanvas.SetActive(true);
-        }
-
-        if (pauseTimeWhenOpen)
-        {
-            if (isPauseOpen)
+            if (pauseTimeWhenOpen)
             {
                 previousTimeScale = Time.timeScale;
                 Time.timeScale = 0f;
             }
-            else
-            {
-                Time.timeScale = previousTimeScale > 0f ? previousTimeScale : 1f;
-            }
-        }
 
-        if (isPauseOpen)
-        {
+            previousCursorVisible = Cursor.visible;
+            previousCursorLockMode = Cursor.lockState;
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
+            return;
         }
+
+        isPauseOpen = false;
+        if (force)
+        {
+            pauseTween?.SetHiddenImmediate();
+            if (pausePanelRoot != null && pauseTween == null)
+            {
+                pausePanelRoot.SetActive(false);
+            }
+
+            if (gameplayHudCanvas != null)
+            {
+                gameplayHudCanvas.SetActive(true);
+            }
+
+            return;
+        }
+
+        if (pausePanelRoot == null)
+        {
+            FinishClose();
+            return;
+        }
+
+        pauseTween ??= GetOrCreateTween(pausePanelRoot);
+        pauseTween.Hide(FinishClose);
     }
 
     private void ResolveReferences()
@@ -159,6 +181,8 @@ public class GameplayPauseMenuController : MonoBehaviour
         {
             pausePanelRoot = FindChildByName(transform, "PopUp_Pause")?.gameObject;
         }
+
+        legacyPausePanel = pausePanelRoot;
 
         if (gameplayHudCanvas == null)
         {
@@ -230,6 +254,14 @@ public class GameplayPauseMenuController : MonoBehaviour
 
         WireButtonsByLabel(pausePanelRoot.transform, new[] { "Quit", "Exit" }, ReturnToMainMenu, mainMenuButtonLabel);
         WireButtonsByLabel(pausePanelRoot.transform, new[] { "Continue", "Back", "Resume" }, ResumeGame, null);
+
+        Transform closeTransform = FindChildByName(pausePanelRoot.transform, "Button_Close");
+        Button closeButton = closeTransform != null ? closeTransform.GetComponent<Button>() : null;
+        if (closeButton != null)
+        {
+            closeButton.onClick = new Button.ButtonClickedEvent();
+            closeButton.onClick.AddListener(ResumeGame);
+        }
     }
 
     private static void WireButtonsByLabel(Transform root, string[] labels, UnityEngine.Events.UnityAction action, string relabel)
@@ -254,7 +286,7 @@ public class GameplayPauseMenuController : MonoBehaviour
                 continue;
             }
 
-            button.onClick.RemoveAllListeners();
+            button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(action);
         }
     }
@@ -320,10 +352,117 @@ public class GameplayPauseMenuController : MonoBehaviour
         return true;
     }
 
-    private static bool TryGetEscapePressed()
+    private static bool TryGetPausePressed()
     {
         Keyboard keyboard = Keyboard.current;
-        return keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
+        return keyboard != null && keyboard.pKey.wasPressedThisFrame;
+    }
+
+    private void CreateSettingsPausePanel()
+    {
+        if (settingsPanelPrefab == null)
+        {
+            Debug.LogWarning(
+                "[GameplayPauseMenu] Chưa gán SettingsPanel prefab, dùng PopUp_Pause cũ.");
+            pauseTween = pausePanelRoot != null ? GetOrCreateTween(pausePanelRoot) : null;
+            pauseTween?.SetHiddenImmediate();
+            return;
+        }
+
+        if (legacyPausePanel != null)
+        {
+            legacyPausePanel.SetActive(false);
+        }
+
+        Transform pauseParent = CreatePauseCanvas();
+        pausePanelRoot = Instantiate(settingsPanelPrefab, pauseParent, false);
+        pausePanelRoot.name = settingsPanelPrefab.name;
+        StretchToParent(pausePanelRoot.transform as RectTransform);
+
+        if (pausePanelRoot.GetComponent<SettingsPanelController>() == null)
+        {
+            pausePanelRoot.AddComponent<SettingsPanelController>();
+        }
+
+        if (pausePanelRoot.GetComponent<AudioSettingsUI>() == null)
+        {
+            pausePanelRoot.AddComponent<AudioSettingsUI>();
+        }
+
+        pauseTween = GetOrCreateTween(pausePanelRoot);
+        pauseTween.SetHiddenImmediate();
+    }
+
+    private Transform CreatePauseCanvas()
+    {
+        GameObject canvasObject = new(
+            "PauseSettings_Canvas",
+            typeof(RectTransform),
+            typeof(Canvas),
+            typeof(CanvasScaler),
+            typeof(GraphicRaycaster));
+
+        Transform parent = transform.parent;
+        canvasObject.transform.SetParent(parent, false);
+        canvasObject.layer = LayerMask.NameToLayer("UI");
+
+        Canvas sourceCanvas = GetComponent<Canvas>();
+        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = sourceCanvas != null ? sourceCanvas.sortingOrder + 1 : 20;
+
+        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f;
+        scaler.referencePixelsPerUnit = 100f;
+
+        return canvasObject.transform;
+    }
+
+    private static void StretchToParent(RectTransform rectTransform)
+    {
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.anchoredPosition = Vector2.zero;
+        rectTransform.sizeDelta = Vector2.zero;
+        rectTransform.localRotation = Quaternion.identity;
+        rectTransform.localScale = Vector3.one;
+    }
+
+    private static PopupTween GetOrCreateTween(GameObject popup)
+    {
+        PopupTween tween = popup.GetComponent<PopupTween>();
+        return tween != null ? tween : popup.AddComponent<PopupTween>();
+    }
+
+    private void FinishClose()
+    {
+        if (isPauseOpen)
+        {
+            return;
+        }
+
+        if (gameplayHudCanvas != null)
+        {
+            gameplayHudCanvas.SetActive(true);
+        }
+
+        if (pauseTimeWhenOpen)
+        {
+            Time.timeScale = previousTimeScale > 0f ? previousTimeScale : 1f;
+        }
+
+        Cursor.visible = previousCursorVisible;
+        Cursor.lockState = previousCursorLockMode;
     }
 
     private static void EnsureAncestorsActive(GameObject target)

@@ -12,10 +12,16 @@ public class MainMenuController : MonoBehaviour
     public GameObject settingsPanel;
     public GameObject deleteConfirmPanel;
 
+    private PopupTween settingsTween;
+
     private void Start()
     {
         if (settingsPanel != null)
-            settingsPanel.SetActive(false);
+        {
+            settingsTween = GetOrCreateTween(settingsPanel);
+            settingsTween.SetHiddenImmediate();
+            WireSettingsCloseButton();
+        }
 
         if (deleteConfirmPanel != null)
             deleteConfirmPanel.SetActive(false);
@@ -98,14 +104,18 @@ public class MainMenuController : MonoBehaviour
 
     public void OpenSettings()
     {
-        if (settingsPanel != null)
-            settingsPanel.SetActive(true);
+        if (settingsPanel == null)
+            return;
+
+        GetOrCreateTween(settingsPanel).Show();
     }
 
     public void CloseSettings()
     {
-        if (settingsPanel != null)
-            settingsPanel.SetActive(false);
+        if (settingsPanel == null)
+            return;
+
+        GetOrCreateTween(settingsPanel).Hide();
     }
 
     public void QuitGame()
@@ -117,5 +127,53 @@ public class MainMenuController : MonoBehaviour
 #else
         Application.Quit();
 #endif
+    }
+
+    private PopupTween GetOrCreateTween(GameObject popup)
+    {
+        if (settingsTween == null)
+        {
+            settingsTween = popup.GetComponent<PopupTween>();
+            if (settingsTween == null)
+            {
+                settingsTween = popup.AddComponent<PopupTween>();
+            }
+        }
+
+        return settingsTween;
+    }
+
+    private void WireSettingsCloseButton()
+    {
+        Transform closeTransform = FindChildByName(settingsPanel.transform, "Button_Close");
+        Button closeButton = closeTransform != null
+            ? closeTransform.GetComponent<Button>()
+            : null;
+        if (closeButton == null)
+        {
+            return;
+        }
+
+        closeButton.onClick = new Button.ButtonClickedEvent();
+        closeButton.onClick.AddListener(CloseSettings);
+    }
+
+    private static Transform FindChildByName(Transform root, string objectName)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        Transform[] children = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < children.Length; i++)
+        {
+            if (children[i].name == objectName)
+            {
+                return children[i];
+            }
+        }
+
+        return null;
     }
 }

@@ -19816,9 +19816,10 @@ MonoBehaviour:
   - Loading
   mainMenuButton: {fileID: 5836127838866504260}
   pausePanelRoot: {fileID: 8697050991425824912}
+  settingsPanelPrefab: {fileID: 7863952055489178877, guid: 06c970fe0e2fa43ce9181acd56f804cf, type: 3}
   gameplayHudCanvas: {fileID: 8684830429467961583}
   mainMenuButtonObjectName: Button_Main Menu
-  allowEscapeToggle: 1
+  allowPauseToggle: 1
   pauseTimeWhenOpen: 1
   saveBeforeExit: 1
   mainMenuButtonLabel: Main Menu

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PrimeTween;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -77,10 +78,14 @@ public class SettingsPanelController : MonoBehaviour
     private TMP_Dropdown bloomDropdown;
     private TMP_Dropdown[] controlDropdowns;
     private AudioSettingsUI audioSettingsUI;
+    private CanvasGroup notificationGroup;
+    private RectTransform notificationRect;
+    private Sequence notificationTween;
 
     private void Start()
     {
         GameSettingsManager.EnsureInstance();
+        ResolvePanelReferences();
         ResolveSettingsControls();
         BindSettingsControls();
 
@@ -96,6 +101,17 @@ public class SettingsPanelController : MonoBehaviour
         // Show AUDIO tab by default
         if (audioButton != null && audioContent != null)
             SelectTab(audioButton, audioContent);
+    }
+
+    private void ResolvePanelReferences()
+    {
+        audioButton ??= FindChildByName(transform, "Btn_Audio")?.GetComponent<Button>();
+        controlsButton ??= FindChildByName(transform, "Btn_Controls")?.GetComponent<Button>();
+        lightingButton ??= FindChildByName(transform, "Btn_Lightings")?.GetComponent<Button>();
+
+        audioContent ??= FindChildByName(transform, "AudioContent")?.gameObject;
+        controlsContent ??= FindChildByName(transform, "ControlsContent")?.gameObject;
+        lightingContent ??= FindChildByName(transform, "LightingContent")?.gameObject;
     }
 
     private void SelectAudioTab()
@@ -467,6 +483,7 @@ public class SettingsPanelController : MonoBehaviour
         }
 
         PlayerPrefs.Save();
+        ShowNotification("SETTINGS APPLIED SUCCESSFULLY");
         Debug.Log("[Settings] Đã áp dụng và lưu Audio, Controls, Brightness, Bloom.");
     }
 
@@ -496,7 +513,136 @@ public class SettingsPanelController : MonoBehaviour
             controlDropdowns[i].RefreshShownValue();
         }
 
+        ShowNotification("DEFAULT SETTINGS RESTORED");
         Debug.Log("[Settings] Đã khôi phục cài đặt mặc định.");
+    }
+
+    private void ShowNotification(string message)
+    {
+        EnsureNotification();
+        if (notificationGroup == null || notificationRect == null)
+        {
+            return;
+        }
+
+        TMP_Text messageText =
+            notificationGroup.GetComponentInChildren<TMP_Text>(true);
+        if (messageText != null)
+        {
+            messageText.text = message;
+        }
+
+        if (notificationTween.isAlive)
+        {
+            notificationTween.Stop();
+        }
+
+        notificationGroup.gameObject.SetActive(true);
+        notificationGroup.alpha = 0f;
+        notificationGroup.blocksRaycasts = false;
+        notificationGroup.interactable = false;
+        notificationRect.localScale = new Vector3(0.82f, 0.82f, 1f);
+
+        notificationTween = Sequence.Create(useUnscaledTime: true)
+            .Group(Tween.Alpha(
+                notificationGroup,
+                0f,
+                1f,
+                0.2f,
+                Ease.OutCubic))
+            .Group(Tween.Scale(
+                notificationRect,
+                notificationRect.localScale,
+                Vector3.one,
+                0.24f,
+                Ease.OutBack))
+            .ChainDelay(1.35f)
+            .Chain(Tween.Alpha(
+                notificationGroup,
+                1f,
+                0f,
+                0.25f,
+                Ease.InCubic))
+            .Group(Tween.Scale(
+                notificationRect,
+                Vector3.one,
+                new Vector3(0.94f, 0.94f, 1f),
+                0.25f,
+                Ease.InCubic))
+            .OnComplete(() => notificationGroup.gameObject.SetActive(false));
+    }
+
+    private void EnsureNotification()
+    {
+        if (notificationGroup != null)
+        {
+            return;
+        }
+
+        Transform panelRoot =
+            audioContent != null && audioContent.transform.parent != null
+                ? audioContent.transform.parent
+                : transform;
+
+        GameObject toast = new(
+            "SettingsApplyNotification",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image),
+            typeof(CanvasGroup),
+            typeof(Outline));
+        toast.transform.SetParent(panelRoot, false);
+        toast.transform.SetAsLastSibling();
+
+        notificationRect = toast.GetComponent<RectTransform>();
+        notificationRect.anchorMin = new Vector2(0.5f, 1f);
+        notificationRect.anchorMax = new Vector2(0.5f, 1f);
+        notificationRect.pivot = new Vector2(0.5f, 1f);
+        notificationRect.anchoredPosition = new Vector2(0f, -92f);
+        notificationRect.sizeDelta = new Vector2(540f, 66f);
+
+        Image background = toast.GetComponent<Image>();
+        background.color = new Color(0.035f, 0.16f, 0.12f, 0.98f);
+        background.raycastTarget = false;
+
+        Outline outline = toast.GetComponent<Outline>();
+        outline.effectColor = new Color(1f, 0.84f, 0.42f, 0.9f);
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        GameObject labelObject = new(
+            "Message",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(TextMeshProUGUI));
+        labelObject.transform.SetParent(toast.transform, false);
+
+        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(18f, 8f);
+        labelRect.offsetMax = new Vector2(-18f, -8f);
+
+        TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+        TMP_Text applyLabel =
+            applyButton != null
+                ? applyButton.GetComponentInChildren<TMP_Text>(true)
+                : null;
+        if (applyLabel != null)
+        {
+            label.font = applyLabel.font;
+            label.fontSharedMaterial = applyLabel.fontSharedMaterial;
+        }
+
+        label.text = "SETTINGS APPLIED SUCCESSFULLY";
+        label.color = new Color(1f, 0.9f, 0.66f, 1f);
+        label.fontSize = 24f;
+        label.fontStyle = FontStyles.Bold;
+        label.alignment = TextAlignmentOptions.Center;
+        label.raycastTarget = false;
+
+        notificationGroup = toast.GetComponent<CanvasGroup>();
+        notificationGroup.alpha = 0f;
+        toast.SetActive(false);
     }
 
     private static List<string> BuildKeyOptions()
