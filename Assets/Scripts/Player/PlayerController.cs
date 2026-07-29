@@ -5,6 +5,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerInputReader inputReader;
     [SerializeField] private PlayerAnimatorBridge animatorBridge;
     [SerializeField] private PlayerCombatController combatController;
+    [SerializeField] private PlayerAudioController audioController;
     [SerializeField] private CharacterController controller;
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private float acceleration = 5f;
@@ -14,6 +15,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float gravity = -20f;
     [SerializeField] private float groundedStickForce = -2f;
     [SerializeField] private float jumpHeight = 1.2f;
+
+    [Header("Hit Reaction")]
+    [SerializeField, Min(0f)] private float hitMovementLockDuration = 1f;
 
     [Header("Dash")]
     [SerializeField] private float dashDistance = 5f;
@@ -33,14 +37,17 @@ public class PlayerController : MonoBehaviour
     private float nextDashTime;
     private bool isDashing;
     private bool isGrounded;
+    private float movementLockedUntil;
 
     public bool IsDashing => isDashing;
+    public bool IsMovementLockedByHit => Time.time < movementLockedUntil;
 
     private void Reset()
     {
         inputReader = GetComponent<PlayerInputReader>();
         animatorBridge = GetComponent<PlayerAnimatorBridge>();
         combatController = GetComponent<PlayerCombatController>();
+        audioController = GetComponent<PlayerAudioController>();
         controller = GetComponent<CharacterController>();
         ResolveCameraTransform();
     }
@@ -75,6 +82,11 @@ public class PlayerController : MonoBehaviour
         if (combatController == null)
         {
             combatController = GetComponent<PlayerCombatController>();
+        }
+
+        if (audioController == null)
+        {
+            audioController = GetComponent<PlayerAudioController>();
         }
 
         if (playerHealth == null)
@@ -115,6 +127,20 @@ public class PlayerController : MonoBehaviour
         {
             ApplyGravityAndJump(false);
             animatorBridge.UpdateLocomotion(0f, Vector2.zero, isGrounded);
+            return;
+        }
+
+        if (IsMovementLockedByHit)
+        {
+            currentSpeedFactor = 0f;
+            animatorBridge.UpdateLocomotion(0f, Vector2.zero, isGrounded);
+            ApplyGravityAndJump(true);
+
+            if (playerHealth != null)
+            {
+                playerHealth.TickEnergyRegen(Time.deltaTime);
+            }
+
             return;
         }
 
@@ -167,6 +193,28 @@ public class PlayerController : MonoBehaviour
         if (playerHealth != null && !isDashing)
         {
             playerHealth.TickEnergyRegen(Time.deltaTime);
+        }
+    }
+
+    public void LockMovementForHit()
+    {
+        LockMovementForHit(hitMovementLockDuration);
+    }
+
+    public void LockMovementForHit(float duration)
+    {
+        if (duration <= 0f)
+        {
+            return;
+        }
+
+        movementLockedUntil = Mathf.Max(movementLockedUntil, Time.time + duration);
+        currentSpeedFactor = 0f;
+        combatController?.InterruptForHit(duration);
+
+        if (isDashing)
+        {
+            StopDash();
         }
     }
 
@@ -268,6 +316,7 @@ public class PlayerController : MonoBehaviour
         {
             verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             animatorBridge.TriggerJump();
+            audioController?.PlayJumpSound();
         }
 
         verticalVelocity.y += gravity * Time.deltaTime;

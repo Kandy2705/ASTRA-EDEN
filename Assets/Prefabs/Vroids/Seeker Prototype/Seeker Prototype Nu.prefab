@@ -7690,7 +7690,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CompanionSummonController
   companionPrefab: {fileID: 1854996814765377967, guid: d885a41ef35404ebca580ac5c7b35d42, type: 3}
   spawnOffset: {x: -1.5, y: 0, z: -1.5}
-  summonOnStart: 1
+  summonOnStart: 0
   inputReader: {fileID: 0}
   skillCooldown: {fileID: 0}
   companionCommandSlotIndex: 3

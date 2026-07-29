@@ -36,7 +36,9 @@ public sealed class PoisonOrbProjectile : MonoBehaviour
         body.useGravity = false;
         body.isKinematic = true;
         body.interpolation = RigidbodyInterpolation.Interpolate;
-        body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        // ContinuousSpeculative có thể báo va chạm "ảo" ở phía trước quỹ đạo,
+        // khiến Player mất máu trước khi nhìn thấy orb thật sự chạm.
+        body.collisionDetectionMode = CollisionDetectionMode.Discrete;
     }
 
     public void Initialize(
@@ -103,6 +105,15 @@ public sealed class PoisonOrbProjectile : MonoBehaviour
             health.IsDead ||
             (!health.CompareTag("Player") &&
              !health.transform.root.CompareTag("Player")))
+        {
+            return;
+        }
+
+        // Prefab Player có nhiều collider ragdoll trên tay/chân. Chỉ collider
+        // điều khiển thân Player mới được tính là orb chạm mục tiêu.
+        CharacterController playerCollider =
+            health.GetComponent<CharacterController>();
+        if (playerCollider != null && other != playerCollider)
         {
             return;
         }

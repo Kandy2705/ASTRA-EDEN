@@ -12,10 +12,14 @@ public class PlayerAudioController : MonoBehaviour
     [SerializeField] private AudioClip[] attackClips; // Các âm thanh attack khác nhau
     [SerializeField] private AudioClip scoreClip; // Âm thanh khi chấm điểm
     [SerializeField] private AudioClip[] skillClips; // Âm thanh cho các skill
+    [SerializeField] private AudioClip hurtClip;
+    [SerializeField] private AudioClip jumpClip;
 
     [Header("Settings")]
     [SerializeField, Range(0f, 2f)] private float attackPitch = 1f;
     [SerializeField, Range(0f, 0.5f)] private float attackPitchRandomRange = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float hurtVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float jumpVolume = 1f;
 
     private PlayerCombatController combatController;
     private int lastAttackClipIndex = -1;
@@ -106,6 +110,24 @@ public class PlayerAudioController : MonoBehaviour
 
         // Fallback: dùng swordSlashClip
         PlaySlashSound();
+    }
+
+    public void PlayHurtSound()
+    {
+        PlayPlayerSfx(hurtClip, hurtVolume);
+    }
+
+    public void PlayJumpSound()
+    {
+        PlayPlayerSfx(jumpClip, jumpVolume);
+    }
+
+    private static void PlayPlayerSfx(AudioClip clip, float volume)
+    {
+        if (clip != null && AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySfx(clip, volume);
+        }
     }
 
     /// <summary>

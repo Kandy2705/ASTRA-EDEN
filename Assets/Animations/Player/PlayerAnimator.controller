@@ -36,7 +36,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: ReceivingUppercut
-  m_Speed: 1
+  m_Speed: 1.5
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -4114910990102532907}
@@ -49,7 +49,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 98f4afb4675f34d3e88b6c12befe6e7c, type: 2}
+  m_Motion: {fileID: 7400000, guid: 5cd2d45b44a7548afbe3a6f69ad71a83, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

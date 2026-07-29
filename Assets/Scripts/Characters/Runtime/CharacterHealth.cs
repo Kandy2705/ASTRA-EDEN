@@ -87,14 +87,35 @@ public class CharacterHealth : MonoBehaviour
         if (gameObject.CompareTag("Player"))
         {
             PlayPlayerDamageEffect(previousHP - runtimeStats.currentHP);
+            PlayerAudioController audioController =
+                GetComponentInParent<PlayerAudioController>();
+            audioController?.PlayHurtSound();
 
             if (triggerHitReaction && !IsDead)
             {
-                PlayerAnimatorBridge animatorBridge =
-                    GetComponentInParent<PlayerAnimatorBridge>();
-                if (animatorBridge != null)
+                PlayerCombatController combatController =
+                    GetComponentInParent<PlayerCombatController>();
+                bool isUsingSpecialSkill =
+                    combatController != null &&
+                    combatController.IsUsingSpecialSkill;
+
+                // Ba skill Q/E/R có hyper armor: vẫn nhận damage nhưng không bị
+                // animation hit ngắt chiêu. Đánh thường vẫn nhận hit reaction.
+                if (!isUsingSpecialSkill)
                 {
-                    animatorBridge.TriggerHit();
+                    PlayerAnimatorBridge animatorBridge =
+                        GetComponentInParent<PlayerAnimatorBridge>();
+                    if (animatorBridge != null)
+                    {
+                        animatorBridge.TriggerHit();
+                    }
+
+                    PlayerController playerController =
+                        GetComponentInParent<PlayerController>();
+                    if (playerController != null)
+                    {
+                        playerController.LockMovementForHit();
+                    }
                 }
             }
         }
@@ -142,6 +163,18 @@ public class CharacterHealth : MonoBehaviour
         runtimeStats.currentHP = runtimeStats.maxHP;
         runtimeStats.currentStamina = runtimeStats.staminaMax;
         runtimeStats.currentEnergy = runtimeStats.energyMax;
+        Changed?.Invoke(this);
+    }
+
+    public void SetCurrentHealthForDebug(float health)
+    {
+        if (runtimeStats == null)
+        {
+            return;
+        }
+
+        runtimeStats.currentHP =
+            Mathf.Clamp(health, 1f, runtimeStats.maxHP);
         Changed?.Invoke(this);
     }
 

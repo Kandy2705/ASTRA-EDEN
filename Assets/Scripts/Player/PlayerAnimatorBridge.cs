@@ -12,6 +12,8 @@ public class PlayerAnimatorBridge : MonoBehaviour
     private static readonly int SkillIndexHash = Animator.StringToHash("SkillIndex");
     private static readonly int HitHash = Animator.StringToHash("Hit");
     private static readonly int IsDeadHash = Animator.StringToHash("IsDead");
+    private static readonly int ReceivingHitStateHash =
+        Animator.StringToHash("Base Layer.ReceivingUppercut");
 
     [SerializeField] private Animator animator;
     [SerializeField] private float animatorDampTime = 0.1f;
@@ -85,14 +87,33 @@ public class PlayerAnimatorBridge : MonoBehaviour
 
     public void TriggerHit()
     {
-        if (animator == null || isDead ||
-            !HasParameter(HitHash, AnimatorControllerParameterType.Trigger))
+        if (animator == null || isDead)
         {
             return;
         }
 
-        animator.ResetTrigger(HitHash);
-        animator.SetTrigger(HitHash);
+        // Hit phải ưu tiên hơn attack/cast đang chờ, nếu không Any State có thể
+        // chọn transition khác và làm animation nhận đòn không chạy.
+        ResetTriggerIfPresent(AttackHash);
+        ResetTriggerIfPresent(CastSkillHash);
+        ResetTriggerIfPresent(JumpHash);
+
+        if (animator.HasState(0, ReceivingHitStateHash))
+        {
+            animator.CrossFadeInFixedTime(
+                ReceivingHitStateHash,
+                0.05f,
+                0,
+                0f);
+            return;
+        }
+
+        // Fallback cho controller khác vẫn dùng parameter Hit.
+        if (HasParameter(HitHash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(HitHash);
+            animator.SetTrigger(HitHash);
+        }
     }
 
     public void TriggerCastSkill(int skillIndex)
@@ -139,6 +160,14 @@ public class PlayerAnimatorBridge : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void ResetTriggerIfPresent(int hash)
+    {
+        if (HasParameter(hash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(hash);
+        }
     }
 
     public void PushPlaybackSpeed(float speed)

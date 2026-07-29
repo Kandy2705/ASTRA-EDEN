@@ -235,6 +235,7 @@ public class EnemyAIController : MonoBehaviour
     /// <summary>Buffer ra khỏi AttackRange mới chạy lại — chống stop/start giựt giựt.</summary>
     const float AttackRangeHoldExitBuffer = 0.45f;
     const float AgentRecoverCooldown = 0.35f;
+    const float MinimumAttackInterval = 1f;
 
     /// <summary>Gọi ngay sau Instantiate, trước Start(), để gán EnemyData + patrol từ spawn point.</summary>
     public void ApplySpawnConfiguration(EnemyData data, Transform[] patrolPts)
@@ -344,7 +345,10 @@ public class EnemyAIController : MonoBehaviour
         effectiveAttackRange = Mathf.Max(baseRange, maxPatternRange);
     }
     public float AggroKeepRange => enemyData != null ? enemyData.aggroKeepRange : 22f;
-    public float AttackCooldown => enemyData != null ? enemyData.attackCooldown : 2f;
+    public float AttackCooldown =>
+        Mathf.Max(
+            MinimumAttackInterval,
+            enemyData != null ? enemyData.attackCooldown : 2f);
     public float MaxPoise => enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.poise : 0f;
 
     void Reset()
@@ -891,6 +895,24 @@ public class EnemyAIController : MonoBehaviour
     /// hoặc khi state Patrol/Return/Retreat không có target để FaceTarget.</summary>
     void ApplyMovementFacing()
     {
+        // Retreat phải quay lưng về Player để chạy ra xa. Trước đây
+        // TickRetreat quay mặt về Player trong khi velocity lại xoay theo hướng
+        // chạy, khiến hai rotation tranh nhau và raptor nhìn như chạy ngang.
+        if (currentState == AIState.Retreat && player != null)
+        {
+            bool isRetreatMoving =
+                transformMovedThisFrame ||
+                (IsAgentNavigable() &&
+                 !agent.isStopped &&
+                 agent.velocity.sqrMagnitude >
+                 movingThreshold * movingThreshold);
+            if (isRetreatMoving)
+            {
+                FaceAwayFromTarget();
+                return;
+            }
+        }
+
         if (!IsAgentNavigable()) return;
         if (agent.velocity.sqrMagnitude <= movingThreshold * movingThreshold) return;
 
@@ -1512,6 +1534,7 @@ public class EnemyAIController : MonoBehaviour
             float cooldown = currentAttack != null && currentAttack.cooldown > 0f
                 ? currentAttack.cooldown
                 : AttackCooldown;
+            cooldown = Mathf.Max(MinimumAttackInterval, cooldown);
             attackCooldownTimer = Mathf.Max(attackCooldownTimer, cooldown);
             RegisterCompletedAttackForTackle();
         }
@@ -1588,7 +1611,7 @@ public class EnemyAIController : MonoBehaviour
             MoveTransformTowards(away, MoveSpeed * retreatSpeedRatio);
         }
 
-        FaceTarget();
+        FaceAwayFromTarget();
     }
 
     void TickEvade()
@@ -2658,6 +2681,26 @@ public class EnemyAIController : MonoBehaviour
         if (dir.sqrMagnitude <= 0.0001f) return;
         Vector3 facing = flipForward180 ? -dir : dir;
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(facing.normalized), 12f * Time.deltaTime);
+    }
+
+    void FaceAwayFromTarget()
+    {
+        if (player == null) return;
+
+        Vector3 away = transform.position - player.position;
+        away.y = 0f;
+        if (away.sqrMagnitude <= 0.0001f) return;
+
+        Vector3 facing = flipForward180 ? -away : away;
+        Quaternion targetRotation = Quaternion.LookRotation(facing.normalized);
+        float turnSpeed =
+            enemyData != null && enemyData.baseStats != null
+                ? Mathf.Max(180f, enemyData.baseStats.turnSpeed)
+                : 720f;
+        transform.rotation = Quaternion.RotateTowards(
+            transform.rotation,
+            targetRotation,
+            turnSpeed * Time.deltaTime);
     }
 
     float HorizontalDistance(Vector3 worldPos)

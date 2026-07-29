@@ -418,7 +418,7 @@ public class EnemyPatrol : MonoBehaviour
     private void StartAttack()
     {
         attackLockTimer = attackLockDuration;
-        nextAttackTime = Time.time + attackCooldown;
+        nextAttackTime = Time.time + Mathf.Max(1f, attackCooldown);
 
         StopAgent();
         FacePlayer();

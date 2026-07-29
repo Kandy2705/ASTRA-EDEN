@@ -64,11 +64,20 @@ public class PlayerCombatController : MonoBehaviour
     private Coroutine areaDamageRoutine;
     private bool areaDamageWindowOpen;
     private int currentSkillIndex;
+    private float hitInputLockedUntil;
 
     public bool IsAttacking => attackLockTimer > 0f;
     public bool IsAttackMoveActive => attackMoveRemaining > 0f;
+    public bool IsUsingSpecialSkill =>
+        currentSkillIndex > 0 &&
+        (attackLockTimer > 0f || swingActive || areaDamageWindowOpen);
     public float AttackMoveSpeed => attack2MoveDistance / Mathf.Max(attack2MoveDuration, 0.001f);
     public float AttackDamage => attackDamage;
+
+    public void SetAttackDamageForDebug(float damage)
+    {
+        attackDamage = Mathf.Max(0.1f, damage);
+    }
 
     private void Reset()
     {
@@ -124,6 +133,11 @@ public class PlayerCombatController : MonoBehaviour
         TickAttackLock();
 
         if (inputReader == null || animatorBridge == null)
+        {
+            return;
+        }
+
+        if (Time.time < hitInputLockedUntil)
         {
             return;
         }
@@ -188,6 +202,18 @@ public class PlayerCombatController : MonoBehaviour
         swingActive = true;
         swingHitResolved = false;
         swingElapsed = 0f;
+    }
+
+    public void InterruptForHit(float duration)
+    {
+        hitInputLockedUntil =
+            Mathf.Max(hitInputLockedUntil, Time.time + Mathf.Max(0f, duration));
+        attackLockTimer = 0f;
+        attackMoveRemaining = 0f;
+        swingActive = false;
+        swingHitResolved = false;
+        swingElapsed = 0f;
+        CloseAreaDamageWindow();
     }
 
     /// <summary>Bắt đầu vùng sát thương chiêu R. Gọi từ SpawnMultipleSlashesVFX / OnAttackHit.</summary>

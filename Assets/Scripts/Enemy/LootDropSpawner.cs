@@ -3,6 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterHealth))]
 public class LootDropSpawner : MonoBehaviour
 {
+    private const float PickupWorldRadius = 0.4f;
+
     [Header("Loot")]
     [SerializeField] private LootTableData lootTable;
     [SerializeField] private int goldMin;
@@ -189,18 +191,26 @@ public class LootDropSpawner : MonoBehaviour
 
     private static void EnsurePickup(GameObject go, ItemData item, int quantity)
     {
-        var col = go.GetComponent<Collider>();
-        if (col == null)
+        SphereCollider pickupCollider = go.GetComponent<SphereCollider>();
+        if (pickupCollider == null)
         {
-            var sc = go.AddComponent<SphereCollider>();
-            sc.radius = 0.4f;
-            sc.isTrigger = true;
-            col = sc;
+            pickupCollider = go.AddComponent<SphereCollider>();
         }
-        else
+
+        // Chỉ collider sphere chuẩn hóa mới nhận pickup. Collider có sẵn của
+        // model có thể rất lớn sau khi scale và gây nhặt từ xa.
+        Collider[] rootColliders = go.GetComponents<Collider>();
+        for (int i = 0; i < rootColliders.Length; i++)
         {
-            col.isTrigger = true;
+            Collider collider = rootColliders[i];
+            if (collider != null && collider != pickupCollider)
+            {
+                collider.enabled = false;
+            }
         }
+
+        pickupCollider.enabled = true;
+        pickupCollider.isTrigger = true;
 
         var pickup = go.GetComponent<PickupItem>();
         if (pickup == null) pickup = go.AddComponent<PickupItem>();
@@ -211,6 +221,7 @@ public class LootDropSpawner : MonoBehaviour
         }
 
         pickup.Initialize(item, quantity);
+        pickup.ConfigurePickupWorldRadius(PickupWorldRadius);
     }
 
     private void ApplyPopForce(GameObject go)

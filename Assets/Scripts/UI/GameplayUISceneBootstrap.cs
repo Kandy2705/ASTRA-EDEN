@@ -1,5 +1,8 @@
+using System.Globalization;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 /// <summary>
 /// Gắn trên root prefab GameplayUI_Root. Ẩn panel combat-only ở hub và đảm bảo EventSystem.
@@ -16,17 +19,42 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         "ZoneResultPanel"
     };
 
+    private Button debugIconButton;
+    private GameObject playerDebugPanel;
+    private TMP_InputField damageInput;
+    private TMP_Text debugStatusText;
+    private PopupTween debugPanelTween;
+    private CharacterHealth debugPlayerHealth;
+    private PlayerCombatController debugPlayerCombat;
+    private float nextDebugRefreshTime;
+    private bool debugUiInitialized;
+
     private void Awake()
     {
         EnsureEventSystem();
         ApplyHubVisibility();
         WirePlayerStatusHud();
+        EnsurePlayerDebugUi();
     }
 
     private void Start()
     {
         // Player có thể spawn sau UI 1 frame (hub / portal).
         WirePlayerStatusHud();
+        EnsurePlayerDebugUi();
+    }
+
+    private void Update()
+    {
+        if (playerDebugPanel == null ||
+            !playerDebugPanel.activeSelf ||
+            Time.unscaledTime < nextDebugRefreshTime)
+        {
+            return;
+        }
+
+        nextDebugRefreshTime = Time.unscaledTime + 0.2f;
+        RefreshDebugStatus();
     }
 
     /// <summary>
@@ -148,5 +176,445 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         {
             eventSystemObject.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
         }
+    }
+
+    private void EnsurePlayerDebugUi()
+    {
+        if (debugUiInitialized)
+        {
+            return;
+        }
+
+        Transform timeIcon = FindChildRecursive(transform, "IMG_TimeIcon");
+        Transform hudCanvas = FindChildRecursive(transform, "HUD_Canvas");
+        if (timeIcon == null || hudCanvas == null)
+        {
+            return;
+        }
+
+        debugIconButton = timeIcon.GetComponent<Button>();
+        if (debugIconButton == null)
+        {
+            debugIconButton = timeIcon.gameObject.AddComponent<Button>();
+        }
+
+        debugIconButton.targetGraphic = timeIcon.GetComponent<Graphic>();
+        debugIconButton.transition = Selectable.Transition.ColorTint;
+        ColorBlock colors = debugIconButton.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1f, 0.86f, 0.42f, 1f);
+        colors.pressedColor = new Color(0.88f, 0.66f, 0.2f, 1f);
+        debugIconButton.colors = colors;
+        debugIconButton.onClick.AddListener(TogglePlayerDebugPanel);
+
+        BuildPlayerDebugPanel(hudCanvas);
+        debugUiInitialized = playerDebugPanel != null;
+    }
+
+    private void BuildPlayerDebugPanel(Transform canvasTransform)
+    {
+        RectTransform panelRect = CreateUiObject(
+            "PlayerDebugPanel",
+            canvasTransform,
+            new Vector2(460f, 330f),
+            Vector2.zero);
+        playerDebugPanel = panelRect.gameObject;
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+
+        Image background = playerDebugPanel.AddComponent<Image>();
+        background.color = new Color(0.025f, 0.055f, 0.085f, 0.97f);
+
+        Outline outline = playerDebugPanel.AddComponent<Outline>();
+        outline.effectColor = new Color(0.92f, 0.67f, 0.2f, 0.95f);
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        CreateLabel(
+            panelRect,
+            "PLAYER DEBUG",
+            new Vector2(0f, 132f),
+            new Vector2(360f, 42f),
+            26f,
+            new Color(1f, 0.78f, 0.3f, 1f),
+            TextAlignmentOptions.Center);
+
+        Button closeButton = CreateButton(
+            panelRect,
+            "Button_CloseDebug",
+            "×",
+            new Vector2(202f, 137f),
+            new Vector2(40f, 40f),
+            new Color(0.34f, 0.12f, 0.1f, 1f));
+        closeButton.onClick.AddListener(ClosePlayerDebugPanel);
+
+        CreateLabel(
+            panelRect,
+            "Damage của Player",
+            new Vector2(-112f, 76f),
+            new Vector2(200f, 34f),
+            20f,
+            Color.white,
+            TextAlignmentOptions.MidlineLeft);
+
+        damageInput = CreateDamageInput(
+            panelRect,
+            new Vector2(43f, 76f),
+            new Vector2(120f, 42f));
+
+        Button applyDamageButton = CreateButton(
+            panelRect,
+            "Button_ApplyDamage",
+            "SET DAMAGE",
+            new Vector2(148f, 76f),
+            new Vector2(120f, 42f),
+            new Color(0.18f, 0.38f, 0.46f, 1f));
+        applyDamageButton.onClick.AddListener(ApplyPlayerDamageValue);
+
+        CreateLabel(
+            panelRect,
+            "Máu của Player",
+            new Vector2(0f, 22f),
+            new Vector2(390f, 34f),
+            20f,
+            Color.white,
+            TextAlignmentOptions.Center);
+
+        Button fullHealthButton = CreateButton(
+            panelRect,
+            "Button_DebugFullHealth",
+            "MÁU ĐẦY",
+            new Vector2(-102f, -28f),
+            new Vector2(180f, 46f),
+            new Color(0.12f, 0.42f, 0.24f, 1f));
+        fullHealthButton.onClick.AddListener(SetPlayerFullHealth);
+
+        Button lowHealthButton = CreateButton(
+            panelRect,
+            "Button_DebugLowHealth",
+            "SẮP HẾT MÁU",
+            new Vector2(102f, -28f),
+            new Vector2(180f, 46f),
+            new Color(0.52f, 0.18f, 0.12f, 1f));
+        lowHealthButton.onClick.AddListener(SetPlayerLowHealth);
+
+        debugStatusText = CreateLabel(
+            panelRect,
+            "Đang tìm Player...",
+            new Vector2(0f, -92f),
+            new Vector2(410f, 44f),
+            18f,
+            new Color(0.82f, 0.9f, 0.94f, 1f),
+            TextAlignmentOptions.Center);
+
+        CreateLabel(
+            panelRect,
+            "Bấm lại icon mặt trời để đóng",
+            new Vector2(0f, -137f),
+            new Vector2(410f, 28f),
+            15f,
+            new Color(0.62f, 0.68f, 0.72f, 1f),
+            TextAlignmentOptions.Center);
+
+        debugPanelTween = playerDebugPanel.AddComponent<PopupTween>();
+        debugPanelTween.SetHiddenImmediate();
+    }
+
+    private void TogglePlayerDebugPanel()
+    {
+        if (playerDebugPanel == null)
+        {
+            EnsurePlayerDebugUi();
+            return;
+        }
+
+        if (playerDebugPanel.activeSelf)
+        {
+            ClosePlayerDebugPanel();
+            return;
+        }
+
+        ResolveDebugPlayer();
+        if (debugPlayerCombat != null && damageInput != null)
+        {
+            damageInput.text =
+                debugPlayerCombat.AttackDamage.ToString("0.##", CultureInfo.InvariantCulture);
+        }
+
+        playerDebugPanel.transform.SetAsLastSibling();
+        RefreshDebugStatus();
+        debugPanelTween.Show();
+    }
+
+    private void ClosePlayerDebugPanel()
+    {
+        debugPanelTween?.Hide();
+    }
+
+    private void ApplyPlayerDamageValue()
+    {
+        ResolveDebugPlayer();
+        if (debugPlayerCombat == null || damageInput == null)
+        {
+            SetDebugMessage("Không tìm thấy Player.");
+            return;
+        }
+
+        string raw = damageInput.text.Trim().Replace(',', '.');
+        if (!float.TryParse(
+                raw,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out float damage))
+        {
+            SetDebugMessage("Damage không hợp lệ.");
+            return;
+        }
+
+        damage = Mathf.Clamp(damage, 0.1f, 999999f);
+        debugPlayerCombat.SetAttackDamageForDebug(damage);
+        damageInput.text = damage.ToString("0.##", CultureInfo.InvariantCulture);
+        RefreshDebugStatus();
+    }
+
+    private void SetPlayerFullHealth()
+    {
+        ResolveDebugPlayer();
+        if (debugPlayerHealth == null || debugPlayerHealth.RuntimeStats == null)
+        {
+            SetDebugMessage("Không tìm thấy máu Player.");
+            return;
+        }
+
+        debugPlayerHealth.SetCurrentHealthForDebug(
+            debugPlayerHealth.RuntimeStats.maxHP);
+        ReviveDebugPlayerIfNeeded();
+        Debug.Log(
+            $"[PlayerDebug] Full Health = {debugPlayerHealth.RuntimeStats.currentHP:0.##}.",
+            debugPlayerHealth);
+        RefreshDebugStatus();
+    }
+
+    private void SetPlayerLowHealth()
+    {
+        ResolveDebugPlayer();
+        if (debugPlayerHealth == null || debugPlayerHealth.RuntimeStats == null)
+        {
+            SetDebugMessage("Không tìm thấy máu Player.");
+            return;
+        }
+
+        float lowHealth =
+            Mathf.Max(1f, debugPlayerHealth.RuntimeStats.maxHP * 0.05f);
+        debugPlayerHealth.SetCurrentHealthForDebug(lowHealth);
+        ReviveDebugPlayerIfNeeded();
+        Debug.Log(
+            $"[PlayerDebug] Low Health = {debugPlayerHealth.RuntimeStats.currentHP:0.##}.",
+            debugPlayerHealth);
+        RefreshDebugStatus();
+    }
+
+    private void ReviveDebugPlayerIfNeeded()
+    {
+        if (debugPlayerHealth == null)
+        {
+            return;
+        }
+
+        PlayerDeathController deathController =
+            debugPlayerHealth.GetComponentInParent<PlayerDeathController>();
+        deathController?.ReviveForDebug();
+    }
+
+    private void ResolveDebugPlayer()
+    {
+        if (debugPlayerHealth != null && debugPlayerCombat != null)
+        {
+            return;
+        }
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            return;
+        }
+
+        debugPlayerHealth = player.GetComponentInChildren<CharacterHealth>(true);
+        debugPlayerCombat =
+            player.GetComponentInChildren<PlayerCombatController>(true);
+    }
+
+    private void RefreshDebugStatus()
+    {
+        ResolveDebugPlayer();
+        if (debugPlayerHealth == null ||
+            debugPlayerHealth.RuntimeStats == null ||
+            debugPlayerCombat == null)
+        {
+            SetDebugMessage("Không tìm thấy Player.");
+            return;
+        }
+
+        CharacterRuntimeStats stats = debugPlayerHealth.RuntimeStats;
+        SetDebugMessage(
+            $"HP {Mathf.CeilToInt(stats.currentHP)} / " +
+            $"{Mathf.CeilToInt(stats.maxHP)}    |    " +
+            $"Damage {debugPlayerCombat.AttackDamage:0.##}");
+    }
+
+    private void SetDebugMessage(string message)
+    {
+        if (debugStatusText != null)
+        {
+            debugStatusText.text = message;
+        }
+    }
+
+    private static TMP_InputField CreateDamageInput(
+        RectTransform parent,
+        Vector2 position,
+        Vector2 size)
+    {
+        RectTransform root = CreateUiObject(
+            "Input_Damage",
+            parent,
+            size,
+            position);
+        Image background = root.gameObject.AddComponent<Image>();
+        background.color = new Color(0.07f, 0.11f, 0.14f, 1f);
+
+        Outline outline = root.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0.66f, 0.5f, 0.2f, 1f);
+        outline.effectDistance = new Vector2(1f, -1f);
+
+        RectTransform viewport = CreateUiObject(
+            "Text Area",
+            root,
+            Vector2.zero,
+            Vector2.zero);
+        StretchRect(viewport, 10f, 10f, 4f, 4f);
+        viewport.gameObject.AddComponent<RectMask2D>();
+
+        TMP_Text inputText = CreateLabel(
+            viewport,
+            string.Empty,
+            Vector2.zero,
+            Vector2.zero,
+            20f,
+            Color.white,
+            TextAlignmentOptions.MidlineLeft);
+        StretchRect(inputText.rectTransform, 0f, 0f, 0f, 0f);
+
+        TMP_Text placeholder = CreateLabel(
+            viewport,
+            "20",
+            Vector2.zero,
+            Vector2.zero,
+            20f,
+            new Color(1f, 1f, 1f, 0.35f),
+            TextAlignmentOptions.MidlineLeft);
+        placeholder.fontStyle = FontStyles.Italic;
+        StretchRect(placeholder.rectTransform, 0f, 0f, 0f, 0f);
+
+        TMP_InputField input = root.gameObject.AddComponent<TMP_InputField>();
+        input.targetGraphic = background;
+        input.textViewport = viewport;
+        input.textComponent = inputText;
+        input.placeholder = placeholder;
+        input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        input.lineType = TMP_InputField.LineType.SingleLine;
+        input.pointSize = 20f;
+        return input;
+    }
+
+    private static Button CreateButton(
+        RectTransform parent,
+        string objectName,
+        string label,
+        Vector2 position,
+        Vector2 size,
+        Color normalColor)
+    {
+        RectTransform rect = CreateUiObject(objectName, parent, size, position);
+        Image image = rect.gameObject.AddComponent<Image>();
+        image.color = normalColor;
+
+        Button button = rect.gameObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        ColorBlock colors = button.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+        colors.pressedColor = new Color(0.72f, 0.72f, 0.72f, 1f);
+        button.colors = colors;
+
+        TMP_Text text = CreateLabel(
+            rect,
+            label,
+            Vector2.zero,
+            Vector2.zero,
+            18f,
+            Color.white,
+            TextAlignmentOptions.Center);
+        text.fontStyle = FontStyles.Bold;
+        StretchRect(text.rectTransform, 4f, 4f, 2f, 2f);
+        return button;
+    }
+
+    private static TMP_Text CreateLabel(
+        RectTransform parent,
+        string text,
+        Vector2 position,
+        Vector2 size,
+        float fontSize,
+        Color color,
+        TextAlignmentOptions alignment)
+    {
+        RectTransform rect = CreateUiObject(
+            "Text",
+            parent,
+            size,
+            position);
+        TextMeshProUGUI label = rect.gameObject.AddComponent<TextMeshProUGUI>();
+        label.text = text;
+        label.font = TMP_Settings.defaultFontAsset;
+        label.fontSize = fontSize;
+        label.color = color;
+        label.alignment = alignment;
+        label.raycastTarget = false;
+        return label;
+    }
+
+    private static RectTransform CreateUiObject(
+        string objectName,
+        Transform parent,
+        Vector2 size,
+        Vector2 position)
+    {
+        GameObject gameObject = new GameObject(
+            objectName,
+            typeof(RectTransform));
+        gameObject.layer = LayerMask.NameToLayer("UI");
+        RectTransform rect = gameObject.GetComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = size;
+        rect.anchoredPosition = position;
+        rect.localScale = Vector3.one;
+        return rect;
+    }
+
+    private static void StretchRect(
+        RectTransform rect,
+        float left,
+        float right,
+        float top,
+        float bottom)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(left, bottom);
+        rect.offsetMax = new Vector2(-right, -top);
     }
 }

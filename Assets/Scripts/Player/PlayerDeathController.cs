@@ -47,6 +47,73 @@ public sealed class PlayerDeathController : MonoBehaviour
 
     public bool IsDead => isDead;
 
+    public void ReviveForDebug()
+    {
+        if (!isDead || characterHealth == null || characterHealth.IsDead)
+        {
+            return;
+        }
+
+        isDead = false;
+        deathStateForced = false;
+
+        if (animatorBridge != null)
+        {
+            animatorBridge.enabled = true;
+            animatorBridge.SetDead(false);
+        }
+
+        if (animator != null)
+        {
+            if (HasBool(isDeadHash))
+            {
+                animator.SetBool(isDeadHash, false);
+            }
+            else if (HasBool(IsDeadHash))
+            {
+                animator.SetBool(IsDeadHash, false);
+            }
+
+            if (animator.HasState(0, Animator.StringToHash("Base Layer.Move")))
+            {
+                animator.Play("Base Layer.Move", 0, 0f);
+                animator.Update(0f);
+            }
+        }
+
+        if (disableInput)
+        {
+            PlayerInputReader input = GetComponent<PlayerInputReader>();
+            if (input != null) input.enabled = true;
+        }
+
+        if (disablePlayerController)
+        {
+            PlayerController movement = GetComponent<PlayerController>();
+            if (movement != null) movement.enabled = true;
+        }
+
+        if (disableCombat)
+        {
+            PlayerCombatController combat = GetComponent<PlayerCombatController>();
+            if (combat != null) combat.enabled = true;
+        }
+
+        if (disableCharacterController)
+        {
+            CharacterController controller = GetComponent<CharacterController>();
+            if (controller != null) controller.enabled = true;
+        }
+
+        PlayerInteractController interact = GetComponent<PlayerInteractController>();
+        if (interact != null) interact.enabled = true;
+
+        CompanionSummonController summon = GetComponent<CompanionSummonController>();
+        if (summon != null) summon.enabled = true;
+
+        Debug.Log("[PlayerDeath] Debug revive — Player controls restored.", this);
+    }
+
     void Awake()
     {
         Instance = this;

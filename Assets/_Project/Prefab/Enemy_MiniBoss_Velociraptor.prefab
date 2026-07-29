@@ -4236,7 +4236,7 @@ MonoBehaviour:
   useNegativeForward: 1
   projectileSpeed: 10
   maxTravelDistance: 18
-  projectileRadius: 0.45
+  projectileRadius: 0.18
   knockbackDistance: 4
   knockbackDuration: 0.22
   verticalLift: 0.25

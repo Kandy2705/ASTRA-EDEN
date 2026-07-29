@@ -21,15 +21,15 @@ MonoBehaviour:
     maxQuantity: 3
     guaranteed: 1
     guaranteedChance: 0.6
-  - item: {fileID: 11400000, guid: a29e9569a71e54f42a9bc34f83d5680c, type: 2}
+  - item: {fileID: 11400000, guid: b887b6f9b76954ec39bd7fe74293a230, type: 2}
     weight: 1
     minQuantity: 1
     maxQuantity: 2
     guaranteed: 1
-    guaranteedChance: 0.3
+    guaranteedChance: 1
   - item: {fileID: 11400000, guid: fa8ef4215f2e1403a81adc1c1fbdca6d, type: 2}
     weight: 1
     minQuantity: 1
     maxQuantity: 1
     guaranteed: 1
-    guaranteedChance: 0.15
+    guaranteedChance: 0.7

@@ -16,6 +16,7 @@ public class EnemyAttackHitbox : MonoBehaviour
 
     [Header("Filter")]
     [SerializeField] private LayerMask targetLayer;
+    [SerializeField, Min(1f)] private float minimumHitInterval = 1f;
 
     [Header("Debug Gizmo")]
     [SerializeField] private Color gizmoColor = new Color(1f, 0.3f, 0.3f, 0.4f);
@@ -23,6 +24,8 @@ public class EnemyAttackHitbox : MonoBehaviour
 
     private static readonly Collider[] HitBuffer = new Collider[16];
     private readonly HashSet<CharacterHealth> hitThisSwing = new HashSet<CharacterHealth>();
+    private readonly Dictionary<CharacterHealth, float> nextAllowedHitTime =
+        new Dictionary<CharacterHealth, float>();
 
     public LayerMask TargetLayer => targetLayer;
 
@@ -61,6 +64,14 @@ public class EnemyAttackHitbox : MonoBehaviour
 
             if (!hitThisSwing.Add(health)) continue;
 
+            if (nextAllowedHitTime.TryGetValue(health, out float nextHitTime) &&
+                Time.time < nextHitTime)
+            {
+                continue;
+            }
+
+            nextAllowedHitTime[health] =
+                Time.time + Mathf.Max(1f, minimumHitInterval);
             health.TakeDamage(damage);
             dealt++;
         }

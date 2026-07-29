@@ -13,7 +13,7 @@ public sealed class EnemyProjectileShooter : MonoBehaviour
     [Header("Flight")]
     [SerializeField, Min(0.1f)] private float projectileSpeed = 10f;
     [SerializeField, Min(0.1f)] private float maxTravelDistance = 18f;
-    [SerializeField, Min(0.05f)] private float projectileRadius = 0.45f;
+    [SerializeField, Min(0.05f)] private float projectileRadius = 0.18f;
 
     [Header("Player Knockback")]
     [SerializeField, Min(0f)] private float knockbackDistance = 4f;

@@ -6,7 +6,7 @@ public class CompanionSummonController : MonoBehaviour
     [Header("Companion")]
     [SerializeField] private GameObject companionPrefab;
     [SerializeField] private Vector3 spawnOffset = new Vector3(-1.5f, 0f, -1.5f);
-    [SerializeField] private bool summonOnStart = true;
+    [SerializeField] private bool summonOnStart = false;
 
     [Header("Input")]
     [SerializeField] private PlayerInputReader inputReader;
