@@ -729,6 +729,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 0
+  minimumHitInterval: 1
   gizmoColor: {r: 1, g: 0.3, b: 0.3, a: 0.4}
   drawGizmoAlways: 0
 --- !u!1 &1880503700196970654
@@ -2581,9 +2582,9 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5094793089080260226}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.04, y: 0.04, z: 0.04}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 0, z: -0.02}
+  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7038913966456425117}
   - {fileID: 3922867441001854766}
@@ -2592,7 +2593,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 6.34}
+  m_AnchoredPosition: {x: 0, y: 3.32}
   m_SizeDelta: {x: 180, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &7655330106964067215
@@ -4245,6 +4246,7 @@ MonoBehaviour:
   ragdoll: {fileID: 0}
   animator: {fileID: 7324799148574095824}
   attackHitbox: {fileID: 154665744286762947}
+  projectileShooter: {fileID: 0}
   patrolPoints: []
   idleDuration: 2
   patrolPointTolerance: 0.5
@@ -4253,6 +4255,20 @@ MonoBehaviour:
   patrolSpeedRatio: 0.5
   retreatSpeedRatio: 1.1
   retreatMinRange: 4
+  enablePressureEvade: 1
+  hitsToEvade: 3
+  hitPressureWindow: 1.1
+  evadeChance: 0.7
+  evadeDistance: 2.8
+  evadeDuration: 0.55
+  evadeCooldown: 2.5
+  evadeSpeedRatio: 1.35
+  enableLowHealthRetreat: 1
+  lowHealthThreshold: 0.25
+  lowHealthRetreatDistance: 6
+  lowHealthRetreatDuration: 2
+  lowHealthRetreatCooldown: 8
+  lowHealthRetreatOnlyOnce: 1
   useHitAnimation: 1
   hitStunDuration: 0.25
   hurtCooldown: 0.6
@@ -4283,6 +4299,7 @@ MonoBehaviour:
   drawAttackGizmo: 1
   debugLogStateMachine: 0
   debugLogChaseTick: 0
+  debugLogCombatResponse: 0
 --- !u!114 &8578823923300559423
 MonoBehaviour:
   m_ObjectHideFlags: 0

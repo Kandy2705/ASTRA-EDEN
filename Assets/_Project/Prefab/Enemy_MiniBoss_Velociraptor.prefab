@@ -654,6 +654,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 0
+  minimumHitInterval: 1
   gizmoColor: {r: 1, g: 0.3, b: 0.3, a: 0.4}
   drawGizmoAlways: 0
 --- !u!1 &1880503700196970654
@@ -3339,9 +3340,9 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6209318042947796062}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.013333334, y: 0.013333334, z: 0.013333334}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 0, z: -0.15}
+  m_LocalScale: {x: 0.008, y: 0.008, z: 0.008}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1620112800879055307}
   - {fileID: 7661478242706071634}
@@ -3350,7 +3351,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 3.07}
+  m_AnchoredPosition: {x: 0, y: 2.9}
   m_SizeDelta: {x: 180, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &4584661254016342015
@@ -4187,6 +4188,20 @@ MonoBehaviour:
   patrolSpeedRatio: 0.5
   retreatSpeedRatio: 1.1
   retreatMinRange: 4
+  enablePressureEvade: 1
+  hitsToEvade: 3
+  hitPressureWindow: 1.1
+  evadeChance: 0.7
+  evadeDistance: 2.8
+  evadeDuration: 0.55
+  evadeCooldown: 2.5
+  evadeSpeedRatio: 1.35
+  enableLowHealthRetreat: 1
+  lowHealthThreshold: 0.25
+  lowHealthRetreatDistance: 6
+  lowHealthRetreatDuration: 2
+  lowHealthRetreatCooldown: 8
+  lowHealthRetreatOnlyOnce: 1
   useHitAnimation: 1
   hitStunDuration: 0.25
   hurtCooldown: 0.6
@@ -4217,29 +4232,7 @@ MonoBehaviour:
   drawAttackGizmo: 1
   debugLogStateMachine: 0
   debugLogChaseTick: 0
---- !u!114 &6399077957897768671
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6399077957897768670}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d941c734e10d46e8a135b17e948f4c21, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileShooter
-  projectilePrefab: {fileID: 5223664366174132872, guid: 1b2a98a4789a84cbf85b44cf1f017f1a, type: 3}
-  spawnPoint: {fileID: 0}
-  localSpawnOffset: {x: 0, y: 1.2, z: 0}
-  spawnForwardOffset: 1.1
-  useNegativeForward: 1
-  projectileSpeed: 10
-  maxTravelDistance: 18
-  projectileRadius: 0.18
-  knockbackDistance: 4
-  knockbackDuration: 0.22
-  verticalLift: 0.25
+  debugLogCombatResponse: 0
 --- !u!114 &8578823923300559423
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4366,6 +4359,29 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65
   eyeHeight: 1.2
+--- !u!114 &6399077957897768671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6399077957897768670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d941c734e10d46e8a135b17e948f4c21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileShooter
+  projectilePrefab: {fileID: 5223664366174132872, guid: 1b2a98a4789a84cbf85b44cf1f017f1a, type: 3}
+  spawnPoint: {fileID: 0}
+  localSpawnOffset: {x: 0, y: 1.2, z: 0}
+  spawnForwardOffset: 1.1
+  useNegativeForward: 1
+  projectileSpeed: 10
+  maxTravelDistance: 18
+  projectileRadius: 0.18
+  knockbackDistance: 4
+  knockbackDuration: 0.22
+  verticalLift: 0.25
 --- !u!1 &6407186710813345963
 GameObject:
   m_ObjectHideFlags: 0

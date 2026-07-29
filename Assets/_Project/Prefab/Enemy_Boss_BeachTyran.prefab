@@ -102,8 +102,8 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1747029903868631283}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.98}
-  m_LocalScale: {x: 0.025, y: 0.025, z: 0.025}
+  m_LocalPosition: {x: 0, y: 0, z: 0.26}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1952763858983619807}
@@ -113,8 +113,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 3.05}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 0, y: 2.29}
+  m_SizeDelta: {x: 180, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &3584395685924046502
 Canvas:
@@ -605,6 +605,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 0
+  minimumHitInterval: 1
   gizmoColor: {r: 1, g: 0.3, b: 0.3, a: 0.4}
   drawGizmoAlways: 0
 --- !u!1 &6999762617471362847
@@ -1150,6 +1151,7 @@ MonoBehaviour:
   ragdoll: {fileID: 0}
   animator: {fileID: 4867024433516897504}
   attackHitbox: {fileID: 4144222138124291040}
+  projectileShooter: {fileID: 0}
   patrolPoints: []
   idleDuration: 2
   patrolPointTolerance: 0.5
