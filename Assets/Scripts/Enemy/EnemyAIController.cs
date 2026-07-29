@@ -52,6 +52,7 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField] private RagdollOnDeath ragdoll;
     [SerializeField] private Animator animator;
     [SerializeField] private EnemyAttackHitbox attackHitbox;
+    [SerializeField] private EnemyProjectileShooter projectileShooter;
 
     [Header("Patrol")]
     [SerializeField] private Transform[] patrolPoints;
@@ -172,6 +173,7 @@ public class EnemyAIController : MonoBehaviour
     enum AttackPhase { None, Windup, Active, Recovery }
     AttackPhase attackPhase = AttackPhase.None;
     bool hitResolvedThisSwing;
+    bool projectileResolvedThisAttack;
     float nextHurtAllowedAt;
     float nextTackleTime;
     int attacksSinceLastTackle;
@@ -354,6 +356,7 @@ public class EnemyAIController : MonoBehaviour
         sensor = GetComponentInChildren<EnemySensor>();
         animator = GetComponentInChildren<Animator>();
         attackHitbox = GetComponentInChildren<EnemyAttackHitbox>();
+        projectileShooter = GetComponent<EnemyProjectileShooter>();
     }
 
     /// Registry cho các hệ thống cần duyệt enemy đang sống (minimap markers, v.v.).
@@ -378,6 +381,7 @@ public class EnemyAIController : MonoBehaviour
         if (sensor == null) sensor = GetComponentInChildren<EnemySensor>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
         if (attackHitbox == null) attackHitbox = GetComponentInChildren<EnemyAttackHitbox>();
+        if (projectileShooter == null) projectileShooter = GetComponent<EnemyProjectileShooter>();
 
         if (playerLayer.value == 0) playerLayer = LayerMask.GetMask("Player");
     }
@@ -1505,7 +1509,10 @@ public class EnemyAIController : MonoBehaviour
         else if (attackPhase == AttackPhase.Recovery && attackPhaseTimer <= 0f)
         {
             attackPhase = AttackPhase.None;
-            attackCooldownTimer = 0f;
+            float cooldown = currentAttack != null && currentAttack.cooldown > 0f
+                ? currentAttack.cooldown
+                : AttackCooldown;
+            attackCooldownTimer = Mathf.Max(attackCooldownTimer, cooldown);
             RegisterCompletedAttackForTackle();
         }
         else if (attackPhase == AttackPhase.None && attackPhaseTimer <= 0f)
@@ -2188,6 +2195,7 @@ public class EnemyAIController : MonoBehaviour
         attackPhase = AttackPhase.Windup;
         attackPhaseTimer = currentAttack != null ? currentAttack.windup : 0.3f;
         hitResolvedThisSwing = false;
+        projectileResolvedThisAttack = false;
         if (animator != null) animator.SetTrigger(AttackHash);
         if (debugLogStateMachine)
         {
@@ -2220,12 +2228,29 @@ public class EnemyAIController : MonoBehaviour
 
     void ResolveHit()
     {
-        if (hitResolvedThisSwing || attackHitbox == null || currentAttack == null) return;
+        if (hitResolvedThisSwing || currentAttack == null) return;
         hitResolvedThisSwing = true;
 
-        if (attackHitbox.TargetLayer.value == 0) attackHitbox.SetTargetLayer(playerLayer);
         float baseAtk = enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.attack : 10f;
         float damage = baseAtk * currentAttack.damageMultiplier;
+
+        bool isProjectile =
+            currentAttack.rangeType == EnemyAttackRangeType.Projectile ||
+            currentAttack.rangeType == EnemyAttackRangeType.ProjectileAOE;
+        if (isProjectile && projectileShooter != null && projectileShooter.CanFire)
+        {
+            if (projectileResolvedThisAttack)
+            {
+                return;
+            }
+
+            projectileResolvedThisAttack = true;
+            projectileShooter.Fire(damage);
+            return;
+        }
+
+        if (attackHitbox == null) return;
+        if (attackHitbox.TargetLayer.value == 0) attackHitbox.SetTargetLayer(playerLayer);
         attackHitbox.PerformHit(damage);
     }
 
@@ -2377,6 +2402,7 @@ public class EnemyAIController : MonoBehaviour
         attackPhaseTimer = 0f;
         currentAttack = null;
         hitResolvedThisSwing = true;
+        projectileResolvedThisAttack = true;
 
         if (animator == null)
         {

@@ -87,6 +87,16 @@ public class CharacterHealth : MonoBehaviour
         if (gameObject.CompareTag("Player"))
         {
             PlayPlayerDamageEffect(previousHP - runtimeStats.currentHP);
+
+            if (triggerHitReaction && !IsDead)
+            {
+                PlayerAnimatorBridge animatorBridge =
+                    GetComponentInParent<PlayerAnimatorBridge>();
+                if (animatorBridge != null)
+                {
+                    animatorBridge.TriggerHit();
+                }
+            }
         }
 
         if (IsDead)

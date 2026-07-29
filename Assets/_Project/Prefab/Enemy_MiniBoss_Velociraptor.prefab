@@ -3786,6 +3786,7 @@ GameObject:
   - component: {fileID: 7269529137949252577}
   - component: {fileID: 3084035736452181263}
   - component: {fileID: 4983250852546031678}
+  - component: {fileID: 6399077957897768671}
   m_Layer: 0
   m_Name: Enemy_MiniBoss_Velociraptor
   m_TagString: Untagged
@@ -4177,6 +4178,7 @@ MonoBehaviour:
   ragdoll: {fileID: 0}
   animator: {fileID: 7324799148574095824}
   attackHitbox: {fileID: 154665744286762947}
+  projectileShooter: {fileID: 6399077957897768671}
   patrolPoints: []
   idleDuration: 2
   patrolPointTolerance: 0.5
@@ -4195,7 +4197,7 @@ MonoBehaviour:
   flipForward180: 1
   animatorDampTime: 0.1
   movingThreshold: 0.05
-  useTackle: 1
+  useTackle: 0
   attacksBeforeTackle: 2
   tackleRange: 3.2
   tackleCooldown: 6
@@ -4215,6 +4217,29 @@ MonoBehaviour:
   drawAttackGizmo: 1
   debugLogStateMachine: 0
   debugLogChaseTick: 0
+--- !u!114 &6399077957897768671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6399077957897768670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d941c734e10d46e8a135b17e948f4c21, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyProjectileShooter
+  projectilePrefab: {fileID: 5223664366174132872, guid: 1b2a98a4789a84cbf85b44cf1f017f1a, type: 3}
+  spawnPoint: {fileID: 0}
+  localSpawnOffset: {x: 0, y: 1.2, z: 0}
+  spawnForwardOffset: 1.1
+  useNegativeForward: 1
+  projectileSpeed: 10
+  maxTravelDistance: 18
+  projectileRadius: 0.45
+  knockbackDistance: 4
+  knockbackDuration: 0.22
+  verticalLift: 0.25
 --- !u!114 &8578823923300559423
 MonoBehaviour:
   m_ObjectHideFlags: 0

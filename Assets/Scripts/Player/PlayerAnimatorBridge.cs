@@ -10,6 +10,7 @@ public class PlayerAnimatorBridge : MonoBehaviour
     private static readonly int AttackHash = Animator.StringToHash("Attack");
     private static readonly int CastSkillHash = Animator.StringToHash("CastSkill");
     private static readonly int SkillIndexHash = Animator.StringToHash("SkillIndex");
+    private static readonly int HitHash = Animator.StringToHash("Hit");
     private static readonly int IsDeadHash = Animator.StringToHash("IsDead");
 
     [SerializeField] private Animator animator;
@@ -80,6 +81,18 @@ public class PlayerAnimatorBridge : MonoBehaviour
         {
             animator.SetTrigger(AttackHash);
         }
+    }
+
+    public void TriggerHit()
+    {
+        if (animator == null || isDead ||
+            !HasParameter(HitHash, AnimatorControllerParameterType.Trigger))
+        {
+            return;
+        }
+
+        animator.ResetTrigger(HitHash);
+        animator.SetTrigger(HitHash);
     }
 
     public void TriggerCastSkill(int skillIndex)

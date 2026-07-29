@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
@@ -31,7 +32,7 @@ public sealed class GameSettingsManager : MonoBehaviour
     private const string BloomPref = "ASTRA_SETTINGS_BLOOM";
     private const string BindingPrefPrefix = "ASTRA_BINDING_";
 
-    public const float DefaultBrightness = 0.5f;
+    public const float DefaultBrightness = 1f;
     public const bool DefaultBloomEnabled = true;
 
     private static readonly Dictionary<GameControlAction, Key> DefaultBindings = new()
@@ -58,8 +59,9 @@ public sealed class GameSettingsManager : MonoBehaviour
 
     private Volume settingsVolume;
     private VolumeProfile settingsProfile;
-    private ColorAdjustments colorAdjustments;
     private Bloom bloom;
+    private Canvas overlayCanvas;
+    private Image overlayImage;
 
     public static float Brightness =>
         Mathf.Clamp01(PlayerPrefs.GetFloat(BrightnessPref, DefaultBrightness));
@@ -133,9 +135,6 @@ public sealed class GameSettingsManager : MonoBehaviour
         settingsProfile = ScriptableObject.CreateInstance<VolumeProfile>();
         settingsProfile.name = "ASTRA Runtime Settings";
 
-        colorAdjustments = settingsProfile.Add<ColorAdjustments>(true);
-        colorAdjustments.postExposure.overrideState = true;
-
         bloom = settingsProfile.Add<Bloom>(true);
         bloom.threshold.overrideState = true;
         bloom.threshold.value = 1f;
@@ -147,6 +146,30 @@ public sealed class GameSettingsManager : MonoBehaviour
         settingsVolume.isGlobal = true;
         settingsVolume.priority = 1000f;
         settingsVolume.sharedProfile = settingsProfile;
+
+        GameObject canvasGO = new("BrightnessOverlay");
+        canvasGO.transform.SetParent(transform);
+        overlayCanvas = canvasGO.AddComponent<Canvas>();
+        overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        overlayCanvas.sortingOrder = 9999;
+
+        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+
+        canvasGO.AddComponent<GraphicRaycaster>();
+
+        GameObject imageGO = new("OverlayImage");
+        imageGO.transform.SetParent(canvasGO.transform, false);
+        overlayImage = imageGO.AddComponent<Image>();
+        overlayImage.color = new Color(0f, 0f, 0f, 0f);
+        overlayImage.raycastTarget = false;
+
+        RectTransform rt = overlayImage.rectTransform;
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
     }
 
     public static void ApplyGraphics(float brightness, bool bloomEnabled, bool save = true)
@@ -164,13 +187,23 @@ public sealed class GameSettingsManager : MonoBehaviour
 
     public void ApplyGraphicsSettings()
     {
-        if (colorAdjustments == null || bloom == null)
+        if (bloom == null)
         {
             return;
         }
 
-        // 0.5 is neutral; the full UI range maps to -1.5 .. +1.5 exposure stops.
-        colorAdjustments.postExposure.value = Mathf.Lerp(-1.5f, 1.5f, Brightness);
+        // Screen darkening overlay — không ảnh hưởng môi trường 3D
+        if (overlayImage == null && overlayCanvas == null)
+        {
+            RebuildOverlay();
+        }
+
+        if (overlayImage != null)
+        {
+            float b = Mathf.Clamp01(Brightness);
+            float alpha = Mathf.Lerp(0.7f, 0f, b);
+            overlayImage.color = new Color(0f, 0f, 0f, alpha);
+        }
 
         bool bloomEnabled = BloomEnabled;
         bloom.active = bloomEnabled;
@@ -185,6 +218,33 @@ public sealed class GameSettingsManager : MonoBehaviour
                 cameraData.renderPostProcessing = true;
             }
         }
+    }
+
+    private void RebuildOverlay()
+    {
+        GameObject canvasGO = new("BrightnessOverlay");
+        canvasGO.transform.SetParent(transform);
+        overlayCanvas = canvasGO.AddComponent<Canvas>();
+        overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        overlayCanvas.sortingOrder = 9999;
+
+        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+
+        canvasGO.AddComponent<GraphicRaycaster>();
+
+        GameObject imageGO = new("OverlayImage");
+        imageGO.transform.SetParent(canvasGO.transform, false);
+        overlayImage = imageGO.AddComponent<Image>();
+        overlayImage.color = new Color(0f, 0f, 0f, 0f);
+        overlayImage.raycastTarget = false;
+
+        RectTransform rt = overlayImage.rectTransform;
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
     }
 
     public static Key GetBinding(GameControlAction action)

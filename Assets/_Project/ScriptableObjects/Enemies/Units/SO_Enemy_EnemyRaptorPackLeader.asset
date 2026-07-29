@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyId: enemy_raptor_pack_leader
   displayName: Wild Claw Raptor Pack Leader
-  archetype: 0
+  archetype: 1
   rank: 1
   zone: 2
   enemyPrefab: {fileID: 6399077957897768670, guid: 3ef2f4e92438b40f2bf8ad034e3505e0, type: 3}
@@ -31,11 +31,10 @@ MonoBehaviour:
   sightAngle: 120
   hearingRange: 10
   aggroKeepRange: 30
-  attackRange: 2.2
-  attackCooldown: 1.8
+  attackRange: 12
+  attackCooldown: 2
   attackPatterns:
-  - {fileID: 11400000, guid: 61babcb1e6d294132b03639de75c3bb2, type: 2}
-  - {fileID: 11400000, guid: 712000b77026e40438ce755435e60489, type: 2}
+  - {fileID: 11400000, guid: f3c82f813fb7443aacb8b7b279f20861, type: 2}
   expReward: 90
   goldMin: 30
   goldMax: 55

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18547bc671f8d4ecdb57dcb03be901b8, type: 3}
+  m_Name: SO_AttackPattern_AtkVelociraptorPoisonOrb
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPatternData
+  attackId: atk_velociraptor_poison_orb
+  displayName: Poison Orb
+  archetype: 1
+  rangeType: 2
+  minRange: 4
+  maxRange: 12
+  cooldown: 1.3
+  windup: 0.35
+  activeTime: 0.15
+  recovery: 0.2
+  damageMultiplier: 1
+  poiseDamage: 20
+  element: 3
+  canBeInterrupted: 1
+  telegraph: "Khóa hướng nhìn rồi phóng một Poison Orb thẳng về phía trước"
