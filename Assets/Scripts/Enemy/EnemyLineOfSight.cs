@@ -49,7 +49,7 @@ public sealed class EnemyLineOfSight : MonoBehaviour
     [SerializeField] private float meshYOffset = 0.05f;
 
     [Header("Debug Gizmos")]
-    [SerializeField] private bool drawGizmos = true;
+    [SerializeField] private bool drawGizmos;
     [SerializeField] private Color gizmoColor = new Color(1f, 0.85f, 0.15f, 0.9f);
     [SerializeField] private Color gizmoHitColor = new Color(1f, 0.4f, 0.1f, 0.9f);
 

@@ -48,10 +48,10 @@ public class EnemySensor : MonoBehaviour
 
     [Header("Debug / Runtime vision (Game view)")]
     [Tooltip("Vẽ nón FOV + ray LOS lúc Play (LineRenderer, thấy trong Game view).")]
-    [SerializeField] private bool showRuntimeVision = true;
+    [SerializeField] private bool showRuntimeVision;
     [SerializeField, Range(8, 64)] private int runtimeVisionRays = 28;
     [SerializeField, Min(0.02f)] private float runtimeVisionHeight = 0.15f;
-    [SerializeField] private bool drawGizmos = true;
+    [SerializeField] private bool drawGizmos;
     [SerializeField] private Color sightColor = new Color(1f, 0.85f, 0.15f, 0.9f);
     [SerializeField] private Color sightAlertColor = new Color(1f, 0.25f, 0.15f, 0.95f);
     [SerializeField] private Color hearingColor = new Color(0f, 0.75f, 1f, 0.55f);
@@ -59,7 +59,7 @@ public class EnemySensor : MonoBehaviour
     [SerializeField] private Color losClearColor = new Color(0.15f, 1f, 0.35f, 0.95f);
 
     /// <summary>Bật/tắt vision runtime cho MỌI EnemySensor (hotkey / debug).</summary>
-    public static bool GlobalShowRuntimeVision = true;
+    public static bool GlobalShowRuntimeVision;
 
     public float SightRange => enemyData != null ? enemyData.sightRange : sightRangeOverride;
     public float SightAngle => enemyData != null ? enemyData.sightAngle : sightAngleOverride;
@@ -125,7 +125,10 @@ public class EnemySensor : MonoBehaviour
     {
         EnsureLosBackends();
         SyncLineOfSightConfig();
-        EnsureRuntimeVisionRenderers();
+        if (showRuntimeVision && GlobalShowRuntimeVision)
+        {
+            EnsureRuntimeVisionRenderers();
+        }
     }
 
     void OnDisable()

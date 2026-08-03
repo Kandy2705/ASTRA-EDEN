@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// HUD_PlayerStatusPanel: HP / Stamina / Energy + name.
+/// HUD_PlayerStatusPanel: HP / Energy / EXP + level và name.
 /// Prefab không serialize được CharacterHealth của player → tự tìm theo tag "Player".
 /// </summary>
 public class CharacterStatsHUD : MonoBehaviour
@@ -18,6 +18,7 @@ public class CharacterStatsHUD : MonoBehaviour
     [SerializeField] private Image hpFill;
     [SerializeField] private Image staminaFill;
     [SerializeField] private Image energyFill;
+    [SerializeField] private Image experienceFill;
 
     [Header("Texts")]
     [SerializeField] private TMP_Text nameText;
@@ -29,8 +30,11 @@ public class CharacterStatsHUD : MonoBehaviour
     [SerializeField] private TMP_Text energyText;
     [SerializeField] private TMP_Text moveSpeedText;
     [SerializeField] private TMP_Text attackSpeedText;
+    [SerializeField] private TMP_Text levelText;
+    [SerializeField] private TMP_Text experienceText;
 
     float rebindTimer;
+    PlayerProgression progression;
 
     private void Awake()
     {
@@ -75,6 +79,10 @@ public class CharacterStatsHUD : MonoBehaviour
     {
         Unsubscribe();
         characterHealth = newCharacterHealth;
+        progression = characterHealth != null
+            ? characterHealth.GetComponent<PlayerProgression>() ??
+              characterHealth.GetComponentInParent<PlayerProgression>()
+            : null;
         Subscribe();
         Refresh();
     }
@@ -132,10 +140,43 @@ public class CharacterStatsHUD : MonoBehaviour
             return;
         }
 
+        if (progression == null)
+        {
+            progression = characterHealth.GetComponent<PlayerProgression>() ??
+                          characterHealth.GetComponentInParent<PlayerProgression>();
+            if (progression != null)
+            {
+                progression.Changed -= HandleProgressionChanged;
+                progression.Changed += HandleProgressionChanged;
+            }
+        }
+
         CharacterRuntimeStats stats = characterHealth.RuntimeStats;
         SetFill(hpFill, stats.currentHP, stats.maxHP);
         SetFill(staminaFill, stats.currentStamina, stats.staminaMax);
         SetFill(energyFill, stats.currentEnergy, stats.energyMax);
+        if (progression != null)
+        {
+            if (experienceFill != null)
+            {
+                experienceFill.fillAmount = progression.NormalizedExperience;
+            }
+
+            SetText(
+                experienceText,
+                progression.Level >= progression.MaxLevel
+                    ? "MAX"
+                    : $"{progression.CurrentExperience} / {progression.ExperienceToNextLevel}");
+            SetText(levelText, progression.Level.ToString());
+        }
+        else
+        {
+            if (experienceFill != null)
+            {
+                experienceFill.fillAmount = 0f;
+            }
+            SetText(experienceText, "0 / 100");
+        }
 
         string displayName = characterHealth.CharacterData != null
             ? characterHealth.CharacterData.displayName
@@ -158,6 +199,12 @@ public class CharacterStatsHUD : MonoBehaviour
             characterHealth.Changed -= HandleHealthChanged;
             characterHealth.Changed += HandleHealthChanged;
         }
+
+        if (progression != null)
+        {
+            progression.Changed -= HandleProgressionChanged;
+            progression.Changed += HandleProgressionChanged;
+        }
     }
 
     private void Unsubscribe()
@@ -166,9 +213,19 @@ public class CharacterStatsHUD : MonoBehaviour
         {
             characterHealth.Changed -= HandleHealthChanged;
         }
+
+        if (progression != null)
+        {
+            progression.Changed -= HandleProgressionChanged;
+        }
     }
 
     private void HandleHealthChanged(CharacterHealth changedHealth)
+    {
+        Refresh();
+    }
+
+    private void HandleProgressionChanged(PlayerProgression changedProgression)
     {
         Refresh();
     }

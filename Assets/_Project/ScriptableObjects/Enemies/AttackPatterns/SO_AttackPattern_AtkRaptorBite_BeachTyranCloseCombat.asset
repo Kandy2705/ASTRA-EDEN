@@ -18,12 +18,12 @@ MonoBehaviour:
   rangeType: 0
   minRange: 0
   maxRange: 3.5
-  cooldown: 2.2
-  windup: 1.1
-  activeTime: 0.3
-  recovery: 2.3999999
+  cooldown: 1.25
+  windup: 1.5
+  activeTime: 0.25
+  recovery: 0.2
   damageMultiplier: 1
   poiseDamage: 18
   element: 0
-  canBeInterrupted: 1
+  canBeInterrupted: 0
   telegraph: "Raptor h\u1EA1 \u0111\u1EA7u tr\u01B0\u1EDBc khi c\u1EAFn"

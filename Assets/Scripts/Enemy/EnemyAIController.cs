@@ -119,6 +119,12 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField, Min(0f)] private float tackleRange = 3.2f;
     [Tooltip("Cooldown tối thiểu giữa hai lần tackle.")]
     [SerializeField, Min(0f)] private float tackleCooldown = 6f;
+    [Tooltip("Mở hitbox hất tại normalized time này của animation Tackle.")]
+    [SerializeField, Range(0.05f, 0.8f)] private float tackleHitOpenNormalized = 0.28f;
+    [Tooltip("Đóng hitbox hất tại normalized time này của animation Tackle.")]
+    [SerializeField, Range(0.1f, 0.95f)] private float tackleHitCloseNormalized = 0.68f;
+    [Tooltip("Failsafe nếu clip Tackle mới bị thiếu Animation Event hoặc transition lỗi.")]
+    [SerializeField, Min(0.5f)] private float tackleFallbackDuration = 2.2f;
 
     [Header("Targeting")]
     [SerializeField] private LayerMask playerLayer;
@@ -126,6 +132,8 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField, Min(0.25f)] private float playerResolveInterval = 0.75f;
     [Tooltip("Dùng Physics.CheckSphere (kiểu tutorial) làm fallback khi EnemySensor null hoặc player sát.")]
     [SerializeField] private bool useProximitySphereFallback = true;
+    [Tooltip("Không phát hiện/tấn công Player ở tầng trên hoặc dưới dù trùng vị trí X/Z.")]
+    [SerializeField, Min(0.5f)] private float maxCombatVerticalDifference = 3f;
 
     [Header("Free Patrol (khi không có patrol points)")]
     [Tooltip("Khi không gán patrol points, tuần tra random quanh origin giống tutorial walkPoint.")]
@@ -143,7 +151,7 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField] private AIState debugState;
     [SerializeField] private float debugPoise;
     [SerializeField] private float debugLastKnownHP;
-    [SerializeField] private bool drawAttackGizmo = true;
+    [SerializeField] private bool drawAttackGizmo;
     [Tooltip("Bật để log mọi state transition + lý do vào/thoát Attack/Chase ra Console.")]
     [SerializeField] private bool debugLogStateMachine = false;
     [Tooltip("Bật để log distance, cooldown, agent.remainingDistance mỗi frame trong Chase. Spam nhiều — chỉ bật khi cần.")]
@@ -178,6 +186,9 @@ public class EnemyAIController : MonoBehaviour
     float nextTackleTime;
     int attacksSinceLastTackle;
     bool isTackling;
+    float tackleElapsed;
+    bool tackleAnimatorEntered;
+    bool tackleHitboxOpened;
     float effectiveAttackRange = 2f;
     float nextPlayerResolveTime;
     float nextChaseDestinationTime;
@@ -788,10 +799,7 @@ public class EnemyAIController : MonoBehaviour
             }
             else
             {
-                // Giống tutorial AttackPlayer: đứng yên + quay về player trong lúc tackle.
-                HoldAgentStill();
-                FaceTarget();
-                UpdateAnimatorMovement(0f);
+                TickTackle();
                 return;
             }
         }
@@ -858,6 +866,11 @@ public class EnemyAIController : MonoBehaviour
         playerInAttackRange = false;
 
         if (player == null)
+        {
+            return;
+        }
+
+        if (!IsPlayerOnReachableCombatLevel())
         {
             return;
         }
@@ -2132,6 +2145,11 @@ public class EnemyAIController : MonoBehaviour
             return false;
         }
 
+        if (!IsPlayerOnReachableCombatLevel())
+        {
+            return false;
+        }
+
         distance = HorizontalDistance(player.position);
 
         if (sensor != null)
@@ -2197,11 +2215,19 @@ public class EnemyAIController : MonoBehaviour
     bool CanStartAttack(float distance)
     {
         if (IsPlayerDeadForAi()) return false;
+        if (!IsPlayerOnReachableCombatLevel()) return false;
         if (attackCooldownTimer > 0f) return false;
         // Nhẹ nhàng nới range (hitbox/body size) — tránh đứng sát mà không đánh.
         float range = AttackRange + 0.2f;
         if (distance > range && !playerInAttackRange) return false;
         return true;
+    }
+
+    bool IsPlayerOnReachableCombatLevel()
+    {
+        return player != null &&
+               Mathf.Abs(player.position.y - transform.position.y) <=
+               Mathf.Max(0.5f, maxCombatVerticalDifference);
     }
 
     bool NeedsRetreat(float distance)
@@ -2367,6 +2393,15 @@ public class EnemyAIController : MonoBehaviour
     {
         bool interruptingAttack = currentState == AIState.Attack || attackPhase != AttackPhase.None;
 
+        // Tackle và pattern có hyper armor phải chạy trọn animation. Vẫn mất HP,
+        // chỉ không để một hit thường vô tình giải phóng/khởi động lại state Boss.
+        if (isTackling ||
+            (interruptingAttack && currentAttack != null && !currentAttack.canBeInterrupted))
+        {
+            currentPoise = Mathf.Max(0f, currentPoise - Mathf.Max(0f, dmg));
+            return;
+        }
+
         if (MaxPoise > 0f)
         {
             currentPoise = Mathf.Max(0f, currentPoise - dmg);
@@ -2437,11 +2472,6 @@ public class EnemyAIController : MonoBehaviour
             animator.ResetTrigger(AttackHash);
         }
 
-        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-        if (state.IsName("Basic Attack") || state.IsName("Attack"))
-        {
-            animator.Play("Hit", 0, 0f);
-        }
     }
 
     void PlayHitAnimation()
@@ -2776,7 +2806,8 @@ public class EnemyAIController : MonoBehaviour
             attackHitbox.BeginSwing();
         }
 
-        hitResolvedThisSwing = false;
+        // Không reset hitResolved ở đây: clip mới có event trễ hơn timed fallback.
+        // Reset lần hai sẽ khiến cùng một animation gây damage hai lần.
     }
 
     public void Anim_OnAttackHit() => ResolveHit();
@@ -2792,9 +2823,56 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
-        EndTackle();
+        CompleteTackle();
+    }
 
-        if (currentState != AIState.Dead && currentState != AIState.Hurt && currentState != AIState.Stagger)
+    void TickTackle()
+    {
+        HoldAgentStill();
+        FaceTarget();
+        UpdateAnimatorMovement(0f);
+        tackleElapsed += Time.deltaTime;
+
+        float normalized = tackleElapsed / Mathf.Max(0.5f, tackleFallbackDuration);
+        bool inTackleState = false;
+        if (animator != null)
+        {
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            inTackleState = state.IsName("Tackle") || state.IsName("Base Layer.Tackle");
+            if (inTackleState)
+            {
+                tackleAnimatorEntered = true;
+                normalized = state.normalizedTime;
+            }
+        }
+
+        EnemyPushHitbox pushHitbox = GetComponentInChildren<EnemyPushHitbox>(true);
+        if (!tackleHitboxOpened && normalized >= tackleHitOpenNormalized)
+        {
+            tackleHitboxOpened = true;
+            pushHitbox?.OpenHitbox();
+        }
+
+        if (tackleHitboxOpened && normalized >= tackleHitCloseNormalized)
+        {
+            pushHitbox?.CloseHitbox();
+        }
+
+        bool animationExited = tackleAnimatorEntered && !inTackleState &&
+                               (animator == null || !animator.IsInTransition(0));
+        if (normalized >= 0.95f || animationExited || tackleElapsed >= tackleFallbackDuration)
+        {
+            CompleteTackle();
+        }
+    }
+
+    void CompleteTackle()
+    {
+        EndTackle();
+        attackCooldownTimer = Mathf.Max(attackCooldownTimer, MinimumAttackInterval * 0.8f);
+
+        if (currentState != AIState.Dead && currentState != AIState.Hurt &&
+            currentState != AIState.Stagger)
         {
             EnterState(AIState.Chase);
         }
@@ -2826,6 +2904,10 @@ public class EnemyAIController : MonoBehaviour
         attacksSinceLastTackle = 0;
         nextTackleTime = Time.time + tackleCooldown;
         isTackling = true;
+        tackleElapsed = 0f;
+        tackleAnimatorEntered = false;
+        tackleHitboxOpened = false;
+        GetComponentInChildren<EnemyPushHitbox>(true)?.ArmHitbox();
         CancelActiveAttack();
         hitStunTimer = 0f;
         StopAgent();
@@ -2838,6 +2920,9 @@ public class EnemyAIController : MonoBehaviour
     void EndTackle()
     {
         isTackling = false;
+        tackleElapsed = 0f;
+        tackleAnimatorEntered = false;
+        tackleHitboxOpened = false;
 
         EnemyPushHitbox pushHitbox = GetComponentInChildren<EnemyPushHitbox>(true);
         if (pushHitbox != null)

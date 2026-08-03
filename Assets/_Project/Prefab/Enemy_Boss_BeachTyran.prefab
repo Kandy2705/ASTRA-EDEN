@@ -385,7 +385,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4403615841393873537}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7b4ad39bcea4754288875872c03d7c2, type: 3}
   m_Name: 
@@ -397,7 +397,7 @@ MonoBehaviour:
   meshComp: {fileID: 0}
   autoRegenerateMesh: 1
   drawHidden: 0
-  drawSight: 1
+  drawSight: 0
   drawSimpleSector: 0
   fillUV: 0
 --- !u!33 &270180428656185459
@@ -415,7 +415,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4403615841393873537}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -636,7 +636,7 @@ Transform:
   m_GameObject: {fileID: 6999762617471362847}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.0444, z: 0.0376}
+  m_LocalPosition: {x: 0, y: 1.5, z: 2.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -661,8 +661,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 0
   serializedVersion: 3
-  m_Size: {x: 0.023060538, y: 0.037546225, z: 0.053877153}
-  m_Center: {x: -0.00028147816, y: -0.02122684, z: -0.0016005087}
+  m_Size: {x: 5.5, y: 3, z: 5.5}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &2563910770574305398
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -707,6 +707,8 @@ MonoBehaviour:
   pushDistance: 6
   pushDuration: 0.22
   verticalLift: 0.25
+  ownerAttackDamageMultiplier: 1.5
+  flatDamageBonus: 0
 --- !u!1 &7831399664061348553
 GameObject:
   m_ObjectHideFlags: 0
@@ -1117,15 +1119,15 @@ MonoBehaviour:
   hearingRequiresLineOfSight: 1
   useAillieoLos2D: 1
   aillieoBridge: {fileID: 1363790776221764518}
-  aillieoDrawMesh: 1
+  aillieoDrawMesh: 0
   lineOfSight: {fileID: 0}
   useMultiRayFov: 0
   generateVisionMesh: 0
   senseInterval: 0.15
-  showRuntimeVision: 1
+  showRuntimeVision: 0
   runtimeVisionRays: 28
   runtimeVisionHeight: 0.15
-  drawGizmos: 1
+  drawGizmos: 0
   sightColor: {r: 1, g: 0.8, b: 0, a: 0.25}
   sightAlertColor: {r: 1, g: 0.25, b: 0.15, a: 0.95}
   hearingColor: {r: 0, g: 0.6, b: 1, a: 0.25}
@@ -1168,7 +1170,7 @@ MonoBehaviour:
   evadeDuration: 0.55
   evadeCooldown: 2.5
   evadeSpeedRatio: 1.35
-  enableLowHealthRetreat: 1
+  enableLowHealthRetreat: 0
   lowHealthThreshold: 0.25
   lowHealthRetreatDistance: 6
   lowHealthRetreatDuration: 2
@@ -1187,7 +1189,10 @@ MonoBehaviour:
   useTackle: 1
   attacksBeforeTackle: 2
   tackleRange: 5.5
-  tackleCooldown: 8
+  tackleCooldown: 6
+  tackleHitOpenNormalized: 0.28
+  tackleHitCloseNormalized: 0.68
+  tackleFallbackDuration: 2.2
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -1201,7 +1206,7 @@ MonoBehaviour:
   debugState: 0
   debugPoise: 0
   debugLastKnownHP: 0
-  drawAttackGizmo: 1
+  drawAttackGizmo: 0
   debugLogStateMachine: 0
   debugLogChaseTick: 0
   debugLogCombatResponse: 0
@@ -1302,6 +1307,7 @@ MonoBehaviour:
   useLockedCombatArena: 1
   arenaRadius: 14
   arenaEngageDistance: 15.5
+  arenaMaxVerticalDifference: 2.5
   showArenaBarrier: 1
   arenaBarrierHeight: 4.5
   arenaBarrierSegments: 64
@@ -1362,9 +1368,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyLOS2DBridge
   losSource: {fileID: 7329189181668130839}
   losMesh: {fileID: 3839289933203055626}
-  createMeshVisual: 1
+  createMeshVisual: 0
   meshResolution: 36
-  drawSightMesh: 1
+  drawSightMesh: 0
   drawHiddenMesh: 0
   flipForward180: 0
   losFacingRoot: {fileID: 4199021745601723090}

@@ -83,7 +83,7 @@ public static class EnemySpawnConfigurator
             }
         }
 
-        EnsureEnemyKillTracker(instance, isMiniBoss);
+        EnsureEnemyKillTracker(instance, isMiniBoss, data);
 
         if (isMiniBoss)
         {
@@ -93,7 +93,7 @@ public static class EnemySpawnConfigurator
         return instance;
     }
 
-    static void EnsureEnemyKillTracker(GameObject instance, bool isMiniBoss)
+    static void EnsureEnemyKillTracker(GameObject instance, bool isMiniBoss, EnemyData data)
     {
         EnemyKillTracker tracker = instance.GetComponent<EnemyKillTracker>();
         if (tracker == null)
@@ -101,7 +101,7 @@ public static class EnemySpawnConfigurator
             tracker = instance.AddComponent<EnemyKillTracker>();
         }
 
-        tracker.Configure(isMiniBoss);
+        tracker.Configure(isMiniBoss, data);
     }
 
     static void EnsureMiniBossMarker(GameObject instance, EnemyData data)

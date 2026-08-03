@@ -14,6 +14,8 @@ public class CharacterHealth : MonoBehaviour
     [SerializeField] private CharacterRuntimeStats runtimeStats;
     [SerializeField] private bool destroyOnDeath;
 
+    private int appliedProgressionLevel = 1;
+
     public event Action<CharacterHealth> Changed;
     public event Action<CharacterHealth> Died;
 
@@ -25,6 +27,14 @@ public class CharacterHealth : MonoBehaviour
     private void Awake()
     {
         Initialize();
+
+        // Áp level trước khi restore HP đã save để HP của level cao không bị
+        // clamp nhầm về maxHP level 1 khi đổi scene/Continue.
+        if (IsPlayerHealth() && GetComponent<PlayerProgression>() == null)
+        {
+            gameObject.AddComponent<PlayerProgression>();
+        }
+
         RestoreFromGameData();
 
         // Player: đảm bảo có death controller (anim IsDead, không ragdoll).
@@ -163,6 +173,48 @@ public class CharacterHealth : MonoBehaviour
         runtimeStats.currentHP = runtimeStats.maxHP;
         runtimeStats.currentStamina = runtimeStats.staminaMax;
         runtimeStats.currentEnergy = runtimeStats.energyMax;
+        Changed?.Invoke(this);
+    }
+
+    /// <summary>Áp phần tăng stats từ level; mỗi level sau level 1 chỉ được cộng một lần.</summary>
+    public void ApplyProgressionLevel(int targetLevel, bool restoreGainedCapacity)
+    {
+        if (runtimeStats == null)
+        {
+            return;
+        }
+
+        targetLevel = Mathf.Max(1, targetLevel);
+        int gainedLevels = targetLevel - appliedProgressionLevel;
+        if (gainedLevels <= 0)
+        {
+            return;
+        }
+
+        float hpGrowth = gainedLevels * 12f;
+        float staminaGrowth = gainedLevels * 2f;
+        float energyGrowth = gainedLevels * 2f;
+
+        runtimeStats.maxHP += hpGrowth;
+        runtimeStats.attack += gainedLevels * 2f;
+        runtimeStats.defense += gainedLevels * 1.25f;
+        runtimeStats.staminaMax += staminaGrowth;
+        runtimeStats.energyMax += energyGrowth;
+
+        if (restoreGainedCapacity)
+        {
+            runtimeStats.currentHP = Mathf.Min(
+                runtimeStats.maxHP,
+                runtimeStats.currentHP + hpGrowth);
+            runtimeStats.currentStamina = Mathf.Min(
+                runtimeStats.staminaMax,
+                runtimeStats.currentStamina + staminaGrowth);
+            runtimeStats.currentEnergy = Mathf.Min(
+                runtimeStats.energyMax,
+                runtimeStats.currentEnergy + energyGrowth);
+        }
+
+        appliedProgressionLevel = targetLevel;
         Changed?.Invoke(this);
     }
 

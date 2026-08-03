@@ -18,6 +18,8 @@ public class GameDataManager : MonoBehaviour
     private const string ContinueFlagKey = "ASTRA_LOAD_FROM_CONTINUE";
     private const string ScenePositionsJsonKey = "ASTRA_SCENE_POSITIONS_JSON";
     private const string GameTimeSecondsKey = "ASTRA_GAME_TIME_SECONDS";
+    private const string PlayerLevelKey = "ASTRA_PLAYER_LEVEL";
+    private const string PlayerExperienceKey = "ASTRA_PLAYER_EXPERIENCE";
 
     [Header("Tiền tệ")]
     [SerializeField] private int currency;
@@ -30,6 +32,10 @@ public class GameDataManager : MonoBehaviour
     [Header("Thời gian thế giới")]
     [Tooltip("Số giây trong ngày hiện tại (0-86399). -1 nghĩa là save cũ chưa có dữ liệu thời gian.")]
     [SerializeField] private float gameTimeSeconds = -1f;
+
+    [Header("Tiến trình Level")]
+    [SerializeField, Min(1)] private int playerLevel = 1;
+    [SerializeField, Min(0)] private int playerExperience;
 
     [Header("Item Database")]
     [SerializeField] private List<ItemData> itemDatabase = new List<ItemData>();
@@ -105,6 +111,10 @@ public class GameDataManager : MonoBehaviour
     public bool HasGameTime => gameTimeSeconds >= 0f;
 
     public float GameTimeSeconds => gameTimeSeconds;
+
+    public int PlayerLevel => Mathf.Max(1, playerLevel);
+
+    public int PlayerExperience => Mathf.Max(0, playerExperience);
 
     public bool HasSave => PlayerPrefs.GetInt(HasSaveKey, 0) == 1;
 
@@ -461,6 +471,16 @@ public class GameDataManager : MonoBehaviour
         MarkPlayerPrefsDirty();
     }
 
+    public void SavePlayerProgression(int level, int experience)
+    {
+        playerLevel = Mathf.Max(1, level);
+        playerExperience = Mathf.Max(0, experience);
+        PlayerPrefs.SetInt(PlayerLevelKey, playerLevel);
+        PlayerPrefs.SetInt(PlayerExperienceKey, playerExperience);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+    }
+
     public void SaveScenePosition(string sceneName, Vector3 position)
     {
         scenePositions[sceneName] = position;
@@ -616,6 +636,10 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_ENERGY");
         PlayerPrefs.DeleteKey(GameTimeSecondsKey);
         gameTimeSeconds = -1f;
+        PlayerPrefs.DeleteKey(PlayerLevelKey);
+        PlayerPrefs.DeleteKey(PlayerExperienceKey);
+        playerLevel = 1;
+        playerExperience = 0;
 
         MarkPlayerPrefsDirty();
         FlushPlayerPrefs();
@@ -635,6 +659,8 @@ public class GameDataManager : MonoBehaviour
         {
             PlayerPrefs.SetFloat(GameTimeSecondsKey, gameTimeSeconds);
         }
+        PlayerPrefs.SetInt(PlayerLevelKey, playerLevel);
+        PlayerPrefs.SetInt(PlayerExperienceKey, playerExperience);
 
         MarkPlayerPrefsDirty();
     }
@@ -646,6 +672,8 @@ public class GameDataManager : MonoBehaviour
         playerStamina = PlayerPrefs.GetFloat("ASTRA_PLAYER_STAMINA", playerStamina);
         playerEnergy = PlayerPrefs.GetFloat("ASTRA_PLAYER_ENERGY", playerEnergy);
         gameTimeSeconds = PlayerPrefs.GetFloat(GameTimeSecondsKey, -1f);
+        playerLevel = Mathf.Max(1, PlayerPrefs.GetInt(PlayerLevelKey, 1));
+        playerExperience = Mathf.Max(0, PlayerPrefs.GetInt(PlayerExperienceKey, 0));
 
         LoadAllScenePositionsFromPrefs();
     }

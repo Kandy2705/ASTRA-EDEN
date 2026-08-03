@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using TMPro;
 using UnityEngine;
@@ -28,6 +29,10 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     private PlayerCombatController debugPlayerCombat;
     private float nextDebugRefreshTime;
     private bool debugUiInitialized;
+    private GameObject deathRecoveryNotice;
+    private TMP_Text deathRecoveryNoticeText;
+    private PopupTween deathRecoveryNoticeTween;
+    private Coroutine deathRecoveryNoticeRoutine;
 
     private void Awake()
     {
@@ -318,6 +323,84 @@ public class GameplayUISceneBootstrap : MonoBehaviour
 
         debugPanelTween = playerDebugPanel.AddComponent<PopupTween>();
         debugPanelTween.SetHiddenImmediate();
+    }
+
+    public void ShowDeathRecoveryNotice(int droppedStackCount, float bagLifetimeSeconds)
+    {
+        EnsureDeathRecoveryNotice();
+        if (deathRecoveryNotice == null || deathRecoveryNoticeText == null)
+        {
+            return;
+        }
+
+        int lifetimeMinutes = Mathf.Max(1, Mathf.RoundToInt(bagLifetimeSeconds / 60f));
+        deathRecoveryNoticeText.text = droppedStackCount > 0
+            ? "BẠN ĐÃ GỤC NGÃ\n" +
+              "Bạn sẽ hồi sinh tại điểm đầu màn. Túi đồ đang nằm ở vị trí chết — " +
+              $"hãy quay lại nhặt trong {lifetimeMinutes} phút, nếu không đồ sẽ biến mất!"
+            : "BẠN ĐÃ GỤC NGÃ\n" +
+              "Bạn sẽ hồi sinh tại điểm đầu màn. Túi hiện không có vật phẩm có thể rơi.";
+
+        deathRecoveryNotice.transform.SetAsLastSibling();
+        deathRecoveryNoticeTween.Show();
+
+        if (deathRecoveryNoticeRoutine != null)
+        {
+            StopCoroutine(deathRecoveryNoticeRoutine);
+        }
+        deathRecoveryNoticeRoutine = StartCoroutine(HideDeathRecoveryNoticeRoutine());
+    }
+
+    void EnsureDeathRecoveryNotice()
+    {
+        if (deathRecoveryNotice != null)
+        {
+            return;
+        }
+
+        Transform hudCanvas = FindChildRecursive(transform, "HUD_Canvas");
+        if (hudCanvas == null)
+        {
+            return;
+        }
+
+        RectTransform panel = CreateUiObject(
+            "DeathRecoveryNotice",
+            hudCanvas,
+            new Vector2(820f, 154f),
+            new Vector2(0f, -165f));
+        panel.anchorMin = new Vector2(0.5f, 1f);
+        panel.anchorMax = new Vector2(0.5f, 1f);
+        panel.pivot = new Vector2(0.5f, 1f);
+        deathRecoveryNotice = panel.gameObject;
+
+        Image background = deathRecoveryNotice.AddComponent<Image>();
+        background.color = new Color(0.055f, 0.025f, 0.018f, 0.94f);
+        background.raycastTarget = false;
+
+        Outline outline = deathRecoveryNotice.AddComponent<Outline>();
+        outline.effectColor = new Color(1f, 0.55f, 0.16f, 0.95f);
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        deathRecoveryNoticeText = CreateLabel(
+            panel,
+            string.Empty,
+            Vector2.zero,
+            new Vector2(770f, 124f),
+            23f,
+            new Color(1f, 0.9f, 0.72f, 1f),
+            TextAlignmentOptions.Center);
+        deathRecoveryNoticeText.fontStyle = FontStyles.Bold;
+
+        deathRecoveryNoticeTween = deathRecoveryNotice.AddComponent<PopupTween>();
+        deathRecoveryNoticeTween.SetHiddenImmediate();
+    }
+
+    IEnumerator HideDeathRecoveryNoticeRoutine()
+    {
+        yield return new WaitForSecondsRealtime(9f);
+        deathRecoveryNoticeTween?.Hide();
+        deathRecoveryNoticeRoutine = null;
     }
 
     private void TogglePlayerDebugPanel()

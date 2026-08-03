@@ -25,6 +25,8 @@ public class MiniBossMarker : MonoBehaviour
     [SerializeField] private bool useLockedCombatArena;
     [SerializeField, Min(6f)] private float arenaRadius = 14f;
     [SerializeField, Min(2f)] private float arenaEngageDistance = 15.5f;
+    [Tooltip("Player phải ở cùng tầng với tâm arena; tránh đứng bên dưới nhưng trùng X/Z vẫn kích hoạt boss.")]
+    [SerializeField, Min(0.5f)] private float arenaMaxVerticalDifference = 2.5f;
 
     [Header("Arena Barrier Visual")]
     [Tooltip("Hiện tường năng lượng để Player nhận biết vùng đấu đang bị khóa.")]
@@ -92,7 +94,10 @@ public class MiniBossMarker : MonoBehaviour
         UpdateArenaBarrierVisual();
 
         float distance = Vector3.Distance(transform.position, player.position);
-        if (distance <= engageDistance)
+        // Boss có arena khóa chỉ hiện HUD/camera sau khi Player thật sự bước vào
+        // đúng tầng của arena. Không cho khoảng cách gần xuyên sàn kích hoạt UI.
+        bool canPresentBoss = !useLockedCombatArena || arenaLocked;
+        if (canPresentBoss && distance <= engageDistance)
         {
             RegisterHud();
             if (registerCamera)
@@ -152,6 +157,38 @@ public class MiniBossMarker : MonoBehaviour
         bossMusic = clip;
     }
 
+    /// <summary>Player thua trận: mở arena, trả boss về tâm và cho phép đánh lại.</summary>
+    public void NotifyPlayerDefeated()
+    {
+        if (!useLockedCombatArena || !arenaLocked || arenaFinished)
+        {
+            return;
+        }
+
+        arenaLocked = false;
+        HideArenaBarrier();
+        StopBossMusic();
+        UnregisterCamera();
+        hudRegistered = false;
+
+        BossHUDController hud =
+            FindFirstObjectByType<BossHUDController>(FindObjectsInactive.Include);
+        hud?.ClearBoss();
+
+        health?.RestoreFull();
+        if (bossAgent != null && bossAgent.enabled && bossAgent.isOnNavMesh &&
+            NavMesh.SamplePosition(arenaCenter, out NavMeshHit hit, 2.5f, bossAgent.areaMask))
+        {
+            bossAgent.Warp(hit.position);
+        }
+        else
+        {
+            transform.position = arenaCenter;
+        }
+
+        Debug.Log($"[BossArena] Player thua — reset trận '{bossDisplayName}'.", this);
+    }
+
     void CachePlayer()
     {
         GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
@@ -172,6 +209,11 @@ public class MiniBossMarker : MonoBehaviour
         }
 
         Vector3 fromCenter = player.position - arenaCenter;
+        if (Mathf.Abs(fromCenter.y) > arenaMaxVerticalDifference)
+        {
+            return;
+        }
+
         fromCenter.y = 0f;
         if (fromCenter.sqrMagnitude > arenaEngageDistance * arenaEngageDistance)
         {
@@ -265,8 +307,16 @@ public class MiniBossMarker : MonoBehaviour
 
     void ShowArenaBarrier()
     {
-        if (!showArenaBarrier || arenaBarrier != null)
+        if (!showArenaBarrier)
         {
+            return;
+        }
+
+        if (arenaBarrier != null)
+        {
+            arenaBarrier.SetActive(true);
+            arenaBarrierFade = 0f;
+            ApplyArenaBarrierColor(0f);
             return;
         }
 

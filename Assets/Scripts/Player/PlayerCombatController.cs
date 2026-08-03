@@ -72,11 +72,17 @@ public class PlayerCombatController : MonoBehaviour
         currentSkillIndex > 0 &&
         (attackLockTimer > 0f || swingActive || areaDamageWindowOpen);
     public float AttackMoveSpeed => attack2MoveDistance / Mathf.Max(attack2MoveDuration, 0.001f);
-    public float AttackDamage => attackDamage;
+    public float AttackDamage => characterHealth != null && characterHealth.RuntimeStats != null
+        ? characterHealth.RuntimeStats.attack
+        : attackDamage;
 
     public void SetAttackDamageForDebug(float damage)
     {
         attackDamage = Mathf.Max(0.1f, damage);
+        if (characterHealth != null && characterHealth.RuntimeStats != null)
+        {
+            characterHealth.RuntimeStats.attack = attackDamage;
+        }
     }
 
     private void Reset()
@@ -486,7 +492,9 @@ public class PlayerCombatController : MonoBehaviour
             }
         }
 
-        float damage = attackDamage;
+        float damage = characterHealth != null && characterHealth.RuntimeStats != null
+            ? Mathf.Max(0.1f, characterHealth.RuntimeStats.attack)
+            : attackDamage;
         if (skillBindings != null && skillIndex >= 0 && skillIndex < skillBindings.Length)
         {
             SkillData skill = skillBindings[skillIndex];

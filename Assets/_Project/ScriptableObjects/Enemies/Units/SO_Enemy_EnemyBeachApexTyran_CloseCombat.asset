@@ -32,7 +32,7 @@ MonoBehaviour:
   hearingRange: 10
   aggroKeepRange: 20
   attackRange: 3.5
-  attackCooldown: 2.2
+  attackCooldown: 1.25
   attackPatterns:
   - {fileID: 11400000, guid: e779985816d6c4105a60adc9fb6ccd1e, type: 2}
   expReward: 120

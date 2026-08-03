@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -41,9 +43,16 @@ public sealed class PlayerDeathController : MonoBehaviour
     [SerializeField] private bool disableCharacterController = false;
     [SerializeField] private bool disableRagdollOnDeath = true;
 
+    [Header("Respawn + Death Bag")]
+    [SerializeField, Min(0f)] private float respawnDelay = 2.5f;
+    [SerializeField, Min(1f)] private float deathBagLifetime = 600f;
+
     bool isDead;
     bool deathStateForced;
     int isDeadHash;
+    Vector3 levelStartPosition;
+    Quaternion levelStartRotation;
+    Coroutine respawnRoutine;
 
     public bool IsDead => isDead;
 
@@ -118,6 +127,10 @@ public sealed class PlayerDeathController : MonoBehaviour
     {
         Instance = this;
         isDeadHash = Animator.StringToHash(isDeadBoolName);
+        // Chụp vị trí đặt sẵn trong scene trước khi PlayerPositionRestore có thể
+        // đưa Player tới vị trí Continue. Đây là điểm bắt đầu thật của màn.
+        levelStartPosition = transform.position;
+        levelStartRotation = transform.rotation;
 
         if (characterHealth == null)
         {
@@ -354,7 +367,86 @@ public sealed class PlayerDeathController : MonoBehaviour
             summon.enabled = false;
         }
 
+        CreateDeathBagAndNotify();
+        if (respawnRoutine != null)
+        {
+            StopCoroutine(respawnRoutine);
+        }
+        respawnRoutine = StartCoroutine(RespawnAtLevelStartRoutine());
+
         Debug.Log("[PlayerDeath] Death applied — IsDead + force state Death, Move stopped.", this);
+    }
+
+    void CreateDeathBagAndNotify()
+    {
+        PlayerInventoryService inventory = GetComponent<PlayerInventoryService>();
+        List<InventoryItemStack> dropped = inventory != null
+            ? inventory.ExtractDeathDropItems()
+            : new List<InventoryItemStack>();
+
+        if (dropped.Count > 0)
+        {
+            PlayerDeathBag.Create(transform.position, dropped, deathBagLifetime);
+        }
+
+        GameplayUISceneBootstrap ui = FindFirstObjectByType<GameplayUISceneBootstrap>(
+            FindObjectsInactive.Include);
+        ui?.ShowDeathRecoveryNotice(dropped.Count, deathBagLifetime);
+    }
+
+    IEnumerator RespawnAtLevelStartRoutine()
+    {
+        yield return new WaitForSecondsRealtime(respawnDelay);
+
+        MiniBossMarker[] arenas = FindObjectsByType<MiniBossMarker>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < arenas.Length; i++)
+        {
+            arenas[i]?.NotifyPlayerDefeated();
+        }
+
+        CharacterController controller = GetComponent<CharacterController>();
+        bool controllerWasEnabled = controller != null && controller.enabled;
+        if (controllerWasEnabled)
+        {
+            controller.enabled = false;
+        }
+
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+
+        transform.SetPositionAndRotation(levelStartPosition, levelStartRotation);
+        if (controllerWasEnabled)
+        {
+            controller.enabled = true;
+        }
+
+        characterHealth?.RestoreFull();
+        ReviveForDebug();
+
+        if (GameDataManager.Instance != null && characterHealth?.RuntimeStats != null)
+        {
+            CharacterRuntimeStats stats = characterHealth.RuntimeStats;
+            GameDataManager.Instance.SavePlayerStats(
+                stats.currentHP,
+                stats.currentStamina,
+                stats.currentEnergy);
+            GameDataManager.Instance.SaveLastPlayerTransform(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+                transform);
+            GameDataManager.Instance.FlushPlayerPrefs();
+        }
+
+        respawnRoutine = null;
+        Debug.Log(
+            $"[PlayerDeath] Respawn tại điểm đầu màn {levelStartPosition}. " +
+            "Túi đồ tồn tại 10 phút tại vị trí chết.",
+            this);
     }
 
     void ZeroLocomotionParams()

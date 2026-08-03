@@ -167,9 +167,9 @@ public sealed class EnemyLOS2DBridge : MonoBehaviour
         {
             EnsureMesh();
         }
-        else if (losMesh != null)
+        else
         {
-            losMesh.enabled = false;
+            SetMeshVisualEnabled(false);
         }
     }
 
@@ -204,6 +204,26 @@ public sealed class EnemyLOS2DBridge : MonoBehaviour
         losMesh.drawHidden = drawHiddenMesh;
         losMesh.drawSimpleSector = false;
         losMesh.autoRegenerateMesh = true;
+        SetMeshVisualEnabled(true);
+    }
+
+    void SetMeshVisualEnabled(bool visible)
+    {
+        if (losMesh != null)
+        {
+            losMesh.enabled = visible;
+        }
+
+        Transform meshRoot = losFacingRoot != null
+            ? losFacingRoot
+            : losMesh != null ? losMesh.transform : null;
+        MeshRenderer renderer = meshRoot != null
+            ? meshRoot.GetComponent<MeshRenderer>()
+            : null;
+        if (renderer != null)
+        {
+            renderer.enabled = visible;
+        }
     }
 
     void ApplyFromSensorOrData()

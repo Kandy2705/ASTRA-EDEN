@@ -227,6 +227,66 @@ public class PlayerInventoryService : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Chuyển toàn bộ item có thể rơi sang túi tử vong. Key Item được giữ lại để
+    /// tránh khóa cứng tiến trình nếu Player không kịp quay lại trong 10 phút.
+    /// </summary>
+    public List<InventoryItemStack> ExtractDeathDropItems()
+    {
+        List<InventoryItemStack> dropped = new List<InventoryItemStack>();
+        for (int i = items.Count - 1; i >= 0; i--)
+        {
+            InventoryItemStack stack = items[i];
+            if (stack?.itemData == null || stack.quantity <= 0 ||
+                stack.itemData.type == ItemType.KeyItem)
+            {
+                continue;
+            }
+
+            dropped.Add(new InventoryItemStack(stack.itemData, stack.quantity));
+            items.RemoveAt(i);
+        }
+
+        if (dropped.Count > 0)
+        {
+            OnInventoryChanged?.Invoke();
+            SaveToGameData();
+        }
+
+        return dropped;
+    }
+
+    /// <summary>Trả toàn bộ nội dung túi tử vong về inventory và chỉ save một lần.</summary>
+    public void RestoreDeathDropItems(IReadOnlyList<InventoryItemStack> recoveredItems)
+    {
+        if (recoveredItems == null || recoveredItems.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < recoveredItems.Count; i++)
+        {
+            InventoryItemStack recovered = recoveredItems[i];
+            if (recovered?.itemData == null || recovered.quantity <= 0)
+            {
+                continue;
+            }
+
+            InventoryItemStack existing = FindStack(recovered.itemData);
+            if (existing != null)
+            {
+                existing.quantity += recovered.quantity;
+            }
+            else
+            {
+                items.Add(new InventoryItemStack(recovered.itemData, recovered.quantity));
+            }
+        }
+
+        OnInventoryChanged?.Invoke();
+        SaveToGameData();
+    }
+
     public int GetQuantity(ItemData itemData)
     {
         InventoryItemStack stack = FindStack(itemData);

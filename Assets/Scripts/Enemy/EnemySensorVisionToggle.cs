@@ -10,8 +10,8 @@ using UnityEngine.InputSystem;
 public sealed class EnemySensorVisionToggle : MonoBehaviour
 {
     [SerializeField] private KeyCode toggleKey = KeyCode.F3;
-    [SerializeField] private bool startEnabled = true;
-    [SerializeField] private bool showOnScreenHint = true;
+    [SerializeField] private bool startEnabled;
+    [SerializeField] private bool showOnScreenHint;
 
     static EnemySensorVisionToggle instance;
 

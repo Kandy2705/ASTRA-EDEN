@@ -692,8 +692,9 @@ MonoBehaviour:
   lineOfSight: {fileID: 0}
   useMultiRayFov: 0
   generateVisionMesh: 0
+  showRuntimeVision: 0
   senseInterval: 0.15
-  drawGizmos: 1
+  drawGizmos: 0
   sightColor: {r: 1, g: 0.8, b: 0, a: 0.25}
   hearingColor: {r: 0, g: 0.6, b: 1, a: 0.25}
   losBlockedColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -755,7 +756,7 @@ MonoBehaviour:
   debugState: 0
   debugPoise: 0
   debugLastKnownHP: 0
-  drawAttackGizmo: 1
+  drawAttackGizmo: 0
   debugLogStateMachine: 0
   debugLogChaseTick: 0
 --- !u!114 &1865802368170393328
