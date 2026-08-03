@@ -117,6 +117,13 @@ public static class EnemySpawnConfigurator
             ? data.displayName
             : "Mini Boss";
         marker.Configure(displayName, health);
+
+        bool isFullBoss =
+            data != null &&
+            (data.archetype == EnemyArchetype.Boss ||
+             data.rank == EnemyRank.AlphaBoss ||
+             data.rank == EnemyRank.FinalBoss);
+        marker.ConfigureLockedArena(isFullBoss);
     }
 
     /// <summary>

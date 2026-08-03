@@ -14,6 +14,7 @@ public static class EnemyBossBeachTyranBuilder
         "Assets/Prefabs/Enemy/dino-hunter-deadly-shores-vicious/source/a_tyran_01.fbx";
     const string BossPrefabPath = "Assets/_Project/Prefab/Enemy_Boss_BeachTyran.prefab";
     const string BossAnimatorPath = "Assets/Animations/Enemy_Boss_1_Animator.controller";
+    const string BossMusicPath = "Assets/Sounds/25 Rpg Game Tracks/Action 2 (Loop).wav";
     const string EnemyTemplatePath = "Assets/_Project/Prefab/Enemy.prefab";
     const string EnemyDataPath =
         "Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_EnemyBeachApexTyran.asset";
@@ -362,7 +363,7 @@ public static class EnemyBossBeachTyranBuilder
         sensorSo.ApplyModifiedPropertiesWithoutUndo();
 
         // World-space HP bar (giống Enemy.prefab). Boss root scale lớn → localY/scale nhỏ hơn.
-        EnemyHUDBuilder.EnsureHudOnRoot(root, canvasLocalY: 0.22f, canvasScale: 0.004f, showDistance: 18f);
+        EnemyHUDBuilder.EnsureHudOnRoot(root, canvasLocalY: 0.22f, canvasScale: 0.004f, showDistance: 30f);
 
         SerializedObject relaySo = new SerializedObject(relay);
         relaySo.FindProperty("aiOwner").objectReferenceValue = ai;
@@ -381,6 +382,8 @@ public static class EnemyBossBeachTyranBuilder
             ? enemyData.displayName
             : "Beach Apex Tyran";
         marker.Configure(displayName, health);
+        marker.ConfigureLockedArena(true);
+        marker.ConfigureBossMusic(AssetDatabase.LoadAssetAtPath<AudioClip>(BossMusicPath));
 
         // Kill tracker: true = do not count as normal trash kill (boss has own objective).
         EnemyKillTracker tracker = Ensure<EnemyKillTracker>(root);

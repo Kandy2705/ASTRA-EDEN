@@ -8460,6 +8460,18 @@ MonoBehaviour:
   startHour: 6
   startMinute: 0
   realSecondsPerGameDay: 3600
+  driveDayNightLighting: 1
+  sunLight: {fileID: 0}
+  morningSkybox: {fileID: 2100000, guid: 9991b6265f7f87d43b7e3c676739f203, type: 2}
+  daySkybox: {fileID: 2100000, guid: 3e56423e1fe71f94ea97f5bb2004a7e6, type: 2}
+  sunsetSkybox: {fileID: 2100000, guid: ac2eeb98f1b423941b373f537bc56e18, type: 2}
+  nightSkybox: {fileID: 2100000, guid: 493bfb50af5d9424da505ba945c86600, type: 2}
+  midnightSkybox: {fileID: 2100000, guid: 97637a2a763b7f24b8da4e139e4144ca, type: 2}
+  fullyBrightHour: 10
+  nightStartsHour: 20
+  minimumLightingIntensity: 0.1
+  maximumLightingIntensity: 1
+  lightingColor: {r: 1, g: 0.9294118, b: 0.7803922, a: 1}
   networkText: {fileID: 8995251284107684141}
   networkUpdateInterval: 0.5
   frameTimeSmoothing: 0.9

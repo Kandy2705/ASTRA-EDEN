@@ -17,6 +17,7 @@ public class GameDataManager : MonoBehaviour
     private const string LastRotYKey = "ASTRA_LAST_ROT_Y";
     private const string ContinueFlagKey = "ASTRA_LOAD_FROM_CONTINUE";
     private const string ScenePositionsJsonKey = "ASTRA_SCENE_POSITIONS_JSON";
+    private const string GameTimeSecondsKey = "ASTRA_GAME_TIME_SECONDS";
 
     [Header("Tiền tệ")]
     [SerializeField] private int currency;
@@ -25,6 +26,10 @@ public class GameDataManager : MonoBehaviour
     [SerializeField] private float playerHP = -1f;
     [SerializeField] private float playerStamina = -1f;
     [SerializeField] private float playerEnergy = -1f;
+
+    [Header("Thời gian thế giới")]
+    [Tooltip("Số giây trong ngày hiện tại (0-86399). -1 nghĩa là save cũ chưa có dữ liệu thời gian.")]
+    [SerializeField] private float gameTimeSeconds = -1f;
 
     [Header("Item Database")]
     [SerializeField] private List<ItemData> itemDatabase = new List<ItemData>();
@@ -96,6 +101,10 @@ public class GameDataManager : MonoBehaviour
     }
 
     public bool HasPlayerData => playerHP >= 0f;
+
+    public bool HasGameTime => gameTimeSeconds >= 0f;
+
+    public float GameTimeSeconds => gameTimeSeconds;
 
     public bool HasSave => PlayerPrefs.GetInt(HasSaveKey, 0) == 1;
 
@@ -429,6 +438,29 @@ public class GameDataManager : MonoBehaviour
         SavePersistentData();
     }
 
+    /// <summary>
+    /// Đồng bộ giờ thế giới từ hệ thống HUD. Chỉ đánh dấu save khi sang phút mới
+    /// để tránh ghi PlayerPrefs ở mọi frame.
+    /// </summary>
+    public void UpdateGameTime(float secondsInDay, bool forcePersist = false)
+    {
+        const float secondsPerDay = 86400f;
+        float normalized = Mathf.Repeat(secondsInDay, secondsPerDay);
+        int previousMinute = gameTimeSeconds >= 0f
+            ? Mathf.FloorToInt(gameTimeSeconds / 60f)
+            : -1;
+        int currentMinute = Mathf.FloorToInt(normalized / 60f);
+
+        gameTimeSeconds = normalized;
+        if (!forcePersist && previousMinute == currentMinute)
+        {
+            return;
+        }
+
+        PlayerPrefs.SetFloat(GameTimeSecondsKey, gameTimeSeconds);
+        MarkPlayerPrefsDirty();
+    }
+
     public void SaveScenePosition(string sceneName, Vector3 position)
     {
         scenePositions[sceneName] = position;
@@ -582,6 +614,8 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_HP");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_STAMINA");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_ENERGY");
+        PlayerPrefs.DeleteKey(GameTimeSecondsKey);
+        gameTimeSeconds = -1f;
 
         MarkPlayerPrefsDirty();
         FlushPlayerPrefs();
@@ -597,6 +631,10 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetFloat("ASTRA_PLAYER_HP", playerHP);
         PlayerPrefs.SetFloat("ASTRA_PLAYER_STAMINA", playerStamina);
         PlayerPrefs.SetFloat("ASTRA_PLAYER_ENERGY", playerEnergy);
+        if (gameTimeSeconds >= 0f)
+        {
+            PlayerPrefs.SetFloat(GameTimeSecondsKey, gameTimeSeconds);
+        }
 
         MarkPlayerPrefsDirty();
     }
@@ -607,6 +645,7 @@ public class GameDataManager : MonoBehaviour
         playerHP = PlayerPrefs.GetFloat("ASTRA_PLAYER_HP", playerHP);
         playerStamina = PlayerPrefs.GetFloat("ASTRA_PLAYER_STAMINA", playerStamina);
         playerEnergy = PlayerPrefs.GetFloat("ASTRA_PLAYER_ENERGY", playerEnergy);
+        gameTimeSeconds = PlayerPrefs.GetFloat(GameTimeSecondsKey, -1f);
 
         LoadAllScenePositionsFromPrefs();
     }

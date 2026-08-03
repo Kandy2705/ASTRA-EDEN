@@ -108,7 +108,7 @@ public static class EnemyHUDBuilder
             {
                 y = 0.22f;
                 scale = 0.004f;
-                showDist = 18f;
+                showDist = 30f;
             }
             else if (name.Contains("miniboss") || name.Contains("velociraptor"))
             {

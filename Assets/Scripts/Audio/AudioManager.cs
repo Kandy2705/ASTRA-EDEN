@@ -46,6 +46,9 @@ public class AudioManager : MonoBehaviour
     string activeSceneName = string.Empty;
     bool beachLayerActive;
     AudioClip activeBeachClip;
+    bool musicOverrideActive;
+    AudioClip musicOverrideClip;
+    float musicOverrideVolumeScale = 1f;
 
     float masterVolume = 1f;
     float musicBusVolume = 1f;
@@ -211,7 +214,7 @@ public class AudioManager : MonoBehaviour
     {
         if (activeMusicSource != null && activeMusicSource.isPlaying)
         {
-            activeMusicSource.volume = GetMusicChannelVolume(activeProfile);
+            activeMusicSource.volume = GetCurrentMusicChannelVolume();
         }
 
         if (activeAmbientSource != null && activeAmbientSource.isPlaying)
@@ -229,6 +232,13 @@ public class AudioManager : MonoBehaviour
     {
         float profileScale = profile != null ? profile.musicVolume : 1f;
         return masterVolume * musicBusVolume * profileScale;
+    }
+
+    float GetCurrentMusicChannelVolume()
+    {
+        return musicOverrideActive
+            ? masterVolume * musicBusVolume * musicOverrideVolumeScale
+            : GetMusicChannelVolume(activeProfile);
     }
 
     float GetAmbientChannelVolume(SceneAudioProfile profile)
@@ -250,6 +260,7 @@ public class AudioManager : MonoBehaviour
     public void NotifyTransitionToLoading(string targetSceneName)
     {
         pendingTargetScene = targetSceneName;
+        ClearMusicOverrideState();
         SceneAudioProfile loadingProfile = catalog != null ? catalog.LoadingProfile : null;
         if (loadingProfile != null)
         {
@@ -311,7 +322,10 @@ public class AudioManager : MonoBehaviour
         }
 
         float fadeDuration = profile.enterCrossfadeDuration;
-        CrossfadeMusic(profile.music, profile.loopMusic, GetMusicChannelVolume(profile), fadeDuration);
+        if (!musicOverrideActive)
+        {
+            CrossfadeMusic(profile.music, profile.loopMusic, GetMusicChannelVolume(profile), fadeDuration);
+        }
         CrossfadeAmbient(profile.ambient, profile.loopAmbient, GetAmbientChannelVolume(profile), fadeDuration);
     }
 
@@ -329,8 +343,67 @@ public class AudioManager : MonoBehaviour
 
         beachLayerActive = false;
         FadeBeachVolume(0f, beachFadeDuration);
+        ClearMusicOverrideState();
 
         ApplySceneByName(scene.name, force: false);
+    }
+
+    /// <summary>
+    /// Tạm thay nhạc nền scene bằng một track gameplay (ví dụ boss fight).
+    /// Âm lượng vẫn đi qua Master + Music bus trong Settings.
+    /// </summary>
+    public void PlayMusicOverride(
+        AudioClip clip,
+        float volumeScale = 1f,
+        float fadeDuration = 1.2f)
+    {
+        if (clip == null)
+        {
+            return;
+        }
+
+        float safeVolumeScale = Mathf.Clamp01(volumeScale);
+        if (musicOverrideActive && musicOverrideClip == clip)
+        {
+            musicOverrideVolumeScale = safeVolumeScale;
+            ApplyBusVolumes();
+            return;
+        }
+
+        musicOverrideActive = true;
+        musicOverrideClip = clip;
+        musicOverrideVolumeScale = safeVolumeScale;
+        CrossfadeMusic(
+            clip,
+            loop: true,
+            masterVolume * musicBusVolume * musicOverrideVolumeScale,
+            fadeDuration);
+    }
+
+    /// <summary>Trả lại track nhạc nền của scene sau khi gameplay override kết thúc.</summary>
+    public void StopMusicOverride(AudioClip expectedClip = null, float fadeDuration = 1.5f)
+    {
+        if (!musicOverrideActive ||
+            (expectedClip != null && musicOverrideClip != expectedClip))
+        {
+            return;
+        }
+
+        ClearMusicOverrideState();
+        AudioClip sceneMusic = activeProfile != null ? activeProfile.music : null;
+        bool loopSceneMusic = activeProfile == null || activeProfile.loopMusic;
+        CrossfadeMusic(
+            sceneMusic,
+            loopSceneMusic,
+            GetMusicChannelVolume(activeProfile),
+            fadeDuration);
+    }
+
+    void ClearMusicOverrideState()
+    {
+        musicOverrideActive = false;
+        musicOverrideClip = null;
+        musicOverrideVolumeScale = 1f;
     }
 
     void CrossfadeMusic(AudioClip clip, bool loop, float targetVolume, float duration)

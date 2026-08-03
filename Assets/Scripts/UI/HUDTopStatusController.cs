@@ -17,6 +17,28 @@ public class HUDTopStatusController : MonoBehaviour
     [Tooltip("1 ngày game = bao nhiêu giây thực. Mặc định 3600 = 1 giờ thực.")]
     [SerializeField] private float realSecondsPerGameDay = 3600f;
 
+    [Header("Day / Night Lighting")]
+    [SerializeField] private bool driveDayNightLighting = true;
+    [Tooltip("Để trống sẽ dùng RenderSettings.sun hoặc tự tìm Directional Light đang bật.")]
+    [SerializeField] private Light sunLight;
+    [SerializeField] private Material morningSkybox;
+    [SerializeField] private Material daySkybox;
+    [SerializeField] private Material sunsetSkybox;
+    [SerializeField] private Material nightSkybox;
+    [SerializeField] private Material midnightSkybox;
+    [Tooltip("Tại giờ này ánh sáng đạt mức ban ngày đầy đủ.")]
+    [Range(6f, 12f)]
+    [SerializeField] private float fullyBrightHour = 10f;
+    [Tooltip("Từ giờ này trở đi là ban đêm.")]
+    [Range(18f, 23f)]
+    [SerializeField] private float nightStartsHour = 20f;
+    [Tooltip("Cường độ ánh sáng thấp nhất vào ban đêm.")]
+    [SerializeField, Range(0f, 1f)] private float minimumLightingIntensity = 0.1f;
+    [Tooltip("Cường độ ánh sáng cao nhất vào ban ngày.")]
+    [SerializeField, Range(0f, 1f)] private float maximumLightingIntensity = 1f;
+    [Tooltip("Màu cố định của Directional Light trong toàn bộ chu kỳ ngày/đêm.")]
+    [SerializeField] private Color lightingColor = new(1f, 0.9294118f, 0.7803922f, 1f);
+
     [Header("Network / FPS")]
     [SerializeField] private TMP_Text networkText;
 
@@ -42,10 +64,16 @@ public class HUDTopStatusController : MonoBehaviour
     private float smoothedFrameMs;
     private float networkUpdateTimer;
     private int lastDisplayedClockKey = -1;
+    private int lastSkyboxPeriod = -1;
+    private bool timeSyncedWithSave;
+    private bool lightingCached;
+    private Color dayFogColor;
+    private float sunYaw;
 
     private void Awake()
     {
         gameSecondsElapsed = (startHour * 3600f) + (startMinute * 60f);
+        SyncTimeFromSave();
         smoothedFrameMs = Time.unscaledDeltaTime * 1000f;
 
         if (inventoryService == null)
@@ -54,6 +82,8 @@ public class HUDTopStatusController : MonoBehaviour
         }
 
         RefreshTime();
+        CacheLighting();
+        UpdateDayNightLighting();
         RefreshNetwork();
         RefreshCurrency();
     }
@@ -79,6 +109,8 @@ public class HUDTopStatusController : MonoBehaviour
         {
             inventoryService.OnInventoryChanged -= RefreshCurrency;
         }
+
+        SaveCurrentTime(true);
     }
 
     private void Update()
@@ -89,6 +121,11 @@ public class HUDTopStatusController : MonoBehaviour
 
     private void TickTime()
     {
+        if (!timeSyncedWithSave)
+        {
+            SyncTimeFromSave();
+        }
+
         if (realSecondsPerGameDay <= 0f)
         {
             return;
@@ -98,6 +135,8 @@ public class HUDTopStatusController : MonoBehaviour
         gameSecondsElapsed = (gameSecondsElapsed + Time.deltaTime * gameSecondsPerRealSecond) % SecondsPerGameDay;
 
         RefreshTime();
+        SaveCurrentTime(false);
+        UpdateDayNightLighting();
     }
 
     private void TickNetwork()
@@ -115,6 +154,205 @@ public class HUDTopStatusController : MonoBehaviour
     }
 
     public TimeSpan CurrentGameTime => TimeSpan.FromSeconds(gameSecondsElapsed);
+
+    public void SetGameTime(int hour, int minute = 0, bool persist = true)
+    {
+        int safeHour = ((hour % 24) + 24) % 24;
+        int safeMinute = Mathf.Clamp(minute, 0, 59);
+        gameSecondsElapsed = safeHour * 3600f + safeMinute * 60f;
+        lastDisplayedClockKey = -1;
+
+        RefreshTime();
+        SaveCurrentTime(persist);
+        UpdateDayNightLighting();
+    }
+
+    private void SyncTimeFromSave()
+    {
+        GameDataManager data = GameDataManager.Instance;
+        if (data == null)
+        {
+            return;
+        }
+
+        if (data.HasGameTime)
+        {
+            gameSecondsElapsed = Mathf.Repeat(data.GameTimeSeconds, SecondsPerGameDay);
+        }
+        else
+        {
+            data.UpdateGameTime(gameSecondsElapsed, true);
+        }
+
+        timeSyncedWithSave = true;
+        lastDisplayedClockKey = -1;
+    }
+
+    private void SaveCurrentTime(bool forcePersist)
+    {
+        GameDataManager data = GameDataManager.Instance;
+        if (data == null)
+        {
+            return;
+        }
+
+        data.UpdateGameTime(gameSecondsElapsed, forcePersist);
+        if (forcePersist)
+        {
+            data.FlushPlayerPrefs();
+        }
+    }
+
+    private void CacheLighting()
+    {
+        if (!driveDayNightLighting || lightingCached)
+        {
+            return;
+        }
+
+        if (sunLight == null)
+        {
+            sunLight = RenderSettings.sun;
+        }
+
+        if (sunLight == null)
+        {
+            Light[] lights = FindObjectsByType<Light>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+            float strongestIntensity = -1f;
+            for (int i = 0; i < lights.Length; i++)
+            {
+                Light candidate = lights[i];
+                if (candidate.type != LightType.Directional ||
+                    !candidate.isActiveAndEnabled ||
+                    candidate.intensity <= strongestIntensity)
+                {
+                    continue;
+                }
+
+                strongestIntensity = candidate.intensity;
+                sunLight = candidate;
+            }
+        }
+
+        if (sunLight != null)
+        {
+            RenderSettings.sun = sunLight;
+            sunYaw = sunLight.transform.eulerAngles.y;
+        }
+
+        dayFogColor = RenderSettings.fogColor;
+        lightingCached = true;
+    }
+
+    private void UpdateDayNightLighting()
+    {
+        if (!driveDayNightLighting)
+        {
+            return;
+        }
+
+        CacheLighting();
+
+        float hour = gameSecondsElapsed / 3600f;
+        float daylight = CalculateDaylight(hour);
+        float minimum = Mathf.Min(minimumLightingIntensity, maximumLightingIntensity);
+        float maximum = Mathf.Max(minimumLightingIntensity, maximumLightingIntensity);
+        float lightingIntensity = Mathf.Lerp(minimum, maximum, daylight);
+
+        if (sunLight != null)
+        {
+            float solarAngle = (hour - 6f) * 15f;
+            sunLight.transform.rotation = Quaternion.Euler(solarAngle, sunYaw, 0f);
+            sunLight.intensity = lightingIntensity;
+            sunLight.color = lightingColor;
+        }
+
+        RenderSettings.ambientIntensity = lightingIntensity;
+        RenderSettings.reflectionIntensity = lightingIntensity;
+        RenderSettings.fogColor = Color.Lerp(
+            new Color(0.025f, 0.045f, 0.09f, 1f),
+            dayFogColor,
+            daylight);
+
+        ApplySkyboxForHour(hour);
+    }
+
+    private float CalculateDaylight(float hour)
+    {
+        const float dawnStartsHour = 6f;
+        const float sunsetStartsHour = 18f;
+
+        if (hour < dawnStartsHour || hour >= nightStartsHour)
+        {
+            return 0f;
+        }
+
+        if (hour < fullyBrightHour)
+        {
+            return Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.InverseLerp(dawnStartsHour, fullyBrightHour, hour));
+        }
+
+        if (hour < sunsetStartsHour)
+        {
+            return 1f;
+        }
+
+        return Mathf.SmoothStep(
+            1f,
+            0f,
+            Mathf.InverseLerp(sunsetStartsHour, nightStartsHour, hour));
+    }
+
+    private void ApplySkyboxForHour(float hour)
+    {
+        int period;
+        Material target;
+
+        if (hour < 5f)
+        {
+            period = 0;
+            target = midnightSkybox != null ? midnightSkybox : nightSkybox;
+        }
+        else if (hour < fullyBrightHour)
+        {
+            period = 1;
+            target = morningSkybox;
+        }
+        else if (hour < 17f)
+        {
+            period = 2;
+            target = daySkybox;
+        }
+        else if (hour < nightStartsHour)
+        {
+            period = 3;
+            target = sunsetSkybox;
+        }
+        else
+        {
+            period = 4;
+            target = nightSkybox;
+        }
+
+        if (period == lastSkyboxPeriod)
+        {
+            return;
+        }
+
+        lastSkyboxPeriod = period;
+        if (target == null || RenderSettings.skybox == target)
+        {
+            return;
+        }
+
+        RenderSettings.skybox = target;
+        DynamicGI.UpdateEnvironment();
+    }
 
     private void RefreshTime()
     {
