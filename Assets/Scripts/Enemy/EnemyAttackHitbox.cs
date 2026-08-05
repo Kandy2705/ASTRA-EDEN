@@ -27,11 +27,63 @@ public class EnemyAttackHitbox : MonoBehaviour
     private readonly Dictionary<CharacterHealth, float> nextAllowedHitTime =
         new Dictionary<CharacterHealth, float>();
 
+    HitShape defaultShape;
+    float defaultRadius;
+    Vector3 defaultBoxHalfExtents;
+    Vector3 defaultLocalOffset;
+    float activeKnockbackDistance;
+    float activeKnockbackDuration = 0.2f;
+    float activeKnockbackVerticalLift;
+
     public LayerMask TargetLayer => targetLayer;
 
     public void SetTargetLayer(LayerMask layer)
     {
         targetLayer = layer;
+    }
+
+    void Awake()
+    {
+        CaptureDefaultConfiguration();
+    }
+
+    public void CaptureDefaultConfiguration()
+    {
+        defaultShape = shape;
+        defaultRadius = radius;
+        defaultBoxHalfExtents = boxHalfExtents;
+        defaultLocalOffset = localOffset;
+    }
+
+    public void ApplyPatternConfiguration(AttackPatternData pattern)
+    {
+        if (pattern != null && pattern.overrideHitbox)
+        {
+            shape = pattern.hitboxShape;
+            radius = Mathf.Max(0.05f, pattern.hitboxRadius);
+            boxHalfExtents = new Vector3(
+                Mathf.Max(0.05f, pattern.hitboxHalfExtents.x),
+                Mathf.Max(0.05f, pattern.hitboxHalfExtents.y),
+                Mathf.Max(0.05f, pattern.hitboxHalfExtents.z));
+            localOffset = pattern.hitboxLocalOffset;
+        }
+        else
+        {
+            shape = defaultShape;
+            radius = defaultRadius;
+            boxHalfExtents = defaultBoxHalfExtents;
+            localOffset = defaultLocalOffset;
+        }
+
+        activeKnockbackDistance = pattern != null
+            ? Mathf.Max(0f, pattern.knockbackDistance)
+            : 0f;
+        activeKnockbackDuration = pattern != null
+            ? Mathf.Max(0.01f, pattern.knockbackDuration)
+            : 0.2f;
+        activeKnockbackVerticalLift = pattern != null
+            ? Mathf.Max(0f, pattern.knockbackVerticalLift)
+            : 0f;
     }
 
     /// <summary>Gọi khi bắt đầu 1 đòn đánh — reset danh sách target đã trúng.</summary>
@@ -73,6 +125,27 @@ public class EnemyAttackHitbox : MonoBehaviour
             nextAllowedHitTime[health] =
                 Time.time + Mathf.Max(1f, minimumHitInterval);
             health.TakeDamage(damage);
+
+            if (activeKnockbackDistance > 0f)
+            {
+                PlayerKnockbackReceiver receiver =
+                    health.GetComponentInParent<PlayerKnockbackReceiver>();
+                if (receiver != null)
+                {
+                    Vector3 pushDirection = health.transform.position - transform.root.position;
+                    pushDirection.y = 0f;
+                    if (pushDirection.sqrMagnitude <= 0.001f)
+                    {
+                        pushDirection = transform.forward;
+                    }
+
+                    receiver.ApplyKnockback(
+                        pushDirection.normalized,
+                        activeKnockbackDistance,
+                        activeKnockbackDuration,
+                        activeKnockbackVerticalLift);
+                }
+            }
             dealt++;
         }
 

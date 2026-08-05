@@ -13,6 +13,8 @@ public class ZoneObjectiveManager : MonoBehaviour
     [SerializeField, Min(0)] private int requiredEnemyKills = 3;
     [SerializeField, Min(0)] private int requiredResourceGathers = 2;
     [SerializeField] private bool requireMiniBossDefeat = true;
+    [SerializeField] private string currentObjective = "";
+    [SerializeField] private ObjectiveHUDController objectiveHudPrefab;
 
     [Header("Rewards")]
     [SerializeField] private ItemData bonusGoldItem;
@@ -22,14 +24,18 @@ public class ZoneObjectiveManager : MonoBehaviour
     int resourceGathers;
     bool miniBossDefeated;
     bool zoneCleared;
+    bool waitingForAncientNote;
+    bool resultPending;
 
     public event Action ZoneCleared;
+    public event Action<string> ObjectiveChanged;
 
     public string ZoneId => zoneId;
     public bool IsZoneCleared => zoneCleared;
     public int EnemyKills => enemyKills;
     public int ResourceGathers => resourceGathers;
     public bool MiniBossDefeated => miniBossDefeated;
+    public string CurrentObjective => currentObjective;
 
     void Awake()
     {
@@ -40,10 +46,32 @@ public class ZoneObjectiveManager : MonoBehaviour
         }
 
         Instance = this;
+        ObjectiveHUDController.RegisterPrefab(objectiveHudPrefab);
 
         if (GameDataManager.Instance != null && GameDataManager.Instance.IsZoneCleared(zoneId))
         {
             zoneCleared = true;
+        }
+
+        if (GameDataManager.Instance != null &&
+            !string.IsNullOrWhiteSpace(GameDataManager.Instance.CurrentObjective))
+        {
+            currentObjective = GameDataManager.Instance.CurrentObjective;
+        }
+    }
+
+    void Start()
+    {
+        if (GameDataManager.Instance != null &&
+            !string.IsNullOrWhiteSpace(GameDataManager.Instance.CurrentObjective))
+        {
+            currentObjective = GameDataManager.Instance.CurrentObjective;
+        }
+
+        if (!string.IsNullOrWhiteSpace(currentObjective))
+        {
+            ObjectiveHUDController.ShowObjective(currentObjective);
+            ObjectiveChanged?.Invoke(currentObjective);
         }
     }
 
@@ -76,6 +104,40 @@ public class ZoneObjectiveManager : MonoBehaviour
         CheckCompletion();
     }
 
+    public void NotifyAncientNoteDropped()
+    {
+        waitingForAncientNote = true;
+    }
+
+    public void SetCurrentObjective(string objective, bool persist = true)
+    {
+        string normalized = objective?.Trim() ?? string.Empty;
+        if (currentObjective == normalized)
+        {
+            if (!string.IsNullOrEmpty(normalized))
+            {
+                ObjectiveHUDController.ShowObjective(normalized);
+            }
+            TryShowPendingResult();
+            return;
+        }
+
+        currentObjective = normalized;
+        if (persist)
+        {
+            GameDataManager.Instance?.SaveCurrentObjective(currentObjective);
+        }
+
+        ObjectiveChanged?.Invoke(currentObjective);
+        if (!string.IsNullOrEmpty(currentObjective))
+        {
+            ObjectiveHUDController.ShowObjective(currentObjective);
+        }
+
+
+        TryShowPendingResult();
+    }
+
     void CheckCompletion()
     {
         if (zoneCleared) return;
@@ -93,14 +155,39 @@ public class ZoneObjectiveManager : MonoBehaviour
         GrantRewards();
         GameDataManager.Instance?.MarkZoneCleared(zoneId);
 
-        ZoneResultScreenController result = FindFirstObjectByType<ZoneResultScreenController>(FindObjectsInactive.Include);
-        if (result != null)
+        if (waitingForAncientNote &&
+            (GameDataManager.Instance == null || !GameDataManager.Instance.IsAncientNoteCollected))
         {
-            result.Show(this);
+            resultPending = true;
+        }
+        else
+        {
+            ShowResultScreen();
         }
 
         ZoneCleared?.Invoke();
         Debug.Log($"[Zone] Cleared '{zoneId}' — kills={enemyKills}, gather={resourceGathers}, boss={miniBossDefeated}");
+    }
+
+    void TryShowPendingResult()
+    {
+        if (!resultPending ||
+            GameDataManager.Instance == null ||
+            !GameDataManager.Instance.IsAncientNoteCollected)
+        {
+            return;
+        }
+
+        resultPending = false;
+        waitingForAncientNote = false;
+        ShowResultScreen();
+    }
+
+    void ShowResultScreen()
+    {
+        ZoneResultScreenController result =
+            FindFirstObjectByType<ZoneResultScreenController>(FindObjectsInactive.Include);
+        result?.Show(this);
     }
 
     void GrantRewards()

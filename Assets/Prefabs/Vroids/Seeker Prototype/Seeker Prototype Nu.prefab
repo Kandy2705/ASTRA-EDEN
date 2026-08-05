@@ -6998,6 +6998,7 @@ GameObject:
   - component: {fileID: 3849946475836124822}
   - component: {fileID: 9114661255595054279}
   - component: {fileID: 1520567275215598051}
+  - component: {fileID: 8794561023847102563}
   m_Layer: 6
   m_Name: Seeker Prototype Nu
   m_TagString: Player
@@ -7756,6 +7757,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLOSTarget
   losTarget: {fileID: 0}
+--- !u!114 &8794561023847102563
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd6bb6900412f4309b0374b2b5bee653, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAudioController
+  swordSlashClip: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
+  attackClips: []
+  scoreClip: {fileID: 0}
+  skillClips: []
+  hurtClip: {fileID: 8300000, guid: 4a17f7b268fec47dd9d5eb18b24d5420, type: 3}
+  jumpClip: {fileID: 8300000, guid: c40da46a7c1f14ac495b8ce7ca72eea2, type: 3}
+  attackPitch: 1
+  attackPitchRandomRange: 0.1
+  hurtVolume: 1
+  jumpVolume: 1
 --- !u!1 &7318886399150952759
 GameObject:
   m_ObjectHideFlags: 0

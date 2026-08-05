@@ -20,6 +20,8 @@ public class GameDataManager : MonoBehaviour
     private const string GameTimeSecondsKey = "ASTRA_GAME_TIME_SECONDS";
     private const string PlayerLevelKey = "ASTRA_PLAYER_LEVEL";
     private const string PlayerExperienceKey = "ASTRA_PLAYER_EXPERIENCE";
+    private const string CurrentObjectiveKey = "ASTRA_CURRENT_OBJECTIVE";
+    private const string AncientNoteCollectedKey = "ASTRA_ANCIENT_NOTE_FLOATING_TREE_COLLECTED";
 
     [Header("Tiền tệ")]
     [SerializeField] private int currency;
@@ -36,6 +38,10 @@ public class GameDataManager : MonoBehaviour
     [Header("Tiến trình Level")]
     [SerializeField, Min(1)] private int playerLevel = 1;
     [SerializeField, Min(0)] private int playerExperience;
+
+    [Header("Tiến trình cốt truyện")]
+    [SerializeField] private string currentObjective = "";
+    [SerializeField] private bool ancientNoteCollected;
 
     [Header("Item Database")]
     [SerializeField] private List<ItemData> itemDatabase = new List<ItemData>();
@@ -115,6 +121,10 @@ public class GameDataManager : MonoBehaviour
     public int PlayerLevel => Mathf.Max(1, playerLevel);
 
     public int PlayerExperience => Mathf.Max(0, playerExperience);
+
+    public string CurrentObjective => currentObjective;
+
+    public bool IsAncientNoteCollected => ancientNoteCollected;
 
     public bool HasSave => PlayerPrefs.GetInt(HasSaveKey, 0) == 1;
 
@@ -481,6 +491,28 @@ public class GameDataManager : MonoBehaviour
         MarkPlayerPrefsDirty();
     }
 
+    public void SaveCurrentObjective(string objective)
+    {
+        currentObjective = objective ?? string.Empty;
+        PlayerPrefs.SetString(CurrentObjectiveKey, currentObjective);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+    }
+
+    public void MarkAncientNoteCollected()
+    {
+        if (ancientNoteCollected)
+        {
+            return;
+        }
+
+        ancientNoteCollected = true;
+        PlayerPrefs.SetInt(AncientNoteCollectedKey, 1);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+        FlushPlayerPrefs();
+    }
+
     public void SaveScenePosition(string sceneName, Vector3 position)
     {
         scenePositions[sceneName] = position;
@@ -640,6 +672,10 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey(PlayerExperienceKey);
         playerLevel = 1;
         playerExperience = 0;
+        PlayerPrefs.DeleteKey(CurrentObjectiveKey);
+        PlayerPrefs.DeleteKey(AncientNoteCollectedKey);
+        currentObjective = string.Empty;
+        ancientNoteCollected = false;
 
         MarkPlayerPrefsDirty();
         FlushPlayerPrefs();
@@ -661,6 +697,8 @@ public class GameDataManager : MonoBehaviour
         }
         PlayerPrefs.SetInt(PlayerLevelKey, playerLevel);
         PlayerPrefs.SetInt(PlayerExperienceKey, playerExperience);
+        PlayerPrefs.SetString(CurrentObjectiveKey, currentObjective ?? string.Empty);
+        PlayerPrefs.SetInt(AncientNoteCollectedKey, ancientNoteCollected ? 1 : 0);
 
         MarkPlayerPrefsDirty();
     }
@@ -674,6 +712,8 @@ public class GameDataManager : MonoBehaviour
         gameTimeSeconds = PlayerPrefs.GetFloat(GameTimeSecondsKey, -1f);
         playerLevel = Mathf.Max(1, PlayerPrefs.GetInt(PlayerLevelKey, 1));
         playerExperience = Mathf.Max(0, PlayerPrefs.GetInt(PlayerExperienceKey, 0));
+        currentObjective = PlayerPrefs.GetString(CurrentObjectiveKey, string.Empty);
+        ancientNoteCollected = PlayerPrefs.GetInt(AncientNoteCollectedKey, 0) == 1;
 
         LoadAllScenePositionsFromPrefs();
     }

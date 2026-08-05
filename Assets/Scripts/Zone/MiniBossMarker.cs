@@ -44,6 +44,11 @@ public class MiniBossMarker : MonoBehaviour
     [SerializeField, Min(0f)] private float bossMusicFadeIn = 1.2f;
     [SerializeField, Min(0f)] private float bossMusicFadeOut = 1.5f;
 
+    [Header("Post-Boss Discovery")]
+    [Tooltip("Ancient Note rơi cạnh xác boss. Để trống nếu boss này không mở tuyến Floating Tree.")]
+    [SerializeField] private AncientNotePickup ancientNotePrefab;
+    [SerializeField] private Vector3 ancientNoteDropOffset = new(0f, 0.3f, 2.2f);
+
     bool hudRegistered;
     bool cameraRegistered;
     bool arenaLocked;
@@ -57,6 +62,7 @@ public class MiniBossMarker : MonoBehaviour
     Material arenaBarrierMaterial;
     float arenaBarrierFade;
     bool bossMusicPlaying;
+    bool ancientNoteSpawned;
 
     void Awake()
     {
@@ -578,6 +584,11 @@ public class MiniBossMarker : MonoBehaviour
         HideArenaBarrier();
         StopBossMusic();
 
+        if (SpawnAncientNote())
+        {
+            ZoneObjectiveManager.Instance?.NotifyAncientNoteDropped();
+        }
+
         ZoneObjectiveManager.Instance?.NotifyMiniBossDefeated();
 
         BossHUDController hud =
@@ -586,5 +597,29 @@ public class MiniBossMarker : MonoBehaviour
 
         UnregisterCamera();
         hudRegistered = false;
+    }
+
+    bool SpawnAncientNote()
+    {
+        if (ancientNoteSpawned || ancientNotePrefab == null || AncientNotePickup.WasCollected)
+        {
+            return false;
+        }
+
+        ancientNoteSpawned = true;
+        Vector3 candidate = transform.position +
+                            transform.right * ancientNoteDropOffset.x +
+                            transform.forward * ancientNoteDropOffset.z;
+        Vector3 spawnPosition = candidate + Vector3.up * ancientNoteDropOffset.y;
+
+        int areaMask = bossAgent != null ? bossAgent.areaMask : NavMesh.AllAreas;
+        if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 3f, areaMask))
+        {
+            spawnPosition = hit.position + Vector3.up * ancientNoteDropOffset.y;
+        }
+
+        Instantiate(ancientNotePrefab, spawnPosition, Quaternion.identity);
+        Debug.Log($"[Boss] '{bossDisplayName}' dropped the Ancient Note.", this);
+        return true;
     }
 }

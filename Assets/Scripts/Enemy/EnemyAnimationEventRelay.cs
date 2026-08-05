@@ -77,6 +77,15 @@ public class EnemyAnimationEventRelay : MonoBehaviour
         }
     }
 
+    /// <summary>Kết thúc một attack pattern thường (không phải tackle).</summary>
+    public void OnAttackEnd()
+    {
+        if (aiOwner != null)
+        {
+            aiOwner.Anim_OnAttackEnd();
+        }
+    }
+
     public void OpenTackleHitbox()
     {
         if (tacklePushHitbox != null)

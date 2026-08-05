@@ -1318,6 +1318,8 @@ MonoBehaviour:
   bossMusicVolume: 1
   bossMusicFadeIn: 1.2
   bossMusicFadeOut: 1.5
+  ancientNotePrefab: {fileID: 11400000, guid: 5d9acbf8ebae43148cd64aebf350b60a, type: 3}
+  ancientNoteDropOffset: {x: 0, y: 0.3, z: 2.2}
 --- !u!114 &5553642720119322321
 MonoBehaviour:
   m_ObjectHideFlags: 0

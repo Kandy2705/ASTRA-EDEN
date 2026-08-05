@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9bf7a46e3fc45a7a1fb8d65971b233, type: 3}
+  m_Name: SO_Enemy_EnemyAncientForestTyranno
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyId: enemy_ancient_forest_tyranno
+  displayName: Ancient Forest Tyranno
+  archetype: 7
+  rank: 3
+  zone: 2
+  enemyPrefab: {fileID: 5847023392721970105, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+  portrait: {fileID: 0}
+  icon: {fileID: 0}
+  baseStats:
+    maxHP: 2000
+    attack: 42
+    defense: 55
+    poise: 160
+    moveSpeed: 4.2
+    turnSpeed: 420
+  sightRange: 24
+  sightAngle: 140
+  hearingRange: 14
+  aggroKeepRange: 40
+  attackRange: 16
+  attackCooldown: 2
+  attackPatterns:
+  - {fileID: 11400000, guid: b54a2a81a83264dea980efecd8978d52, type: 2}
+  - {fileID: 11400000, guid: c6f6c017b176d4da3b452314a07e7cfc, type: 2}
+  - {fileID: 11400000, guid: 74d1895995ee44922a51d46c060caed7, type: 2}
+  - {fileID: 11400000, guid: 1195cc1c9cbc84bb29c5318c3c32979a, type: 2}
+  - {fileID: 11400000, guid: fb001399d40e94415b0edff5499898fb, type: 2}
+  expReward: 260
+  goldMin: 90
+  goldMax: 140
+  mainLootTable: {fileID: 11400000, guid: ae98599bb8c6a432c8b22b252c1d0360, type: 2}
+  description: Ancient Forest alpha tyranno. Mixes heavy close-range pressure, a
+    sweeping tail and a toxic ranged roar.

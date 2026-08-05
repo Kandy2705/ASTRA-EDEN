@@ -22,6 +22,7 @@ public static class EnemyHUDBuilder
         "Assets/_Project/Prefab/Enemy_WildClawRaptor.prefab",
         "Assets/_Project/Prefab/Enemy_MiniBoss_Velociraptor.prefab",
         "Assets/_Project/Prefab/Enemy_Boss_BeachTyran.prefab",
+        "Assets/_Project/Prefab/Enemy_Boss_AncientForest.prefab",
     };
 
     [MenuItem("ASTRA EDEN/Enemies/Setup Enemy HUD On Selected")]

@@ -26157,6 +26157,16 @@ MonoBehaviour:
   enemyMarkerSize: 14
   enemyShowRange: 0
   enemyMarkerPool: 32
+  objectiveTargetName: Flying_Tree_Zone_2
+  objectiveMarkerSprite: {fileID: 21300000, guid: d4552ab3d86d29a4890af682a52a4904, type: 3}
+  objectiveMarkerColor: {r: 1, g: 0.72, b: 0.24, a: 1}
+  objectiveMarkerSize: 28
+  objectiveEdgePadding: 12
+  objectiveArrivalDistance: 8
+  objectiveRouteColor: {r: 1, g: 0.72, b: 0.24, a: 0.9}
+  objectiveRouteGlowColor: {r: 0.55, g: 0.2, b: 1, a: 0.42}
+  objectiveRouteThickness: 3
+  objectiveDistanceScreenOffset: {x: 0, y: -48}
   rotateWithPlayer: 0
   rotateCompass: 0
   compassSign: 1

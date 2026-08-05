@@ -1,9 +1,12 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class HUDTopStatusController : MonoBehaviour
 {
+    private const string DayNightSceneName = "World_Eden7";
+
     [Header("Time")]
     [SerializeField] private TMP_Text timeText;
 
@@ -155,6 +158,15 @@ public class HUDTopStatusController : MonoBehaviour
 
     public TimeSpan CurrentGameTime => TimeSpan.FromSeconds(gameSecondsElapsed);
 
+    /// <summary>
+    /// Chỉnh tốc độ chu kỳ ngày/đêm. 1x = bình thường (3600s thực / ngày game).
+    /// Demo: 60x = 1 ngày game trong 60 giây thực.
+    /// </summary>
+    public void SetTimeMultiplier(float multiplier)
+    {
+        realSecondsPerGameDay = 3600f / Mathf.Max(0.01f, multiplier);
+    }
+
     public void SetGameTime(int hour, int minute = 0, bool persist = true)
     {
         int safeHour = ((hour % 24) + 24) % 24;
@@ -205,7 +217,7 @@ public class HUDTopStatusController : MonoBehaviour
 
     private void CacheLighting()
     {
-        if (!driveDayNightLighting || lightingCached)
+        if (!ShouldDriveDayNightLighting() || lightingCached)
         {
             return;
         }
@@ -248,7 +260,7 @@ public class HUDTopStatusController : MonoBehaviour
 
     private void UpdateDayNightLighting()
     {
-        if (!driveDayNightLighting)
+        if (!ShouldDriveDayNightLighting())
         {
             return;
         }
@@ -277,6 +289,12 @@ public class HUDTopStatusController : MonoBehaviour
             daylight);
 
         ApplySkyboxForHour(hour);
+    }
+
+    private bool ShouldDriveDayNightLighting()
+    {
+        return driveDayNightLighting &&
+               SceneManager.GetActiveScene().name == DayNightSceneName;
     }
 
     private float CalculateDaylight(float hour)

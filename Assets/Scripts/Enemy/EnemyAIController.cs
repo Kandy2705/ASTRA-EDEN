@@ -108,6 +108,8 @@ public class EnemyAIController : MonoBehaviour
     [Header("Model Orientation")]
     [Tooltip("Tick nếu model forward thực ra là -Z.")]
     [SerializeField] private bool flipForward180 = false;
+    [Tooltip("Xoay model visual thêm góc này quanh trục Y (độ). Chỉ xoay node model, không ảnh hưởng collider/hitbox/sensor.")]
+    [SerializeField, Range(-180f, 180f)] private float modelYawOffset = 0f;
     [SerializeField, Min(0f)] private float animatorDampTime = 0.1f;
     [SerializeField, Min(0f)] private float movingThreshold = 0.05f;
 
@@ -177,6 +179,8 @@ public class EnemyAIController : MonoBehaviour
     float currentPoise;
     float lastHitReactionTime;
     AttackPatternData currentAttack;
+    AttackPatternData lastAttackPattern;
+    int currentAttackTriggerHash;
     float attackPhaseTimer;
     enum AttackPhase { None, Windup, Active, Recovery }
     AttackPhase attackPhase = AttackPhase.None;
@@ -405,6 +409,7 @@ public class EnemyAIController : MonoBehaviour
     {
         RecalculateAttackRange();
         ApplyEnemyDataToAgent();
+        ApplyModelYawOffset();
         currentPoise = MaxPoise;
 
         if (spawnPinnedToPatrol)
@@ -716,6 +721,65 @@ public class EnemyAIController : MonoBehaviour
 
         // Giữ nguyên trạng thái enable (tránh bật lại → snap rìa).
         agent.enabled = wasEnabled;
+    }
+
+    /// <summary>
+    /// Xoay model visual một góc quanh trục Y cho khớp hướng AI
+    /// (model RaptorALL hướng lệch). Chỉ xoay node model — không đụng
+    /// collider/hitbox/sensor (chúng là child của root, đứng yên).
+    /// </summary>
+    void ApplyModelYawOffset()
+    {
+        if (Mathf.Abs(modelYawOffset) <= 0.001f)
+        {
+            return;
+        }
+
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        Transform common = null;
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] == null)
+            {
+                continue;
+            }
+
+            // Bỏ renderer thuộc UI canvas (nếu có).
+            if (renderers[i].GetComponentInParent<Canvas>(true) != null)
+            {
+                continue;
+            }
+
+            Transform r = renderers[i].transform;
+            common = common == null ? r : FindCommonAncestor(common, r);
+        }
+
+        if (common == null || common == transform)
+        {
+            return;
+        }
+
+        common.localRotation = Quaternion.Euler(0f, modelYawOffset, 0f) * common.localRotation;
+        Debug.Log($"[AI:{name}] ApplyModelYawOffset {modelYawOffset}° → node '{common.name}'.", this);
+    }
+
+    static Transform FindCommonAncestor(Transform a, Transform b)
+    {
+        List<Transform> chain = new List<Transform>();
+        for (Transform cur = a; cur != null; cur = cur.parent)
+        {
+            chain.Add(cur);
+        }
+
+        for (Transform cur = b; cur != null; cur = cur.parent)
+        {
+            if (chain.Contains(cur))
+            {
+                return cur;
+            }
+        }
+
+        return null;
     }
 
     void ConfigureAgentStoppingForState(AIState state)
@@ -1523,7 +1587,9 @@ public class EnemyAIController : MonoBehaviour
         {
             attackPhase = AttackPhase.Active;
             attackPhaseTimer = currentAttack != null ? currentAttack.activeTime : 0.2f;
-            hitResolvedThisSwing = false;
+            // hitResolved đã reset khi BeginAttackPattern. Không reset ở đây:
+            // Animation Event OnAttackHit có thể chạy ngay trước Update ở đúng
+            // frame chuyển Windup → Active và sẽ gây damage hai lần nếu bị xóa cờ.
             if (attackHitbox != null) attackHitbox.BeginSwing();
         }
         else if (attackPhase == AttackPhase.Active && !hitResolvedThisSwing)
@@ -2245,7 +2311,27 @@ public class EnemyAIController : MonoBehaviour
         attackPhaseTimer = currentAttack != null ? currentAttack.windup : 0.3f;
         hitResolvedThisSwing = false;
         projectileResolvedThisAttack = false;
-        if (animator != null) animator.SetTrigger(AttackHash);
+        if (attackHitbox != null)
+        {
+            attackHitbox.ApplyPatternConfiguration(currentAttack);
+        }
+
+        currentAttackTriggerHash = AttackHash;
+        if (animator != null)
+        {
+            string requestedTrigger = currentAttack != null
+                ? currentAttack.animationTrigger
+                : null;
+            int requestedHash = string.IsNullOrWhiteSpace(requestedTrigger)
+                ? AttackHash
+                : Animator.StringToHash(requestedTrigger);
+            currentAttackTriggerHash =
+                HasParam(requestedHash, AnimatorControllerParameterType.Trigger)
+                    ? requestedHash
+                    : AttackHash;
+            animator.ResetTrigger(currentAttackTriggerHash);
+            animator.SetTrigger(currentAttackTriggerHash);
+        }
         if (debugLogStateMachine)
         {
             string atkName = currentAttack != null ? currentAttack.displayName : "<null>";
@@ -2264,14 +2350,49 @@ public class EnemyAIController : MonoBehaviour
 
         float distance = HorizontalDistance(player.position);
         AttackPatternData best = null;
-        int bestScore = -1;
+        int eligibleCount = 0;
+        float nearestGap = float.PositiveInfinity;
         foreach (var ap in enemyData.attackPatterns)
         {
             if (ap == null) continue;
-            int score = 0;
-            if (distance >= ap.minRange && distance <= ap.maxRange) score += 2;
-            if (best == null || score > bestScore) { best = ap; bestScore = score; }
+            if (distance >= ap.minRange && distance <= ap.maxRange)
+            {
+                eligibleCount++;
+                // Reservoir sampling: tạo biến thể đòn đánh, tránh luôn chọn phần tử đầu.
+                if (Random.Range(0, eligibleCount) == 0)
+                {
+                    best = ap;
+                }
+
+                continue;
+            }
+
+            if (eligibleCount > 0) continue;
+            float gap = distance < ap.minRange
+                ? ap.minRange - distance
+                : distance - ap.maxRange;
+            if (gap < nearestGap)
+            {
+                nearestGap = gap;
+                best = ap;
+            }
         }
+
+        // Nếu có nhiều lựa chọn, hạn chế lặp đúng cùng một chiêu liên tiếp.
+        if (eligibleCount > 1 && best == lastAttackPattern)
+        {
+            foreach (var ap in enemyData.attackPatterns)
+            {
+                if (ap != null && ap != lastAttackPattern &&
+                    distance >= ap.minRange && distance <= ap.maxRange)
+                {
+                    best = ap;
+                    break;
+                }
+            }
+        }
+
+        lastAttackPattern = best;
         return best;
     }
 
@@ -2458,7 +2579,9 @@ public class EnemyAIController : MonoBehaviour
     {
         attackPhase = AttackPhase.None;
         attackPhaseTimer = 0f;
+        int triggerToReset = currentAttackTriggerHash;
         currentAttack = null;
+        currentAttackTriggerHash = 0;
         hitResolvedThisSwing = true;
         projectileResolvedThisAttack = true;
 
@@ -2470,6 +2593,12 @@ public class EnemyAIController : MonoBehaviour
         if (HasParam(AttackHash, AnimatorControllerParameterType.Trigger))
         {
             animator.ResetTrigger(AttackHash);
+        }
+
+        if (triggerToReset != 0 && triggerToReset != AttackHash &&
+            HasParam(triggerToReset, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(triggerToReset);
         }
 
     }

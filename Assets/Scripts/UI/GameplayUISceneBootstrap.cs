@@ -24,6 +24,8 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     private GameObject playerDebugPanel;
     private TMP_InputField damageInput;
     private TMP_Text debugStatusText;
+    private Slider timeSpeedSlider;
+    private TMP_Text timeSpeedValueText;
     private PopupTween debugPanelTween;
     private CharacterHealth debugPlayerHealth;
     private PlayerCombatController debugPlayerCombat;
@@ -221,7 +223,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         RectTransform panelRect = CreateUiObject(
             "PlayerDebugPanel",
             canvasTransform,
-            new Vector2(460f, 330f),
+            new Vector2(460f, 400f),
             Vector2.zero);
         playerDebugPanel = panelRect.gameObject;
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -303,10 +305,38 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             new Color(0.52f, 0.18f, 0.12f, 1f));
         lowHealthButton.onClick.AddListener(SetPlayerLowHealth);
 
+        CreateLabel(
+            panelRect,
+            "Tốc độ thời gian",
+            new Vector2(-138f, -92f),
+            new Vector2(190f, 26f),
+            16f,
+            Color.white,
+            TextAlignmentOptions.MidlineLeft);
+
+        timeSpeedSlider = CreateSlider(
+            panelRect,
+            "Slider_TimeSpeed",
+            new Vector2(32f, -92f),
+            new Vector2(216f, 24f),
+            1f,
+            120f,
+            1f);
+        timeSpeedSlider.onValueChanged.AddListener(OnTimeSpeedChanged);
+
+        timeSpeedValueText = CreateLabel(
+            panelRect,
+            "1x",
+            new Vector2(188f, -92f),
+            new Vector2(70f, 24f),
+            16f,
+            new Color(1f, 0.78f, 0.3f, 1f),
+            TextAlignmentOptions.Center);
+
         debugStatusText = CreateLabel(
             panelRect,
             "Đang tìm Player...",
-            new Vector2(0f, -92f),
+            new Vector2(0f, -165f),
             new Vector2(410f, 44f),
             18f,
             new Color(0.82f, 0.9f, 0.94f, 1f),
@@ -315,7 +345,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "Bấm lại icon mặt trời để đóng",
-            new Vector2(0f, -137f),
+            new Vector2(0f, -210f),
             new Vector2(410f, 28f),
             15f,
             new Color(0.62f, 0.68f, 0.72f, 1f),
@@ -497,9 +527,25 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         RefreshDebugStatus();
     }
 
-    private void ReviveDebugPlayerIfNeeded()
+    private void OnTimeSpeedChanged(float multiplier)
     {
-        if (debugPlayerHealth == null)
+        if (timeSpeedValueText != null)
+        {
+            timeSpeedValueText.text = multiplier >= 1f
+                ? $"{multiplier:0}x"
+                : $"{multiplier:0.0}x";
+        }
+
+        HUDTopStatusController topStatus =
+            GetComponentInChildren<HUDTopStatusController>(true);
+        if (topStatus != null)
+        {
+            topStatus.SetTimeMultiplier(multiplier);
+        }
+    }
+
+    private void ReviveDebugPlayerIfNeeded()
+    {        if (debugPlayerHealth == null)
         {
             return;
         }
@@ -641,6 +687,69 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         text.fontStyle = FontStyles.Bold;
         StretchRect(text.rectTransform, 4f, 4f, 2f, 2f);
         return button;
+    }
+
+    private static Slider CreateSlider(
+        RectTransform parent,
+        string objectName,
+        Vector2 position,
+        Vector2 size,
+        float minValue,
+        float maxValue,
+        float value)
+    {
+        RectTransform root = CreateUiObject(objectName, parent, size, position);
+        Image background = root.gameObject.AddComponent<Image>();
+        background.color = new Color(0.07f, 0.11f, 0.14f, 1f);
+
+        RectTransform fillArea = CreateUiObject(
+            "Fill Area",
+            root,
+            Vector2.zero,
+            Vector2.zero);
+        fillArea.anchorMin = new Vector2(0f, 0.25f);
+        fillArea.anchorMax = new Vector2(1f, 0.75f);
+        fillArea.offsetMin = Vector2.zero;
+        fillArea.offsetMax = Vector2.zero;
+
+        RectTransform fill = CreateUiObject(
+            "Fill",
+            fillArea,
+            Vector2.zero,
+            Vector2.zero);
+        fill.anchorMin = Vector2.zero;
+        fill.anchorMax = Vector2.one;
+        fill.offsetMin = Vector2.zero;
+        fill.offsetMax = Vector2.zero;
+        Image fillImage = fill.gameObject.AddComponent<Image>();
+        fillImage.color = new Color(0.92f, 0.67f, 0.2f, 1f);
+
+        RectTransform handleArea = CreateUiObject(
+            "Handle Slide Area",
+            root,
+            Vector2.zero,
+            Vector2.zero);
+        StretchRect(handleArea, 0f, 0f, 0f, 0f);
+
+        RectTransform handle = CreateUiObject(
+            "Handle",
+            handleArea,
+            new Vector2(18f, 18f),
+            Vector2.zero);
+        handle.anchorMin = Vector2.zero;
+        handle.anchorMax = Vector2.one;
+        Image handleImage = handle.gameObject.AddComponent<Image>();
+        handleImage.color = Color.white;
+
+        Slider slider = root.gameObject.AddComponent<Slider>();
+        slider.fillRect = fill;
+        slider.handleRect = handle;
+        slider.targetGraphic = handleImage;
+        slider.direction = Slider.Direction.LeftToRight;
+        slider.minValue = minValue;
+        slider.maxValue = maxValue;
+        slider.SetValueWithoutNotify(value);
+        return slider;
     }
 
     private static TMP_Text CreateLabel(
