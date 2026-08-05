@@ -80,17 +80,12 @@ public class PlayerAudioController : MonoBehaviour
     {
         if (scoreClip == null)
         {
-            Debug.LogWarning("[PlayerAudioController] scoreClip chưa được assign!");
             return;
         }
 
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySfx(scoreClip, 1f);
-        }
-        else
-        {
-            Debug.LogWarning("[PlayerAudioController] AudioManager chưa có instance!");
         }
     }
 

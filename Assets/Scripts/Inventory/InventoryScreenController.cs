@@ -141,7 +141,6 @@ public class InventoryScreenController : MonoBehaviour
     {
         BindInventoryService();
 
-        Debug.Log("[InventoryUI] RefreshNow called.");
         Refresh();
     }
 
@@ -207,7 +206,6 @@ public class InventoryScreenController : MonoBehaviour
             slot.Setup(stack, SelectItem);
             slot.SetSelected(stack.itemData == selectedItemData);
 
-            Debug.Log($"[InventoryUI] Spawn slot: {stack.itemData.displayName} x {stack.quantity}");
         }
 
         for (int i = usedExistingSlots; i < existingSlots.Length; i++)
@@ -651,7 +649,6 @@ public class InventoryScreenController : MonoBehaviour
             return;
         }
 
-        Debug.LogWarning("[InventoryUI] Close button clicked, but InventoryToggleController is not assigned.");
     }
 
     private void ClearSpawnedSlots()

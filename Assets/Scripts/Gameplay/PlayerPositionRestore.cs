@@ -17,7 +17,6 @@ public class PlayerPositionRestore : MonoBehaviour
 
         if (GameDataManager.Instance == null)
         {
-            Debug.LogWarning("[PlayerPositionRestore] Không có GameDataManager.");
             yield break;
         }
 
@@ -42,28 +41,9 @@ public class PlayerPositionRestore : MonoBehaviour
 
                 if (agent != null) agent.enabled = true;
                 if (cc != null) cc.enabled = true;
-
-                if (showDebugLog)
-                {
-                    Debug.Log($"[PlayerPositionRestore] Restored scene={currentScene}, pos={savedPos}, rotY={savedRotY}");
-                }
-            }
-            else
-            {
-                if (showDebugLog)
-                {
-                    Debug.Log($"[PlayerPositionRestore] Scene '{currentScene}' chưa có vị trí lưu, dùng spawn mặc định.");
-                }
             }
 
             GameDataManager.Instance.ClearContinueFlag();
-        }
-        else
-        {
-            if (showDebugLog)
-            {
-                Debug.Log("[PlayerPositionRestore] Không có cờ Continue/Restore nên không restore position.");
-            }
         }
 
         // Stats luôn restore nếu đã có save (Awake CharacterHealth cũng restore — gọi lại để chắc sau 1 frame).
@@ -72,11 +52,6 @@ public class PlayerPositionRestore : MonoBehaviour
         // QUAN TRỌNG:
         // Sau khi vào scene hiện tại, lưu scene này thành scene mới nhất để Continue biết.
         GameDataManager.Instance.SaveLastPlayerTransform(currentScene, transform);
-
-        if (showDebugLog)
-        {
-            Debug.Log($"[PlayerPositionRestore] Mark current scene as last played: {currentScene}");
-        }
     }
 
     private void RestorePlayerStatsIfPossible()

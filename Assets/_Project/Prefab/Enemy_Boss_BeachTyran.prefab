@@ -938,6 +938,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4132956082108797945}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6831488852710694605}
     - targetCorrespondingSourceObject: {fileID: -2585578292277107871, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 916239223181458861}
@@ -1147,6 +1150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAIController
   enemyData: {fileID: 11400000, guid: de66e7f16dc59400d90c9b84265b91b4, type: 2}
   initializeFromEnemyData: 1
+  bossBehaviour: {fileID: 0}
   sensor: {fileID: 946351111358374057}
   health: {fileID: 1288010195568088798}
   knockback: {fileID: 5031118478018109776}
@@ -1184,6 +1188,8 @@ MonoBehaviour:
   useDeathAnimation: 1
   deathAnimationDuration: 3
   flipForward180: 0
+  modelVisualRoot: {fileID: 0}
+  modelYawOffset: 0
   animatorDampTime: 0.1
   movingThreshold: 0.05
   useTackle: 1
@@ -1198,6 +1204,7 @@ MonoBehaviour:
     m_Bits: 64
   playerResolveInterval: 0.75
   useProximitySphereFallback: 1
+  maxCombatVerticalDifference: 3
   enableRandomWalkWhenNoPatrol: 1
   randomWalkRange: 8
   randomWalkArriveDistance: 1
@@ -1334,6 +1341,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyKillTracker
   health: {fileID: 1288010195568088798}
   skipMiniBoss: 1
+  enemyData: {fileID: 0}
 --- !u!114 &2199267935540286165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1522,6 +1530,20 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 655ae2339de0ea14c8adefdcb28e2ffa, type: 3}
   volume: 1
   minInterval: 0.25
+--- !u!114 &6831488852710694605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4604233392114813644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33c58235395ea4dedb94764af40a3808, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BeachTyranBossBehaviour
+  visualRoot: {fileID: 3796065323733389430}
+  visualYawOffset: 0
 --- !u!1 &8014931844429468924 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -2585578292277107871, guid: a321d10ba606f406e94922ecbe0d786f, type: 3}

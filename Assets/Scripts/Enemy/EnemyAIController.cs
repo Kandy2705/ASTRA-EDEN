@@ -46,6 +46,7 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField] private bool initializeFromEnemyData = true;
 
     [Header("References")]
+    [SerializeField] private EnemyBossBehaviour bossBehaviour;
     [SerializeField] private EnemySensor sensor;
     [SerializeField] private CharacterHealth health;
     [SerializeField] private CharacterKnockback knockback;
@@ -108,6 +109,8 @@ public class EnemyAIController : MonoBehaviour
     [Header("Model Orientation")]
     [Tooltip("Tick nếu model forward thực ra là -Z.")]
     [SerializeField] private bool flipForward180 = false;
+    [Tooltip("Object chứa toàn bộ model/skeleton — modelYawOffset sẽ xoay object này. Để trống thì dùng Animator root.")]
+    [SerializeField] private Transform modelVisualRoot;
     [Tooltip("Xoay model visual thêm góc này quanh trục Y (độ). Chỉ xoay node model, không ảnh hưởng collider/hitbox/sensor.")]
     [SerializeField, Range(-180f, 180f)] private float modelYawOffset = 0f;
     [SerializeField, Min(0f)] private float animatorDampTime = 0.1f;
@@ -344,7 +347,23 @@ public class EnemyAIController : MonoBehaviour
 
     void RecalculateAttackRange()
     {
-        float baseRange = enemyData != null ? enemyData.attackRange : 2f;
+        ResolveBossBehaviour();
+
+        if (bossBehaviour != null)
+        {
+            effectiveAttackRange =
+                bossBehaviour.GetEffectiveAttackRange(enemyData);
+            Debug.Log(
+                $"[BOSS-FIX] {name}: bossBehaviour={bossBehaviour.GetType().Name} → AttackRange={effectiveAttackRange:F2}",
+                this);
+            return;
+        }
+
+        // Logic cũ dành cho enemy chưa có behaviour riêng.
+        float baseRange = enemyData != null
+            ? enemyData.attackRange
+            : 2f;
+
         if (enemyData == null || enemyData.attackPatterns == null)
         {
             effectiveAttackRange = baseRange;
@@ -352,12 +371,18 @@ public class EnemyAIController : MonoBehaviour
         }
 
         float maxPatternRange = 0f;
-        foreach (var ap in enemyData.attackPatterns)
+
+        foreach (AttackPatternData pattern in enemyData.attackPatterns)
         {
-            if (ap != null && ap.maxRange > maxPatternRange) maxPatternRange = ap.maxRange;
+            if (pattern != null)
+            {
+                maxPatternRange =
+                    Mathf.Max(maxPatternRange, pattern.maxRange);
+            }
         }
 
-        effectiveAttackRange = Mathf.Max(baseRange, maxPatternRange);
+        effectiveAttackRange =
+            Mathf.Max(baseRange, maxPatternRange);
     }
     public float AggroKeepRange => enemyData != null ? enemyData.aggroKeepRange : 22f;
     public float AttackCooldown =>
@@ -365,6 +390,14 @@ public class EnemyAIController : MonoBehaviour
             MinimumAttackInterval,
             enemyData != null ? enemyData.attackCooldown : 2f);
     public float MaxPoise => enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.poise : 0f;
+
+    void ResolveBossBehaviour()
+    {
+        if (bossBehaviour == null)
+        {
+            bossBehaviour = GetComponent<EnemyBossBehaviour>();
+        }
+    }
 
     void Reset()
     {
@@ -376,6 +409,7 @@ public class EnemyAIController : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         attackHitbox = GetComponentInChildren<EnemyAttackHitbox>();
         projectileShooter = GetComponent<EnemyProjectileShooter>();
+        bossBehaviour = GetComponent<EnemyBossBehaviour>();
     }
 
     /// Registry cho các hệ thống cần duyệt enemy đang sống (minimap markers, v.v.).
@@ -402,6 +436,8 @@ public class EnemyAIController : MonoBehaviour
         if (attackHitbox == null) attackHitbox = GetComponentInChildren<EnemyAttackHitbox>();
         if (projectileShooter == null) projectileShooter = GetComponent<EnemyProjectileShooter>();
 
+        ResolveBossBehaviour();
+
         if (playerLayer.value == 0) playerLayer = LayerMask.GetMask("Player");
     }
 
@@ -409,7 +445,21 @@ public class EnemyAIController : MonoBehaviour
     {
         RecalculateAttackRange();
         ApplyEnemyDataToAgent();
-        ApplyModelYawOffset();
+
+        ResolveBossBehaviour();
+        if (bossBehaviour != null)
+        {
+            bossBehaviour.Initialize(this);
+            Debug.Log(
+                $"[BOSS-FIX] {name}: init bossBehaviour={bossBehaviour.GetType().Name} | AttackRange={AttackRange:F2} | flipForward180={flipForward180} | modelYawOffset={modelYawOffset}",
+                this);
+        }
+        else
+        {
+            // Giữ compatibility cho enemy cũ chưa có behaviour riêng.
+            ApplyModelYawOffset();
+        }
+
         currentPoise = MaxPoise;
 
         if (spawnPinnedToPatrol)
@@ -735,51 +785,38 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
-        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
-        Transform common = null;
-        for (int i = 0; i < renderers.Length; i++)
+        Transform visual = modelVisualRoot;
+
+        // Fallback: Animator thường nằm trên root model.
+        if (visual == null && animator != null && animator.transform != transform)
         {
-            if (renderers[i] == null)
-            {
-                continue;
-            }
-
-            // Bỏ renderer thuộc UI canvas (nếu có).
-            if (renderers[i].GetComponentInParent<Canvas>(true) != null)
-            {
-                continue;
-            }
-
-            Transform r = renderers[i].transform;
-            common = common == null ? r : FindCommonAncestor(common, r);
+            visual = animator.transform;
         }
 
-        if (common == null || common == transform)
+        if (visual == null)
         {
+            Debug.LogWarning(
+                $"[AI:{name}] Chưa gán Model Visual Root nên không thể áp dụng Model Yaw Offset.",
+                this);
             return;
         }
 
-        common.localRotation = Quaternion.Euler(0f, modelYawOffset, 0f) * common.localRotation;
-        Debug.Log($"[AI:{name}] ApplyModelYawOffset {modelYawOffset}° → node '{common.name}'.", this);
-    }
-
-    static Transform FindCommonAncestor(Transform a, Transform b)
-    {
-        List<Transform> chain = new List<Transform>();
-        for (Transform cur = a; cur != null; cur = cur.parent)
+        if (visual == transform)
         {
-            chain.Add(cur);
+            Debug.LogWarning(
+                $"[AI:{name}] Model Visual Root đang trùng AI root. " +
+                "Hãy đặt model thành child để chỉ xoay phần hình ảnh.",
+                this);
+            return;
         }
 
-        for (Transform cur = b; cur != null; cur = cur.parent)
-        {
-            if (chain.Contains(cur))
-            {
-                return cur;
-            }
-        }
+        visual.localRotation =
+            Quaternion.Euler(0f, modelYawOffset, 0f) *
+            visual.localRotation;
 
-        return null;
+        Debug.Log(
+            $"[AI:{name}] Applied Model Yaw Offset {modelYawOffset}° to '{visual.name}'.",
+            this);
     }
 
     void ConfigureAgentStoppingForState(AIState state)
@@ -1420,9 +1457,30 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
+        if (bossBehaviour != null &&
+            bossBehaviour.CanStartSpecialAttack(
+                enemyData,
+                distance,
+                attackCooldownTimer))
+        {
+            Debug.Log(
+                $"[BOSS-FIX] {name}: SPECIAL (PoisonRoar) @ dist={distance:F2} cdLeft={attackCooldownTimer:F2} → Attack state",
+                this);
+            holdingInAttackRange = false;
+            EnterState(AIState.Attack);
+            return;
+        }
+
         // Tutorial: playerInAttackRange && playerInSightRange → Attack.
         if (CanStartAttack(distance) || (playerInAttackRange && attackCooldownTimer <= 0f && distance <= AttackRange + 0.35f))
         {
+            if (bossBehaviour != null)
+            {
+                Debug.Log(
+                    $"[BOSS-FIX] {name}: MELEE @ dist={distance:F2} attackRange={AttackRange:F2} → Attack state",
+                    this);
+            }
+
             holdingInAttackRange = false;
             EnterState(AIState.Attack);
             return;
@@ -2341,6 +2399,18 @@ public class EnemyAIController : MonoBehaviour
             float rec = currentAttack != null ? currentAttack.recovery : 0.4f;
             Debug.Log($"[AI:{name}] BeginAttack '{atkName}' | windup={wu:F2} active={act:F2} recovery={rec:F2} cdAfter={cd:F2}", this);
         }
+
+        if (bossBehaviour != null)
+        {
+            string atkName = currentAttack != null ? currentAttack.displayName : "<null>";
+            string rangeType = currentAttack != null ? currentAttack.rangeType.ToString() : "?";
+            float minR = currentAttack != null ? currentAttack.minRange : 0f;
+            float maxR = currentAttack != null ? currentAttack.maxRange : 0f;
+            float dist = player != null ? HorizontalDistance(player.position) : -1f;
+            Debug.Log(
+                $"[BOSS-FIX] {name}: BẮT ĐẦU đòn '{atkName}' | type={rangeType} window=[{minR:F2},{maxR:F2}] | dist={dist:F2} | AttackRange={AttackRange:F2}",
+                this);
+        }
     }
 
     AttackPatternData PickAttackPattern()
@@ -2415,7 +2485,7 @@ public class EnemyAIController : MonoBehaviour
             }
 
             projectileResolvedThisAttack = true;
-            projectileShooter.Fire(damage);
+            projectileShooter.Fire(damage, player);
             return;
         }
 

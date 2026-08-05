@@ -16,8 +16,8 @@ MonoBehaviour:
   displayName: Poison Roar
   archetype: 7
   rangeType: 3
-  minRange: 5
-  maxRange: 16
+  minRange: 6
+  maxRange: 10
   cooldown: 2.05
   windup: 2.9
   activeTime: 0.16

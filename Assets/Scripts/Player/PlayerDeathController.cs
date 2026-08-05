@@ -119,8 +119,6 @@ public sealed class PlayerDeathController : MonoBehaviour
 
         CompanionSummonController summon = GetComponent<CompanionSummonController>();
         if (summon != null) summon.enabled = true;
-
-        Debug.Log("[PlayerDeath] Debug revive — Player controls restored.", this);
     }
 
     void Awake()
@@ -373,8 +371,6 @@ public sealed class PlayerDeathController : MonoBehaviour
             StopCoroutine(respawnRoutine);
         }
         respawnRoutine = StartCoroutine(RespawnAtLevelStartRoutine());
-
-        Debug.Log("[PlayerDeath] Death applied — IsDead + force state Death, Move stopped.", this);
     }
 
     void CreateDeathBagAndNotify()
@@ -443,10 +439,6 @@ public sealed class PlayerDeathController : MonoBehaviour
         }
 
         respawnRoutine = null;
-        Debug.Log(
-            $"[PlayerDeath] Respawn tại điểm đầu màn {levelStartPosition}. " +
-            "Túi đồ tồn tại 10 phút tại vị trí chết.",
-            this);
     }
 
     void ZeroLocomotionParams()

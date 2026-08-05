@@ -14,7 +14,8 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     [SerializeField] private string[] hubSceneNames = { "Beacon_Camp", "MainMenu" };
 
     [Header("Combat-only panels (ẩn ở hub)")]
-    [SerializeField] private string[] combatOnlyPanelNames =
+    [SerializeField]
+    private string[] combatOnlyPanelNames =
     {
         "BossHUDPanel",
         "ZoneResultPanel"
@@ -502,9 +503,6 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         debugPlayerHealth.SetCurrentHealthForDebug(
             debugPlayerHealth.RuntimeStats.maxHP);
         ReviveDebugPlayerIfNeeded();
-        Debug.Log(
-            $"[PlayerDebug] Full Health = {debugPlayerHealth.RuntimeStats.currentHP:0.##}.",
-            debugPlayerHealth);
         RefreshDebugStatus();
     }
 
@@ -521,9 +519,6 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             Mathf.Max(1f, debugPlayerHealth.RuntimeStats.maxHP * 0.05f);
         debugPlayerHealth.SetCurrentHealthForDebug(lowHealth);
         ReviveDebugPlayerIfNeeded();
-        Debug.Log(
-            $"[PlayerDebug] Low Health = {debugPlayerHealth.RuntimeStats.currentHP:0.##}.",
-            debugPlayerHealth);
         RefreshDebugStatus();
     }
 
@@ -545,7 +540,8 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     }
 
     private void ReviveDebugPlayerIfNeeded()
-    {        if (debugPlayerHealth == null)
+    {
+        if (debugPlayerHealth == null)
         {
             return;
         }

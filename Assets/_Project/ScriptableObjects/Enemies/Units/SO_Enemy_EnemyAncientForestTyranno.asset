@@ -17,7 +17,7 @@ MonoBehaviour:
   archetype: 7
   rank: 3
   zone: 2
-  enemyPrefab: {fileID: 5847023392721970105, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+  enemyPrefab: {fileID: 4999798807128010360, guid: 81467d790bc74474aa67f4c5860c27f3, type: 3}
   portrait: {fileID: 0}
   icon: {fileID: 0}
   baseStats:
@@ -31,7 +31,7 @@ MonoBehaviour:
   sightAngle: 140
   hearingRange: 14
   aggroKeepRange: 40
-  attackRange: 16
+  attackRange: 5.5
   attackCooldown: 2
   attackPatterns:
   - {fileID: 11400000, guid: b54a2a81a83264dea980efecd8978d52, type: 2}

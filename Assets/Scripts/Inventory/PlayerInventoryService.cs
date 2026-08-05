@@ -30,8 +30,6 @@ public class PlayerInventoryService : MonoBehaviour
         PlayerInventoryService[] services = player.GetComponents<PlayerInventoryService>();
         if (services.Length > 1)
         {
-            Debug.LogWarning(
-                $"[Inventory] Player có {services.Length} PlayerInventoryService — dùng component đầu tiên, xóa bản trùng trong scene/prefab.");
         }
 
         return services.Length > 0 ? services[0] : null;
@@ -72,7 +70,6 @@ public class PlayerInventoryService : MonoBehaviour
     {
         if (GameDataManager.Instance == null)
         {
-            Debug.LogWarning("[Inventory] LoadFromGameData bỏ qua — chưa có GameDataManager.");
             return;
         }
 
@@ -93,7 +90,6 @@ public class PlayerInventoryService : MonoBehaviour
             else
             {
                 missingCount++;
-                Debug.LogWarning($"[Inventory] Không tìm thấy ItemData cho itemId='{kvp.Key}' (qty={kvp.Value}).");
             }
         }
 
@@ -101,7 +97,6 @@ public class PlayerInventoryService : MonoBehaviour
         MigrateLegacyCurrencyIntoGoldStacks();
         SyncCurrencyMirrorToGameData();
 
-        Debug.Log($"[Inventory] Loaded {loadedCount} stacks from save (missing={missingCount}, raw={data.Count}, gold={GetGoldQuantity()}).");
         OnInventoryChanged?.Invoke();
     }
 
@@ -109,7 +104,6 @@ public class PlayerInventoryService : MonoBehaviour
     {
         if (GameDataManager.Instance == null)
         {
-            Debug.LogWarning("[Inventory] SaveToGameData bỏ qua — chưa có GameDataManager.");
             return;
         }
 
@@ -122,7 +116,6 @@ public class PlayerInventoryService : MonoBehaviour
 
         GameDataManager.Instance.SaveInventory(data);
         SyncCurrencyMirrorToGameData();
-        Debug.Log($"[Inventory] Saved {data.Count} item types to PlayerPrefs (gold={GetGoldQuantity()}).");
     }
 
     /// <summary>
@@ -145,7 +138,6 @@ public class PlayerInventoryService : MonoBehaviour
         ItemData gold = ResolveGoldItem();
         if (gold == null)
         {
-            Debug.LogWarning("[Inventory] Không resolve được SO_Item_Gold để migrate Currency.");
             return;
         }
 
@@ -157,7 +149,6 @@ public class PlayerInventoryService : MonoBehaviour
         }
 
         items.Add(new InventoryItemStack(gold, legacy));
-        Debug.Log($"[Inventory] Migrated legacy Currency {legacy} → inventory gold.");
     }
 
     /// <summary>Đồng bộ field Currency của GameDataManager chỉ để mirror (UI/API cũ), không phải wallet thứ 2.</summary>
@@ -175,13 +166,11 @@ public class PlayerInventoryService : MonoBehaviour
     {
         if (itemData == null)
         {
-            Debug.LogWarning("[Inventory] AddItem failed: itemData is null.");
             return false;
         }
 
         if (amount <= 0)
         {
-            Debug.LogWarning("[Inventory] AddItem failed: amount <= 0.");
             return false;
         }
 
@@ -196,7 +185,6 @@ public class PlayerInventoryService : MonoBehaviour
             items.Add(new InventoryItemStack(itemData, amount));
         }
 
-        Debug.Log($"[Inventory] Added {amount} x {itemData.name} (total stacks={items.Count}, service={name})");
         OnInventoryChanged?.Invoke();
         SaveToGameData();
         return true;

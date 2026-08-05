@@ -31,10 +31,6 @@ public class InventoryToggleController : MonoBehaviour
     {
         ResolveInventoryReferences();
 
-        if (inventoryRoot == null)
-        {
-            Debug.LogWarning("[InventoryToggle] inventoryRoot chưa được gán. Kéo object Panels/Inventory vào Managers.");
-        }
 
         SetInventoryOpen(false);
     }
@@ -162,10 +158,6 @@ public class InventoryToggleController : MonoBehaviour
             inventoryScreenController.RefreshNow();
         }
 
-        if (isOpen)
-        {
-            Debug.Log($"[InventoryToggle] Opened inventory UI (root={(inventoryRoot != null ? inventoryRoot.name : "null")}).");
-        }
 
         if (gameplayHudCanvas != null)
         {

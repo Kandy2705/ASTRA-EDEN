@@ -101,7 +101,27 @@ public static class EnemyBossAncientForestBuilder
         valid &= ValidateCount<CharacterHealth>(prefab, 1);
         valid &= ValidateCount<MiniBossMarker>(prefab, 1);
         valid &= prefab.transform.Find("ProjectileSpawnPoint") != null;
-        valid &= prefab.GetComponentInChildren<EnemyAnimationEventRelay>(true) != null;
+
+        Animator[] animators = prefab.GetComponentsInChildren<Animator>(true);
+        valid &= animators.Length == 1;
+        if (animators.Length != 1)
+        {
+            Debug.LogError($"[AncientForestBoss] Validation: expected exactly 1 Animator, found {animators.Length}.");
+        }
+        else
+        {
+            Transform modelRoot = FindModelAnimationRoot(prefab.transform);
+            valid &= modelRoot != null && animators[0].transform == modelRoot;
+            valid &= animators[0].runtimeAnimatorController == controller;
+            valid &= animators[0].GetComponent<EnemyAnimationEventRelay>() != null;
+
+            if (modelRoot == null || animators[0].transform != modelRoot)
+            {
+                Debug.LogError(
+                    "[AncientForestBoss] Validation: Animator is not on the common parent of Hips and U3DMesh.");
+            }
+        }
+
         valid &= data != null && data.attackPatterns != null && data.attackPatterns.Count == 5;
         valid &= data != null && data.enemyPrefab == prefab;
 
@@ -180,7 +200,7 @@ public static class EnemyBossAncientForestBuilder
             .GroupBy(clip => clip.name, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 
-        string[] required = { "Idle", "Walk", "Run", "Attack", "Attack2", "HeadButt", "TailWhip", "Roar" };
+        string[] required = { "Idle", "Walk", "Run", "Attack", "Attack2", "HeadButt", "TailWhip", "Roar", "Fall" };
         foreach (string name in required)
         {
             if (!embedded.ContainsKey(name))
@@ -207,7 +227,7 @@ public static class EnemyBossAncientForestBuilder
             TailWhip = CopyAttackClip(embedded["TailWhip"], "AncientForest_TailWhip", 0.08f, 0.54f, 0.93f),
             Roar = CopyAttackClip(embedded["Roar"], "AncientForest_PoisonRoar", 0.08f, 0.58f, 0.92f),
             Hit = CopyClip(idle2, "AncientForest_Hit", false),
-            Death = CopyClip(idle2, "AncientForest_Death", false),
+            Death = CopyClip(embedded["Fall"], "AncientForest_Death", false),
         };
     }
 
@@ -450,7 +470,7 @@ public static class EnemyBossAncientForestBuilder
                 new Vector3(0f, 1.25f, -2.4f), 6f, 0.28f),
             UpsertPattern(
                 "PoisonRoar", "atk_ancient_forest_poison_roar", "Poison Roar", "Roar",
-                EnemyAttackRangeType.ProjectileAOE, 5f, 16f, 2.05f,
+                EnemyAttackRangeType.ProjectileAOE, 6f, 10f, 2.05f,
                 clips.Roar, 0.58f, 0.16f, 1.2f, 34f,
                 EnemyAttackHitbox.HitShape.Sphere, Vector3.one,
                 Vector3.zero, 3f, 0.2f),
@@ -553,7 +573,7 @@ public static class EnemyBossAncientForestBuilder
         so.FindProperty("sightAngle").floatValue = 140f;
         so.FindProperty("hearingRange").floatValue = 14f;
         so.FindProperty("aggroKeepRange").floatValue = 40f;
-        so.FindProperty("attackRange").floatValue = 16f;
+        so.FindProperty("attackRange").floatValue = 5.5f;
         so.FindProperty("attackCooldown").floatValue = 2f;
         so.FindProperty("expReward").intValue = 260;
         so.FindProperty("goldMin").intValue = 90;
@@ -589,16 +609,40 @@ public static class EnemyBossAncientForestBuilder
             Bounds localBounds = CalculateLocalRendererBounds(root);
             Bounds worldBounds = CalculateWorldRendererBounds(root);
 
-            Animator animator = root.GetComponentInChildren<Animator>(true);
-            if (animator == null) animator = Ensure<Animator>(root);
+            // The copied clips are bound to paths beginning at Hips/U3DMesh.
+            // Therefore the Animator must live on their common parent (the visual/model root),
+            // not on the outer AI root. An Animator on the wrong level can receive triggers
+            // and still deal timed damage while the dinosaur appears frozen.
+            Transform modelRoot = FindModelAnimationRoot(root.transform);
+            if (modelRoot == null)
+            {
+                Debug.LogError(
+                    "[AncientForestBoss] Could not find the model root containing both Hips and U3DMesh. " +
+                    "The prefab hierarchy must keep those model nodes under one common parent.");
+                return null;
+            }
+
+            RemoveAnimatorsOutsideModelRoot(root, modelRoot);
+            Animator animator = Ensure<Animator>(modelRoot.gameObject);
             animator.runtimeAnimatorController = controller;
             animator.applyRootMotion = false;
-            animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+            animator.updateMode = AnimatorUpdateMode.Normal;
+            // Boss attack events must continue even when the renderer is briefly outside camera view.
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
 
             Avatar sourceAvatar = AssetDatabase.LoadAllAssetsAtPath(SourceModelPath)
                 .OfType<Avatar>()
                 .FirstOrDefault();
-            if (sourceAvatar != null) animator.avatar = sourceAvatar;
+            if (sourceAvatar != null)
+            {
+                animator.avatar = sourceAvatar;
+            }
+            else
+            {
+                Debug.LogWarning(
+                    $"[AncientForestBoss] No Avatar was found in {SourceModelPath}. " +
+                    "Animations may not bind correctly.");
+            }
 
             BoxCollider body = Ensure<BoxCollider>(root);
             body.isTrigger = false;
@@ -627,6 +671,15 @@ public static class EnemyBossAncientForestBuilder
             CharacterKnockback knockback = Ensure<CharacterKnockback>(root);
             EnemySensor sensor = Ensure<EnemySensor>(root);
             EnemyAIController ai = Ensure<EnemyAIController>(root);
+            AncientForestBossBehaviour bossBehaviour = Ensure<AncientForestBossBehaviour>(root);
+
+            SerializedObject behaviourSo = new SerializedObject(bossBehaviour);
+            SetObjectReferenceIfPresent(behaviourSo, "visualRoot", modelRoot);
+            SetFloatIfPresent(behaviourSo, "visualYawOffset", 90f);
+            SetFloatIfPresent(behaviourSo, "fallbackMeleeRange", 5.5f);
+            behaviourSo.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(bossBehaviour);
+
             LootDropSpawner loot = Ensure<LootDropSpawner>(root);
             loot.ConfigureFromEnemyData(data);
             DissolveOnDeath dissolve = Ensure<DissolveOnDeath>(root);
@@ -704,6 +757,8 @@ public static class EnemyBossAncientForestBuilder
             aiSo.FindProperty("animator").objectReferenceValue = animator;
             aiSo.FindProperty("attackHitbox").objectReferenceValue = attackHitbox;
             aiSo.FindProperty("projectileShooter").objectReferenceValue = shooter;
+            SetObjectReferenceIfPresent(aiSo, "bossBehaviour", bossBehaviour);
+            SetFloatIfPresent(aiSo, "modelYawOffset", 0f);
             aiSo.FindProperty("flipForward180").boolValue = false;
             aiSo.FindProperty("useHitAnimation").boolValue = true;
             aiSo.FindProperty("hitStunDuration").floatValue = 0.12f;
@@ -717,10 +772,12 @@ public static class EnemyBossAncientForestBuilder
             aiSo.FindProperty("chaseDestinationInterval").floatValue = 0.08f;
             aiSo.ApplyModifiedPropertiesWithoutUndo();
 
+            RemoveRelaysOutsideAnimator(root, animator);
             EnemyAnimationEventRelay relay = Ensure<EnemyAnimationEventRelay>(animator.gameObject);
             SerializedObject relaySo = new SerializedObject(relay);
             relaySo.FindProperty("aiOwner").objectReferenceValue = ai;
             relaySo.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(relay);
 
             SerializedObject dissolveSo = new SerializedObject(dissolve);
             dissolveSo.FindProperty("characterHealth").objectReferenceValue = health;
@@ -757,12 +814,12 @@ public static class EnemyBossAncientForestBuilder
             Vector3 min = bounds.min;
             Vector3 max = bounds.max;
             for (int x = 0; x < 2; x++)
-            for (int y = 0; y < 2; y++)
-            for (int z = 0; z < 2; z++)
-            {
-                Vector3 corner = new Vector3(x == 0 ? min.x : max.x, y == 0 ? min.y : max.y, z == 0 ? min.z : max.z);
-                local.Encapsulate(root.transform.InverseTransformPoint(corner));
-            }
+                for (int y = 0; y < 2; y++)
+                    for (int z = 0; z < 2; z++)
+                    {
+                        Vector3 corner = new Vector3(x == 0 ? min.x : max.x, y == 0 ? min.y : max.y, z == 0 ? min.z : max.z);
+                        local.Encapsulate(root.transform.InverseTransformPoint(corner));
+                    }
         }
 
         return local;
@@ -788,6 +845,107 @@ public static class EnemyBossAncientForestBuilder
         }
 
         return null;
+    }
+
+    static Transform FindModelAnimationRoot(Transform root)
+    {
+        Transform hips = FindTransformByExactName(root, "Hips");
+        Transform mesh = FindTransformByExactName(root, "U3DMesh");
+
+        if (hips == null || mesh == null)
+        {
+            return null;
+        }
+
+        Transform common = FindCommonAncestor(hips, mesh);
+        return common != root ? common : null;
+    }
+
+    static Transform FindTransformByExactName(Transform root, string exactName)
+    {
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (string.Equals(child.name, exactName, StringComparison.OrdinalIgnoreCase))
+            {
+                return child;
+            }
+        }
+
+        return null;
+    }
+
+    static Transform FindCommonAncestor(Transform a, Transform b)
+    {
+        if (a == null || b == null)
+        {
+            return null;
+        }
+
+        HashSet<Transform> ancestors = new HashSet<Transform>();
+        for (Transform current = a; current != null; current = current.parent)
+        {
+            ancestors.Add(current);
+        }
+
+        for (Transform current = b; current != null; current = current.parent)
+        {
+            if (ancestors.Contains(current))
+            {
+                return current;
+            }
+        }
+
+        return null;
+    }
+
+    static void RemoveAnimatorsOutsideModelRoot(GameObject root, Transform modelRoot)
+    {
+        Animator[] animators = root.GetComponentsInChildren<Animator>(true);
+        foreach (Animator existing in animators)
+        {
+            if (existing != null && existing.transform != modelRoot)
+            {
+                UnityEngine.Object.DestroyImmediate(existing);
+            }
+        }
+    }
+
+    static void RemoveRelaysOutsideAnimator(GameObject root, Animator animator)
+    {
+        EnemyAnimationEventRelay[] relays =
+            root.GetComponentsInChildren<EnemyAnimationEventRelay>(true);
+
+        foreach (EnemyAnimationEventRelay existing in relays)
+        {
+            if (existing != null && existing.gameObject != animator.gameObject)
+            {
+                UnityEngine.Object.DestroyImmediate(existing);
+            }
+        }
+    }
+
+    static void SetObjectReferenceIfPresent(
+        SerializedObject serializedObject,
+        string propertyName,
+        UnityEngine.Object value)
+    {
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property != null)
+        {
+            property.objectReferenceValue = value;
+        }
+    }
+
+    static void SetFloatIfPresent(
+        SerializedObject serializedObject,
+        string propertyName,
+        float value)
+    {
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property != null)
+        {
+            property.floatValue = value;
+        }
     }
 
     static Transform EnsureChild(Transform parent, string name)

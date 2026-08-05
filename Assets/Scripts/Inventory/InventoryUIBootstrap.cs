@@ -15,15 +15,10 @@ public class InventoryUIBootstrap : MonoBehaviour
         InventoryToggleController existing = FindFirstObjectByType<InventoryToggleController>(FindObjectsInactive.Include);
         if (existing != null)
         {
-            if (logDiagnostics)
-            {
-                Debug.Log($"[InventoryUIBootstrap] OK — toggle on '{existing.gameObject.name}'.");
-            }
 
             return;
         }
 
         InventoryToggleController created = gameObject.AddComponent<InventoryToggleController>();
-        Debug.LogWarning("[InventoryUIBootstrap] Không tìm thấy InventoryToggleController — đã tạo trên Menu_Canvas.");
     }
 }

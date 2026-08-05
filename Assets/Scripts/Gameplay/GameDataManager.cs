@@ -414,7 +414,6 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetInt(HasSaveKey, 1);
         MarkPlayerPrefsDirty();
 
-        Debug.Log($"[GameDataManager] Saved inventory ({data.entries.Count} entries).");
     }
 
     public Dictionary<string, int> LoadInventory()
@@ -528,7 +527,6 @@ public class GameDataManager : MonoBehaviour
         SaveAllScenePositionsToPrefs();
         MarkPlayerPrefsDirty();
 
-        // Debug.Log($"[GameDataManager] Save position scene={sceneName}, pos={position}");
     }
 
     private void SaveAllScenePositionsToPrefs()
@@ -547,7 +545,6 @@ public class GameDataManager : MonoBehaviour
         string json = JsonUtility.ToJson(data);
         PlayerPrefs.SetString(ScenePositionsJsonKey, json);
 
-        // Debug.Log($"[GameDataManager] Saved scene positions json: {json}");
     }
 
     private void LoadAllScenePositionsFromPrefs()
@@ -579,7 +576,6 @@ public class GameDataManager : MonoBehaviour
 
         SyncPosToLists();
 
-        Debug.Log($"[GameDataManager] Loaded {scenePositions.Count} scene positions from save.");
     }
 
     public void SaveLastPlayerTransform(string sceneName, Transform playerTransform)
@@ -594,7 +590,6 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetFloat(LastRotYKey, rotY);
         MarkPlayerPrefsDirty();
 
-        // Debug.Log($"[GameDataManager] Save transform scene={sceneName}, pos={pos}, rotY={rotY}");
     }
 
     public bool TryGetScenePosition(string sceneName, out Vector3 position)
@@ -680,7 +675,6 @@ public class GameDataManager : MonoBehaviour
         MarkPlayerPrefsDirty();
         FlushPlayerPrefs();
 
-        Debug.Log("[GameDataManager] Delete save data.");
     }
 
     private void SavePersistentData()

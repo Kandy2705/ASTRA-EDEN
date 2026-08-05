@@ -15,6 +15,10 @@ public sealed class EnemyProjectileShooter : MonoBehaviour
     [SerializeField, Min(0.1f)] private float maxTravelDistance = 18f;
     [SerializeField, Min(0.05f)] private float projectileRadius = 0.18f;
 
+    [Header("Target Aiming")]
+    [Tooltip("Độ cao ngắm vào player khi không có CharacterController (fallback).")]
+    [SerializeField, Min(0f)] private float targetHeightOffset = 0.9f;
+
     [Header("Player Knockback")]
     [SerializeField, Min(0f)] private float knockbackDistance = 4f;
     [SerializeField, Min(0.01f)] private float knockbackDuration = 0.22f;
@@ -22,7 +26,13 @@ public sealed class EnemyProjectileShooter : MonoBehaviour
 
     public bool CanFire => projectilePrefab != null;
 
+    /// <summary>Giữ nguyên API cũ — bắn theo hướng forward, không ngắm target.</summary>
     public bool Fire(float damage)
+    {
+        return Fire(damage, null);
+    }
+
+    public bool Fire(float damage, Transform target)
     {
         if (projectilePrefab == null)
         {
@@ -30,18 +40,48 @@ public sealed class EnemyProjectileShooter : MonoBehaviour
             return false;
         }
 
-        Vector3 direction = useNegativeForward ? -transform.forward : transform.forward;
-        direction.y = 0f;
-        if (direction.sqrMagnitude <= 0.001f)
-        {
-            return false;
-        }
-
-        direction.Normalize();
+        Vector3 fallbackForward =
+            useNegativeForward ? -transform.forward : transform.forward;
 
         Vector3 position = spawnPoint != null
             ? spawnPoint.position
             : transform.TransformPoint(localSpawnOffset);
+
+        Vector3 aimPoint;
+
+        if (target != null)
+        {
+            CharacterController characterController =
+                target.GetComponent<CharacterController>();
+            if (characterController == null)
+            {
+                characterController =
+                    target.GetComponentInParent<CharacterController>();
+            }
+
+            if (characterController != null)
+            {
+                aimPoint = characterController.bounds.center;
+            }
+            else
+            {
+                aimPoint = target.position + Vector3.up * targetHeightOffset;
+            }
+        }
+        else
+        {
+            aimPoint = position + fallbackForward * maxTravelDistance;
+        }
+
+        Vector3 direction = aimPoint - position;
+        if (direction.sqrMagnitude <= 0.001f)
+        {
+            direction = fallbackForward;
+        }
+
+        direction.Normalize();
+
+        // Đẩy điểm spawn ra trước theo đúng hướng bắn.
         position += direction * spawnForwardOffset;
 
         GameObject projectileObject = Instantiate(

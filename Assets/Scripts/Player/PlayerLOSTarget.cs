@@ -53,7 +53,6 @@ public sealed class PlayerLOSTarget : MonoBehaviour
                 capsule.height = 1.8f;
                 capsule.radius = 0.35f;
                 capsule.center = new Vector3(0f, 0.9f, 0f);
-                Debug.LogWarning("[PlayerLOSTarget] Added CapsuleCollider trigger for LOSTarget.", this);
             }
 
             // CharacterController alone: LOSTarget RequireComponent(Collider) may fail at edit time.
