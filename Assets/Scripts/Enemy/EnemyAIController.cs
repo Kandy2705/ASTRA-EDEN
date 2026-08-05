@@ -34,6 +34,10 @@ public class EnemyAIController : MonoBehaviour
     static readonly int HorizontalHash = Animator.StringToHash("Horizontal");
     static readonly int VerticalHash = Animator.StringToHash("Vertical");
     static readonly int AttackHash = Animator.StringToHash("Attack");
+    static readonly int Attack2Hash = Animator.StringToHash("Attack2");
+    static readonly int HeadButtHash = Animator.StringToHash("HeadButt");
+    static readonly int TailWhipHash = Animator.StringToHash("TailWhip");
+    static readonly int RoarHash = Animator.StringToHash("Roar");
     static readonly int HitHash = Animator.StringToHash("Hit");
     static readonly int StaggerHash = Animator.StringToHash("Stagger");
     static readonly int DieHash = Animator.StringToHash("Die");
@@ -410,6 +414,31 @@ public class EnemyAIController : MonoBehaviour
         attackHitbox = GetComponentInChildren<EnemyAttackHitbox>();
         projectileShooter = GetComponent<EnemyProjectileShooter>();
         bossBehaviour = GetComponent<EnemyBossBehaviour>();
+    }
+
+    void ResetAllAttackTriggers()
+    {
+        if (animator == null)
+        {
+            return;
+        }
+
+        int[] hashes =
+        {
+            AttackHash,
+            Attack2Hash,
+            HeadButtHash,
+            TailWhipHash,
+            RoarHash
+        };
+
+        foreach (int hash in hashes)
+        {
+            if (HasParam(hash, AnimatorControllerParameterType.Trigger))
+            {
+                animator.ResetTrigger(hash);
+            }
+        }
     }
 
     /// Registry cho các hệ thống cần duyệt enemy đang sống (minimap markers, v.v.).
@@ -2383,12 +2412,33 @@ public class EnemyAIController : MonoBehaviour
             int requestedHash = string.IsNullOrWhiteSpace(requestedTrigger)
                 ? AttackHash
                 : Animator.StringToHash(requestedTrigger);
-            currentAttackTriggerHash =
-                HasParam(requestedHash, AnimatorControllerParameterType.Trigger)
-                    ? requestedHash
-                    : AttackHash;
-            animator.ResetTrigger(currentAttackTriggerHash);
+
+            bool triggerExists =
+                HasParam(requestedHash, AnimatorControllerParameterType.Trigger);
+
+            if (!triggerExists)
+            {
+                Debug.LogError(
+                    $"[AI:{name}] Animator '{animator.name}' không có Trigger " +
+                    $"'{requestedTrigger}'. Controller=" +
+                    $"{animator.runtimeAnimatorController?.name}",
+                    this);
+
+                currentAttackTriggerHash = AttackHash;
+            }
+            else
+            {
+                currentAttackTriggerHash = requestedHash;
+            }
+
+            ResetAllAttackTriggers();
             animator.SetTrigger(currentAttackTriggerHash);
+
+            Debug.Log(
+                $"[AI:{name}] Animator trigger='{requestedTrigger}' " +
+                $"exists={triggerExists} actualHash={currentAttackTriggerHash} " +
+                $"controller={animator.runtimeAnimatorController?.name}",
+                this);
         }
         if (debugLogStateMachine)
         {
