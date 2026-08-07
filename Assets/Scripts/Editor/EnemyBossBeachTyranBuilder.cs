@@ -336,8 +336,10 @@ public static class EnemyBossBeachTyranBuilder
         // Multi-ray FOV (eoger-style). Mesh off by default — bật Generate Vision Mesh trên Inspector để debug.
         sensorSo.FindProperty("useMultiRayFov").boolValue = true;
         sensorSo.FindProperty("generateVisionMesh").boolValue = false;
-        // Obstacle: Default + Environment-ish; không ray-block bởi trigger.
-        // Giữ mask rộng; Player sẽ pass vì hit gần target vẫn count as clear.
+        // Obstacle: only real blockers + Player target; avoid boss/VFX/UI/helper layers blocking passive detection.
+        sensorSo.FindProperty("obstacleMask").intValue = LayerMask.GetMask("Default", "Ground", "Player");
+        // Boss should still aggro by sound if tiny decorative colliders obscure the sight ray.
+        sensorSo.FindProperty("hearingRequiresLineOfSight").boolValue = false;
         sensorSo.ApplyModifiedPropertiesWithoutUndo();
 
         // Ensure LoS component exists when multi-ray is on.
