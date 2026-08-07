@@ -782,7 +782,7 @@ public static class EnemyBossAncientForestBuilder
             SerializedObject dissolveSo = new SerializedObject(dissolve);
             dissolveSo.FindProperty("characterHealth").objectReferenceValue = health;
             dissolveSo.FindProperty("startDelay").floatValue = 2.5f;
-            dissolveSo.FindProperty("dissolveDuration").floatValue = 2f;
+            dissolveSo.FindProperty("dissolveDuration").floatValue = 2.14f;
             dissolveSo.ApplyModifiedPropertiesWithoutUndo();
 
             float hudY = localBounds.max.y + Mathf.Max(0.35f, localBounds.size.y * 0.12f);
