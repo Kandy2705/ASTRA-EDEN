@@ -352,6 +352,11 @@ public class MiniBossMarker : MonoBehaviour
         renderer.lightProbeUsage = LightProbeUsage.Off;
         renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
 
+        // Camera cần bị chặn bởi tường arena, nếu không sẽ nhìn xuyên qua
+        // khi camera boss (distance 7m) bị đẩy ra ngoài bán kính arena (14m).
+        MeshCollider barrierCollider = arenaBarrier.AddComponent<MeshCollider>();
+        barrierCollider.sharedMesh = arenaBarrierMesh;
+
         arenaBarrierFade = 0f;
         ApplyArenaBarrierColor(0f);
     }

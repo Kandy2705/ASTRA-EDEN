@@ -424,7 +424,7 @@ MonoBehaviour:
   arenaEngageDistance: 15.5
   arenaMaxVerticalDifference: 2.5
   showArenaBarrier: 1
-  arenaBarrierHeight: 4.5
+  arenaBarrierHeight: 12
   arenaBarrierSegments: 64
   arenaBarrierColor: {r: 0.2, g: 0.82, b: 1, a: 0.22}
   arenaBarrierPulseAmount: 0.055

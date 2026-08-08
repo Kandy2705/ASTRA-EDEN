@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 522865151b6464a4197723415a28bd6d
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: orochix_d
+    second: {fileID: 2100000, guid: e0b3d4fd73e184a03af2d1ebda218746, type: 2}
+  - first:
+      type: UnityEngine:Texture
+      assembly: UnityEngine.CoreModule
+      name: orochix_d
+    second: {fileID: 2800000, guid: dda9285f245d8417ebb0cb297b8605bd, type: 3}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: cc45016b844e7624dae3aec10fb443ea, type: 3}
+  reverseAxis: 0
+  renderPipeline: 0

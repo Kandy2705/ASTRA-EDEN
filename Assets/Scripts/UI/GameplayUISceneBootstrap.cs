@@ -2,6 +2,7 @@ using System.Collections;
 using System.Globalization;
 using TMPro;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -37,6 +38,9 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     private PopupTween deathRecoveryNoticeTween;
     private Coroutine deathRecoveryNoticeRoutine;
     private InteractPromptUI interactPromptUI;
+
+    private const float DebugBossTeleportDistance = 10f;
+    private const float DebugBossTeleportNavMeshRadius = 5f;
 
     private void Awake()
     {
@@ -278,7 +282,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         RectTransform panelRect = CreateUiObject(
             "PlayerDebugPanel",
             canvasTransform,
-            new Vector2(460f, 450f),
+            new Vector2(460f, 600f),
             Vector2.zero);
         playerDebugPanel = panelRect.gameObject;
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -295,7 +299,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "PLAYER DEBUG",
-            new Vector2(0f, 132f),
+            new Vector2(0f, 218f),
             new Vector2(360f, 42f),
             26f,
             new Color(1f, 0.78f, 0.3f, 1f),
@@ -305,7 +309,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             panelRect,
             "Button_CloseDebug",
             "×",
-            new Vector2(202f, 137f),
+            new Vector2(202f, 223f),
             new Vector2(40f, 40f),
             new Color(0.34f, 0.12f, 0.1f, 1f));
         closeButton.onClick.AddListener(ClosePlayerDebugPanel);
@@ -313,7 +317,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "Damage của Player",
-            new Vector2(-112f, 76f),
+            new Vector2(-112f, 154f),
             new Vector2(200f, 34f),
             20f,
             Color.white,
@@ -321,14 +325,14 @@ public class GameplayUISceneBootstrap : MonoBehaviour
 
         damageInput = CreateDamageInput(
             panelRect,
-            new Vector2(43f, 76f),
+            new Vector2(43f, 154f),
             new Vector2(120f, 42f));
 
         Button applyDamageButton = CreateButton(
             panelRect,
             "Button_ApplyDamage",
             "SET DAMAGE",
-            new Vector2(148f, 76f),
+            new Vector2(148f, 154f),
             new Vector2(120f, 42f),
             new Color(0.18f, 0.38f, 0.46f, 1f));
         applyDamageButton.onClick.AddListener(ApplyPlayerDamageValue);
@@ -336,7 +340,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "Máu của Player",
-            new Vector2(0f, 22f),
+            new Vector2(0f, 100f),
             new Vector2(390f, 34f),
             20f,
             Color.white,
@@ -346,7 +350,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             panelRect,
             "Button_DebugFullHealth",
             "MÁU ĐẦY",
-            new Vector2(-102f, -28f),
+            new Vector2(-102f, 50f),
             new Vector2(180f, 46f),
             new Color(0.12f, 0.42f, 0.24f, 1f));
         fullHealthButton.onClick.AddListener(SetPlayerFullHealth);
@@ -355,7 +359,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             panelRect,
             "Button_DebugLowHealth",
             "SẮP HẾT MÁU",
-            new Vector2(102f, -28f),
+            new Vector2(102f, 50f),
             new Vector2(180f, 46f),
             new Color(0.52f, 0.18f, 0.12f, 1f));
         lowHealthButton.onClick.AddListener(SetPlayerLowHealth);
@@ -363,7 +367,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "Tốc độ thời gian",
-            new Vector2(-138f, -92f),
+            new Vector2(-138f, -14f),
             new Vector2(190f, 26f),
             16f,
             Color.white,
@@ -372,7 +376,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         timeSpeedSlider = CreateSlider(
             panelRect,
             "Slider_TimeSpeed",
-            new Vector2(32f, -92f),
+            new Vector2(32f, -14f),
             new Vector2(216f, 24f),
             1f,
             120f,
@@ -382,7 +386,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         timeSpeedValueText = CreateLabel(
             panelRect,
             "1x",
-            new Vector2(188f, -92f),
+            new Vector2(188f, -14f),
             new Vector2(70f, 24f),
             16f,
             new Color(1f, 0.78f, 0.3f, 1f),
@@ -392,15 +396,42 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             panelRect,
             "Button_ResetNote",
             "RESET NHẶC GIẤY",
-            new Vector2(0f, -126f),
+            new Vector2(0f, -62f),
             new Vector2(320f, 36f),
             new Color(0.38f, 0.24f, 0.52f, 1f));
         resetNoteButton.onClick.AddListener(ResetAncientNoteProgress);
 
+        CreateLabel(
+            panelRect,
+            "DỊCH CHUYỂN TEST BOSS",
+            new Vector2(0f, -112f),
+            new Vector2(390f, 28f),
+            17f,
+            new Color(1f, 0.78f, 0.3f, 1f),
+            TextAlignmentOptions.Center);
+
+        Button teleportBoss1Button = CreateButton(
+            panelRect,
+            "Button_TeleportBoss1",
+            "TỚI BOSS 1",
+            new Vector2(-102f, -158f),
+            new Vector2(180f, 42f),
+            new Color(0.18f, 0.35f, 0.52f, 1f));
+        teleportBoss1Button.onClick.AddListener(TeleportNearBoss1);
+
+        Button teleportBoss2Button = CreateButton(
+            panelRect,
+            "Button_TeleportBoss2",
+            "TỚI BOSS 2",
+            new Vector2(102f, -158f),
+            new Vector2(180f, 42f),
+            new Color(0.4f, 0.2f, 0.5f, 1f));
+        teleportBoss2Button.onClick.AddListener(TeleportNearBoss2);
+
         debugStatusText = CreateLabel(
             panelRect,
             "Đang tìm Player...",
-            new Vector2(0f, -172f),
+            new Vector2(0f, -210f),
             new Vector2(410f, 44f),
             18f,
             new Color(0.82f, 0.9f, 0.94f, 1f),
@@ -409,7 +440,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "Bấm lại icon mặt trời để đóng",
-            new Vector2(0f, -210f),
+            new Vector2(0f, -252f),
             new Vector2(410f, 28f),
             15f,
             new Color(0.62f, 0.68f, 0.72f, 1f),
@@ -595,6 +626,108 @@ public class GameplayUISceneBootstrap : MonoBehaviour
 
         GameDataManager.Instance.ResetAncientNoteProgressForDemo();
         SetDebugMessage("Đã reset — hạ boss Ancient Forest lại thì F mới nhả giấy.");
+    }
+
+    private void TeleportNearBoss1()
+    {
+        TeleportNearBoss<BeachTyranBossBehaviour>("Boss 1 - Beach Tyran");
+    }
+
+    private void TeleportNearBoss2()
+    {
+        TeleportNearBoss<AncientForestBossBehaviour>("Boss 2 - Ancient Forest");
+    }
+
+    private void TeleportNearBoss<TBoss>(string bossLabel) where TBoss : Component
+    {
+        ResolveDebugPlayer();
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            SetDebugMessage("Không tìm thấy Player.");
+            return;
+        }
+
+        TBoss boss = FindLivingBoss<TBoss>();
+        if (boss == null)
+        {
+            SetDebugMessage($"{bossLabel} chưa spawn hoặc đã bị hạ.");
+            return;
+        }
+
+        Vector3 destination = FindSafeBossTeleportPosition(boss.transform);
+        CharacterController controller = player.GetComponent<CharacterController>();
+        if (controller != null)
+        {
+            controller.enabled = false;
+        }
+
+        player.transform.position = destination;
+        Vector3 lookDirection = boss.transform.position - destination;
+        lookDirection.y = 0f;
+        if (lookDirection.sqrMagnitude > 0.001f)
+        {
+            player.transform.rotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+        }
+
+        if (controller != null)
+        {
+            controller.enabled = true;
+        }
+
+        SetDebugMessage($"Đã dịch chuyển gần {bossLabel}.");
+    }
+
+    private static TBoss FindLivingBoss<TBoss>() where TBoss : Component
+    {
+        TBoss[] bosses = FindObjectsByType<TBoss>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < bosses.Length; i++)
+        {
+            TBoss boss = bosses[i];
+            if (boss == null || !boss.gameObject.activeInHierarchy)
+            {
+                continue;
+            }
+
+            CharacterHealth health = boss.GetComponentInParent<CharacterHealth>();
+            if (health == null || !health.IsDead)
+            {
+                return boss;
+            }
+        }
+
+        return null;
+    }
+
+    private static Vector3 FindSafeBossTeleportPosition(Transform boss)
+    {
+        Vector3 bossPosition = boss.position;
+        Vector3 forward = Vector3.ProjectOnPlane(boss.forward, Vector3.up).normalized;
+        if (forward.sqrMagnitude < 0.01f)
+        {
+            forward = Vector3.forward;
+        }
+
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+        Vector3[] directions = { -forward, right, -right, forward };
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector3 candidate = bossPosition + directions[i] * DebugBossTeleportDistance;
+            if (NavMesh.SamplePosition(
+                    candidate,
+                    out NavMeshHit hit,
+                    DebugBossTeleportNavMeshRadius,
+                    NavMesh.AllAreas))
+            {
+                return hit.position + Vector3.up * 0.08f;
+            }
+        }
+
+        // Fallback cho trường hợp NavMesh chưa bake: vẫn đặt cách boss an toàn,
+        // tránh dịch thẳng vào collider hoặc ngay dưới mặt đất.
+        return bossPosition - forward * DebugBossTeleportDistance + Vector3.up * 0.5f;
     }
 
     private void OnTimeSpeedChanged(float multiplier)
