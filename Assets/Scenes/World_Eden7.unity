@@ -3105,7 +3105,7 @@ MonoBehaviour:
   ancientMapItem2: {fileID: 11400000, guid: a39561c3cd9540a0a4710fbe47a8cb82, type: 2}
   noteUiPrefab: {fileID: 5381400642266364740, guid: 5088545c969c4ae988055540d010d380, type: 3}
   floatingTreeClueImage: {fileID: 21300000, guid: 58c7a20fb69943318fe59099bdafd046, type: 3}
-  mapImage: {fileID: 21300000, guid: 3d7f244bf402346e8962c244e991a490, type: 3}
+  mapImage: {fileID: 21300000, guid: b78b91cd33564c2fba3584e928f66a46, type: 3}
   openSfx: {fileID: 8300000, guid: bcdcd887275a14f5492b29a5c7be4122, type: 3}
   secondOpenSfx: {fileID: 8300000, guid: 71648780f6c3f4248a9891aec161486c, type: 3}
   nextDestination: {fileID: 0}

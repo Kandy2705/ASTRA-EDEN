@@ -19,6 +19,9 @@ public class PlayerInventoryService : MonoBehaviour
 
     private bool hasLoadedFromSave;
     private bool ensuringCollectedDocuments;
+    // Không được làm rơi các entry chỉ vì scene hiện tại chưa đăng ký đủ ItemData.
+    // Các entry này sẽ được giữ nguyên trong PlayerPrefs và thử resolve lại sau.
+    private readonly Dictionary<string, int> unresolvedSavedItems = new Dictionary<string, int>();
 
     public static PlayerInventoryService FindForPlayer()
     {
@@ -61,12 +64,20 @@ public class PlayerInventoryService : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-        SaveToGameData();
+        if (hasLoadedFromSave)
+        {
+            SaveToGameData();
+        }
     }
 
     private void OnDestroy()
     {
-        SaveToGameData();
+        // Có thể bị destroy khi chuyển scene trước Start. Khi đó `items` vẫn rỗng
+        // nhưng save thật có dữ liệu; tuyệt đối không ghi rỗng đè lên save.
+        if (hasLoadedFromSave)
+        {
+            SaveToGameData();
+        }
     }
 
     public void LoadFromGameData()
@@ -78,6 +89,7 @@ public class PlayerInventoryService : MonoBehaviour
 
         Dictionary<string, int> data = GameDataManager.Instance.LoadInventory();
         items.Clear();
+        unresolvedSavedItems.Clear();
 
         int loadedCount = 0;
         int missingCount = 0;
@@ -93,12 +105,21 @@ public class PlayerInventoryService : MonoBehaviour
             else
             {
                 missingCount++;
+                unresolvedSavedItems[kvp.Key] = kvp.Value;
             }
         }
 
         // Gold nguồn sự thật = inventory item. Migrate legacy ASTRA_CURRENCY → stack gold một lần.
         MigrateLegacyCurrencyIntoGoldStacks();
         SyncCurrencyMirrorToGameData();
+
+        if (missingCount > 0)
+        {
+            Debug.LogWarning(
+                $"[Inventory] Giữ lại {missingCount} item save chưa resolve được; " +
+                "sẽ không ghi đè chúng khi Item Database của scene chưa đầy đủ.",
+                this);
+        }
 
         OnInventoryChanged?.Invoke();
     }
@@ -110,11 +131,36 @@ public class PlayerInventoryService : MonoBehaviour
             return;
         }
 
+        if (!hasLoadedFromSave)
+        {
+            // Bảo hiểm cho object bị gọi Save trước Start: nếu save có item rồi,
+            // không cho list runtime mặc định/rỗng phá dữ liệu cũ.
+            if (GameDataManager.Instance.LoadInventory().Count > 0)
+            {
+                Debug.LogWarning(
+                    "[Inventory] Bỏ qua Save trước khi LoadFromGameData để bảo vệ save hiện có.",
+                    this);
+                return;
+            }
+        }
+
+        TryResolveDeferredSavedItems();
+
         Dictionary<string, int> data = new Dictionary<string, int>();
         foreach (var stack in items)
         {
             if (stack?.itemData == null || string.IsNullOrEmpty(stack.itemData.itemId)) continue;
             data[stack.itemData.itemId] = stack.quantity;
+        }
+
+        // Giữ lại item của save mà scene hiện tại chưa có ItemData để resolve.
+        // Không có đoạn này, một lần mở scene thiếu registry có thể xóa cả inventory.
+        foreach (KeyValuePair<string, int> unresolved in unresolvedSavedItems)
+        {
+            if (!data.ContainsKey(unresolved.Key))
+            {
+                data[unresolved.Key] = unresolved.Value;
+            }
         }
 
         GameDataManager.Instance.SaveInventory(data);
@@ -162,7 +208,15 @@ public class PlayerInventoryService : MonoBehaviour
             return;
         }
 
-        GameDataManager.Instance.SetCurrencyMirror(GetGoldQuantity());
+        ItemData gold = ResolveGoldItem();
+        if (gold == null)
+        {
+            // Khi registry chưa sẵn sàng, GetGoldQuantity() trả 0. Không được
+            // dùng số 0 tạm đó để ghi đè ASTRA_CURRENCY thật.
+            return;
+        }
+
+        GameDataManager.Instance.SetCurrencyMirror(GetQuantity(gold));
     }
 
     public bool AddItem(ItemData itemData, int amount)
@@ -388,6 +442,8 @@ public class PlayerInventoryService : MonoBehaviour
         ensuringCollectedDocuments = true;
         try
         {
+            TryResolveDeferredSavedItems();
+
             if (GameDataManager.Instance.IsAncientNoteCollected)
             {
                 RestoreCollectedDocument(AncientMapProgression.ResolveMapItem());
@@ -402,6 +458,49 @@ public class PlayerInventoryService : MonoBehaviour
         {
             ensuringCollectedDocuments = false;
         }
+    }
+
+    private void TryResolveDeferredSavedItems()
+    {
+        if (GameDataManager.Instance == null || unresolvedSavedItems.Count == 0)
+        {
+            return;
+        }
+
+        List<string> resolvedIds = null;
+        foreach (KeyValuePair<string, int> pending in unresolvedSavedItems)
+        {
+            ItemData item = GameDataManager.Instance.ResolveItem(pending.Key);
+            if (item == null)
+            {
+                continue;
+            }
+
+            InventoryItemStack stack = FindStack(item);
+            if (stack != null)
+            {
+                stack.quantity += pending.Value;
+            }
+            else
+            {
+                items.Add(new InventoryItemStack(item, pending.Value));
+            }
+
+            resolvedIds ??= new List<string>();
+            resolvedIds.Add(pending.Key);
+        }
+
+        if (resolvedIds == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < resolvedIds.Count; i++)
+        {
+            unresolvedSavedItems.Remove(resolvedIds[i]);
+        }
+
+        OnInventoryChanged?.Invoke();
     }
 
     private void RestoreCollectedDocument(ItemData document)
