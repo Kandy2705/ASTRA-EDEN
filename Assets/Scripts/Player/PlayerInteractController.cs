@@ -60,7 +60,7 @@ public class PlayerInteractController : MonoBehaviour
                 continue;
             }
 
-            float dist = Vector3.Distance(selfPosition, hit.transform.position);
+            float dist = Vector3.Distance(selfPosition, hit.ClosestPoint(selfPosition));
             if (dist <= interactable.InteractionRange && dist < bestDist)
             {
                 bestDist = dist;

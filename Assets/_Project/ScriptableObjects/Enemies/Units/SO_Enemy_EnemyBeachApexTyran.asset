@@ -27,9 +27,9 @@ MonoBehaviour:
     poise: 100
     moveSpeed: 3.8
     turnSpeed: 400
-  sightRange: 5.2
-  sightAngle: 129
-  hearingRange: 16
+  sightRange: 22
+  sightAngle: 130
+  hearingRange: 12
   aggroKeepRange: 36
   attackRange: 4.5
   attackCooldown: 2.2

@@ -49,6 +49,10 @@ public class MiniBossMarker : MonoBehaviour
     [SerializeField] private AncientNotePickup ancientNotePrefab;
     [SerializeField] private Vector3 ancientNoteDropOffset = new(0f, 0.3f, 2.2f);
 
+    [Header("Post-Boss Rewards")]
+    [Tooltip("Cấu hình phần thưởng chắc chắn (bình máu + đánh dấu tiến trình). Đặt trên cùng GameObject boss.")]
+    [SerializeField] private BossDeathRewardConfig bossDeathRewardConfig;
+
     bool hudRegistered;
     bool cameraRegistered;
     bool arenaLocked;
@@ -161,6 +165,11 @@ public class MiniBossMarker : MonoBehaviour
     public void ConfigureBossMusic(AudioClip clip)
     {
         bossMusic = clip;
+    }
+
+    public void ConfigureBossDeathReward(BossDeathRewardConfig config)
+    {
+        bossDeathRewardConfig = config;
     }
 
     /// <summary>Player thua trận: mở arena, trả boss về tâm và cho phép đánh lại.</summary>
@@ -588,6 +597,8 @@ public class MiniBossMarker : MonoBehaviour
         {
             ZoneObjectiveManager.Instance?.NotifyAncientNoteDropped();
         }
+
+        bossDeathRewardConfig?.NotifyBossDied(transform);
 
         ZoneObjectiveManager.Instance?.NotifyMiniBossDefeated();
 

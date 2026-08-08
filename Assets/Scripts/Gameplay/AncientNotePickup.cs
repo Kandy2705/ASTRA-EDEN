@@ -11,6 +11,7 @@ using UnityEngine;
 public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
 {
     public const string DefaultNoteId = "ancient_note_floating_tree";
+    public const string Note2Id = "ancient_note_floating_tree_02";
 
     [Header("Ancient Note")]
     [SerializeField] private string noteId = DefaultNoteId;
@@ -20,10 +21,52 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
     [Tooltip("Optional prefab UI đã author sẵn. Để trống sẽ dùng layout runtime mặc định.")]
     [SerializeField] private AncientNoteUIController noteUiPrefab;
 
+    [Header("Note 2 - Content")]
+    [Tooltip("Chỉ dùng khi noteId == \"ancient_note_floating_tree_02\".")]
+    [SerializeField] private string note2Title = "THE WHISPER BENEATH THE ROOTS";
+    [SerializeField] private string note2Subtitle = "LỜI THÌ THẦM DƯỚI NHỮNG BỘ RỄ";
+    [SerializeField, TextArea(8, 24)] private string note2MessageEnglish =
+        "To the one who has found this place,\n\n" +
+        "If you are reading these words, then I may no longer have the chance to finish the path ahead myself.\n\n" +
+        "I once believed the beast within this forest was the cause of the chaos that consumed this island.\n\n" +
+        "I was wrong.\n\n" +
+        "It, too, was only a victim.\n\n" +
+        "A guardian twisted by a power that has been spreading silently beneath this island.\n\n" +
+        "I have left a map beneath the roots of this tree. Upon it lies the path I was never able to finish.\n\n" +
+        "Take it with you.\n\n" +
+        "Follow the forgotten mark upon the map, and continue where I could not.\n\n" +
+        "At the end of that path, you will find the truth — and perhaps the one responsible for all the suffering we have endured.\n\n" +
+        "If you truly wish to bring peace back to this island, you will have to face him.\n\n" +
+        "I ask only one thing of you...\n\n" +
+        "Do not let the sacrifices of those who fell here become meaningless.\n\n" +
+        "And be careful.\n\n" +
+        "Something is still watching every step you take.";
+    [SerializeField, TextArea(8, 24)] private string note2MessageVietnamese =
+        "Gửi người đã tìm được đến nơi này,\n\n" +
+        "Nếu ngươi đang đọc những dòng này, có lẽ ta đã không còn cơ hội để tự mình hoàn thành con đường phía trước.\n\n" +
+        "Ta từng nghĩ con quái vật trong khu rừng này là nguyên nhân khiến hòn đảo rơi vào hỗn loạn. Nhưng ta đã lầm.\n\n" +
+        "Nó cũng chỉ là một nạn nhân.\n\n" +
+        "Một kẻ canh giữ bị biến đổi bởi thứ sức mạnh đang âm thầm lan rộng bên dưới hòn đảo.\n\n" +
+        "Ta đã để lại một tấm bản đồ dưới những bộ rễ của cái cây này. Trên đó là con đường mà ta đã không thể đi hết.\n\n" +
+        "Hãy mang nó theo.\n\n" +
+        "Hãy lần theo dấu ấn trên bản đồ và tiếp tục thay phần của ta.\n\n" +
+        "Ở cuối con đường ấy, ngươi sẽ tìm thấy sự thật — và có lẽ cả kẻ đã khiến tất cả chúng ta phải chịu đựng đến ngày hôm nay.\n\n" +
+        "Nếu ngươi thực sự muốn mang sự bình yên trở lại hòn đảo này, ngươi sẽ phải đối mặt với hắn.\n\n" +
+        "Ta chỉ xin ngươi một điều...\n\n" +
+        "Đừng để sự hy sinh của những người đã nằm lại nơi đây trở nên vô nghĩa.\n\n" +
+        "Và hãy cẩn thận.\n\n" +
+        "Có thứ gì đó vẫn đang dõi theo từng bước chân của ngươi.";
+
+    [Header("Note 2 - Next Destination")]
+    [Tooltip("Điểm đến tiếp theo trên bản đồ cổ. Để trống: vẫn hoàn tất Note #2 và đặt objective nhưng KHÔNG tạo destination marker.")]
+    [SerializeField] private Transform nextDestination;
+
     [Header("World Visual")]
     [SerializeField, Min(0f)] private float hoverHeight = 0.16f;
     [SerializeField, Min(0.1f)] private float hoverSpeed = 1.35f;
     [SerializeField] private float rotationSpeed = 18f;
+    [Tooltip("Note #2 nằm sát rễ cây; Note #1 giữ độ cao cũ.")]
+    [SerializeField, Min(0f)] private float note2VisualBaseHeight = 0.18f;
     [SerializeField] private Color parchmentColor = new(1f, 0.82f, 0.45f, 1f);
     [SerializeField] private Color magicColor = new(0.58f, 0.24f, 1f, 1f);
 
@@ -52,6 +95,28 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
         }
     }
 
+    public static bool WasCollectedNote2
+    {
+        get
+        {
+            GameDataManager data = GameDataManager.Instance;
+            return data != null && data.IsAncientNote2Collected;
+        }
+    }
+
+    private bool IsNote2 => string.Equals(noteId, Note2Id, StringComparison.Ordinal);
+
+    /// <summary>
+    /// Chuyển instance này thành Note #2. Dùng khi spawn cùng prefab cơ sở
+    /// (Note #1) cho Floating Tree. Gọi ngay sau Instantiate trước khi Start chạy.
+    /// </summary>
+    public void ConfigureNote2()
+    {
+        noteId = Note2Id;
+    }
+
+    private bool IsCollectedForThisNote => IsNote2 ? WasCollectedNote2 : WasCollected;
+
     private void Awake()
     {
         SphereCollider trigger = GetComponent<SphereCollider>();
@@ -65,7 +130,7 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
 
     private void Start()
     {
-        if (WasCollected)
+        if (IsCollectedForThisNote)
         {
             Destroy(gameObject);
             return;
@@ -94,7 +159,7 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
 
     public bool CanInteract(Transform interactor)
     {
-        if (opening || consumed || interactor == null || WasCollected)
+        if (opening || consumed || interactor == null || IsCollectedForThisNote)
         {
             return false;
         }
@@ -116,7 +181,10 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
             CompleteCollection,
             () => opening = false,
             openSfx,
-            noteUiPrefab);
+            noteUiPrefab,
+            IsNote2 ? note2Title : null,
+            IsNote2 ? note2Subtitle : null,
+            IsNote2 ? BuildNote2Message() : null);
     }
 
     public string GetInteractPrompt()
@@ -134,15 +202,29 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
         consumed = true;
         opening = false;
         Debug.Log($"[AncientNote] Collected '{noteId}'.", this);
-        GameDataManager.Instance?.MarkAncientNoteCollected();
-        if (ZoneObjectiveManager.Instance != null)
+
+        if (IsNote2)
         {
-            ZoneObjectiveManager.Instance.SetCurrentObjective("Find the Floating Tree", true);
+            GameDataManager.Instance?.MarkAncientNote2Collected();
+            SetObjective("Follow the Ancient Map");
+
+            if (nextDestination == null)
+            {
+                Debug.Log(
+                    "[AncientNote] nextDestination rỗng — vẫn hoàn tất Note #2, " +
+                    "không tạo destination marker.", this);
+            }
+            else
+            {
+                Debug.Log(
+                    $"[AncientNote] nextDestination = '{nextDestination.name}' — " +
+                    "tạo destination marker chưa được implement, bỏ qua.", this);
+            }
         }
         else
         {
-            GameDataManager.Instance?.SaveCurrentObjective("Find the Floating Tree");
-            ObjectiveHUDController.ShowObjective("Find the Floating Tree");
+            GameDataManager.Instance?.MarkAncientNoteCollected();
+            SetObjective("Find the Floating Tree");
         }
 
         if (collectSfx != null)
@@ -159,6 +241,24 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
             .OnComplete(this, static target => Destroy(target.gameObject));
     }
 
+    private string BuildNote2Message()
+    {
+        return note2MessageEnglish + "\n\n────────────────────\n\n" + note2MessageVietnamese;
+    }
+
+    private static void SetObjective(string objective)
+    {
+        if (ZoneObjectiveManager.Instance != null)
+        {
+            ZoneObjectiveManager.Instance.SetCurrentObjective(objective, true);
+        }
+        else
+        {
+            GameDataManager.Instance?.SaveCurrentObjective(objective);
+            ObjectiveHUDController.ShowObjective(objective);
+        }
+    }
+
     private void BuildVisualIfMissing()
     {
         Transform existing = transform.Find("Visual");
@@ -172,7 +272,7 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
         GameObject root = new("Visual");
         visualRoot = root.transform;
         visualRoot.SetParent(transform, false);
-        visualRoot.localPosition = Vector3.up * 0.75f;
+        visualRoot.localPosition = Vector3.up * (IsNote2 ? note2VisualBaseHeight : 0.75f);
 
         GameObject paper = GameObject.CreatePrimitive(PrimitiveType.Cube);
         paper.name = "AncientParchment";

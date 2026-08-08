@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 400000}
+  - component: {fileID: 13500000}
+  - component: {fileID: 11400000}
+  m_Layer: 0
+  m_Name: AncientNotePickupNote2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &400000
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &13500000
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.35
+  m_Center: {x: 0, y: 0.75, z: 0}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7a1a7377c894bccbccfb33f37129028, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AncientNotePickup
+  noteId: ancient_note_floating_tree_02
+  interactionRange: 2.8
+  floatingTreeClue: {fileID: 21300000, guid: 58c7a20fb69943318fe59099bdafd046, type: 3}
+  tyrantMapClue: {fileID: 21300000, guid: b78b91cd33564c2fba3584e928f66a46, type: 3}
+  noteUiPrefab: {fileID: 5381400642266364740, guid: 5088545c969c4ae988055540d010d380, type: 3}
+  note2Title: THE WHISPER BENEATH THE ROOTS
+  note2Subtitle: "L\u1EDCI TH\xCC TH\u1EA6M D\u01AF\u1EDAI NH\u1EEENG B\u1ED8 R\u1EC4"
+  note2MessageEnglish: "To the one who has found this place,\n\nIf you are reading
+    these words, then I may no longer have the chance to finish the path ahead myself.\n\nI
+    once believed the beast within this forest was the cause of the chaos that consumed
+    this island.\n\nI was wrong.\n\nIt, too, was only a victim.\n\nA guardian twisted
+    by a power that has been spreading silently beneath this island.\n\nI have left
+    a map beneath the roots of this tree. Upon it lies the path I was never able
+    to finish.\n\nTake it with you.\n\nFollow the forgotten mark upon the map, and
+    continue where I could not.\n\nAt the end of that path, you will find the truth
+    \u2014 and perhaps the one responsible for all the suffering we have endured.\n\nIf
+    you truly wish to bring peace back to this island, you will have to face him.\n\nI
+    ask only one thing of you...\n\nDo not let the sacrifices of those who fell here
+    become meaningless.\n\nAnd be careful.\n\nSomething is still watching every step
+    you take."
+  note2MessageVietnamese: "G\u1EEDi ng\u01B0\u1EDDi \u0111\xE3 t\xECm \u0111\u01B0\u1EE3c
+    \u0111\u1EBFn n\u01A1i n\xE0y,\n\nN\u1EBFu ng\u01B0\u01A1i \u0111ang \u0111\u1ECDc
+    nh\u1EEFng d\xF2ng n\xE0y, c\xF3 l\u1EBD ta \u0111\xE3 kh\xF4ng c\xF2n c\u01A1
+    h\u1ED9i \u0111\u1EC3 t\u1EF1 m\xECnh ho\xE0n th\xE0nh con \u0111\u01B0\u1EDDng
+    ph\xEDa tr\u01B0\u1EDBc.\n\nTa t\u1EEBng ngh\u0129 con qu\xE1i v\u1EADt trong
+    khu r\u1EEBng n\xE0y l\xE0 nguy\xEAn nh\xE2n khi\u1EBFn h\xF2n \u0111\u1EA3o
+    r\u01A1i v\xE0o h\u1ED7n lo\u1EA1n. Nh\u01B0ng ta \u0111\xE3 l\u1EA7m.\n\nN\xF3
+    c\u0169ng ch\u1EC9 l\xE0 m\u1ED9t n\u1EA1n nh\xE2n.\n\nM\u1ED9t k\u1EBB canh
+    gi\u1EEF b\u1ECB bi\u1EBFn \u0111\u1ED5i b\u1EDFi th\u1EE9 s\u1EE9c m\u1EA1nh
+    \u0111ang \xE2m th\u1EA7m lan r\u1ED9ng b\xEAn d\u01B0\u1EDBi h\xF2n \u0111\u1EA3o.\n\nTa
+    \u0111\xE3 \u0111\u1EC3 l\u1EA1i m\u1ED9t t\u1EA5m b\u1EA3n \u0111\u1ED3 d\u01B0\u1EDBi
+    nh\u1EEFng b\u1ED9 r\u1EC5 c\u1EE7a c\xE1i c\xE2y n\xE0y. Tr\xEAn \u0111\xF3
+    l\xE0 con \u0111\u01B0\u1EDDng m\xE0 ta \u0111\xE3 kh\xF4ng th\u1EC3 \u0111i
+    h\u1EBFt.\n\nH\xE3y mang n\xF3 theo.\n\nH\xE3y l\u1EA7n theo d\u1EA5u \u1EA5n
+    tr\xEAn b\u1EA3n \u0111\u1ED3 v\xE0 ti\u1EBFp t\u1EE5c thay ph\u1EA7n c\u1EE7a
+    ta.\n\n\u1EDE cu\u1ED1i con \u0111\u01B0\u1EDDng \u1EA5y, ng\u01B0\u01A1i s\u1EBD
+    t\xECm th\u1EA5y s\u1EF1 th\u1EADt \u2014 v\xE0 c\xF3 l\u1EBD c\u1EA3 k\u1EBB
+    \u0111\xE3 khi\u1EBFn t\u1EA5t c\u1EA3 ch\xFAng ta ph\u1EA3i ch\u1ECBu \u0111\u1EF1ng
+    \u0111\u1EBFn ng\xE0y h\xF4m nay.\n\nN\u1EBFu ng\u01B0\u01A1i th\u1EF1c s\u1EF1
+    mu\u1ED1n mang s\u1EF1 b\xECnh y\xEAn tr\u1EDF l\u1EA1i h\xF2n \u0111\u1EA3o
+    n\xE0y, ng\u01B0\u01A1i s\u1EBD ph\u1EA3i \u0111\u1ED1i m\u1EB7t v\u1EDBi h\u1EAFn.\n\nTa
+    ch\u1EC9 xin ng\u01B0\u01A1i m\u1ED9t \u0111i\u1EC1u...\n\n\u0110\u1EEBng \u0111\u1EC3
+    s\u1EF1 hy sinh c\u1EE7a nh\u1EEFng ng\u01B0\u1EDDi \u0111\xE3 n\u1EB1m l\u1EA1i
+    n\u01A1i \u0111\xE2y tr\u1EDF n\xEAn v\xF4 ngh\u0129a.\n\nV\xE0 h\xE3y c\u1EA9n
+    th\u1EADn.\n\nC\xF3 th\u1EE9 g\xEC \u0111\xF3 v\u1EABn \u0111ang d\xF5i theo
+    t\u1EEBng b\u01B0\u1EDBc ch\xE2n c\u1EE7a ng\u01B0\u01A1i."
+  nextDestination: {fileID: 0}
+  hoverHeight: 0.16
+  hoverSpeed: 1.35
+  rotationSpeed: 18
+  parchmentColor: {r: 1, g: 0.82, b: 0.45, a: 1}
+  magicColor: {r: 0.58, g: 0.24, b: 1, a: 1}
+  openSfx: {fileID: 0}
+  collectSfx: {fileID: 0}

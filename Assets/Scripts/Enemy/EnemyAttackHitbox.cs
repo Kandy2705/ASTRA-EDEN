@@ -34,6 +34,7 @@ public class EnemyAttackHitbox : MonoBehaviour
     float activeKnockbackDistance;
     float activeKnockbackDuration = 0.2f;
     float activeKnockbackVerticalLift;
+    Transform dynamicAnchor;
 
     public LayerMask TargetLayer => targetLayer;
 
@@ -57,6 +58,10 @@ public class EnemyAttackHitbox : MonoBehaviour
 
     public void ApplyPatternConfiguration(AttackPatternData pattern)
     {
+        // Attack thường dùng hitbox ở root. Boss-specific behaviour có thể gắn
+        // riêng một đòn vào bone (vd. TailWhip) ngay sau bước này.
+        dynamicAnchor = null;
+
         if (pattern != null && pattern.overrideHitbox)
         {
             shape = pattern.hitboxShape;
@@ -86,6 +91,15 @@ public class EnemyAttackHitbox : MonoBehaviour
             : 0f;
     }
 
+    /// <summary>
+    /// Cho phép một đòn đặc biệt đặt tâm hitbox trên bone đang animate, thay vì
+    /// quét một vùng tĩnh quanh root của enemy.
+    /// </summary>
+    public void SetDynamicAnchor(Transform anchor)
+    {
+        dynamicAnchor = anchor;
+    }
+
     /// <summary>Gọi khi bắt đầu 1 đòn đánh — reset danh sách target đã trúng.</summary>
     public void BeginSwing()
     {
@@ -95,7 +109,7 @@ public class EnemyAttackHitbox : MonoBehaviour
     /// <summary>Quét hitbox tại 1 frame impact và gây dame cho tất cả target hợp lệ chưa trúng trong swing này.</summary>
     public int PerformHit(float damage)
     {
-        Vector3 worldCenter = transform.TransformPoint(localOffset);
+        Vector3 worldCenter = GetWorldCenter();
         int count = shape == HitShape.Sphere
             ? Physics.OverlapSphereNonAlloc(worldCenter, radius, HitBuffer, targetLayer, QueryTriggerInteraction.Collide)
             : Physics.OverlapBoxNonAlloc(worldCenter, boxHalfExtents, HitBuffer, transform.rotation, targetLayer, QueryTriggerInteraction.Collide);
@@ -167,7 +181,7 @@ public class EnemyAttackHitbox : MonoBehaviour
     private void DrawGizmoShape()
     {
         Gizmos.color = gizmoColor;
-        Vector3 worldCenter = transform.TransformPoint(localOffset);
+        Vector3 worldCenter = GetWorldCenter();
         if (shape == HitShape.Sphere)
         {
             Gizmos.DrawWireSphere(worldCenter, radius);
@@ -179,5 +193,11 @@ public class EnemyAttackHitbox : MonoBehaviour
             Gizmos.DrawWireCube(Vector3.zero, boxHalfExtents * 2f);
             Gizmos.matrix = prev;
         }
+    }
+
+    Vector3 GetWorldCenter()
+    {
+        Transform anchor = dynamicAnchor != null ? dynamicAnchor : transform;
+        return anchor.TransformPoint(localOffset);
     }
 }

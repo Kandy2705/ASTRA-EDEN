@@ -53,13 +53,15 @@ public class PlayerCombatController : MonoBehaviour
     [Tooltip("Tâm vùng AOE theo trục Y từ player (khớp VFX).")]
     [SerializeField] private float areaDamageHeightOffset = 2f;
 
+    private static int globalSwingIdCounter;
+    private int currentSwingId;
     private float attackLockTimer;
     private float attackMoveRemaining;
     private float swingElapsed;
     private bool swingActive;
     private bool swingHitResolved;
     private readonly Collider[] attackHits = new Collider[16];
-    private readonly CharacterHealth[] damagedTargets = new CharacterHealth[16];
+    private readonly HashSet<CharacterHealth> swingDamagedTargets = new HashSet<CharacterHealth>();
     private readonly HashSet<CharacterHealth> areaTickTargets = new HashSet<CharacterHealth>();
     private Coroutine areaDamageRoutine;
     private bool areaDamageWindowOpen;
@@ -67,6 +69,8 @@ public class PlayerCombatController : MonoBehaviour
     private float hitInputLockedUntil;
 
     public bool IsAttacking => attackLockTimer > 0f;
+    /// <summary>ID tăng dần của swing hiện tại — dùng làm key dedup damage (1 swing + 1 enemy = 1 lần dame).</summary>
+    public int CurrentSwingId => currentSwingId;
     public bool IsAttackMoveActive => attackMoveRemaining > 0f;
     public bool IsUsingSpecialSkill =>
         currentSkillIndex > 0 &&
@@ -208,6 +212,8 @@ public class PlayerCombatController : MonoBehaviour
         swingActive = true;
         swingHitResolved = false;
         swingElapsed = 0f;
+        currentSwingId = ++globalSwingIdCounter;
+        swingDamagedTargets.Clear();
     }
 
     public void InterruptForHit(float duration)
@@ -394,31 +400,26 @@ public class PlayerCombatController : MonoBehaviour
 
     private void ApplyAttackDamage()
     {
-        for (int i = 0; i < damagedTargets.Length; i++)
-        {
-            damagedTargets[i] = null;
-        }
-
         Vector3 center = attackPoint != null
             ? attackPoint.position
             : transform.position + transform.forward * attackForwardOffset + Vector3.up;
 
         int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, attackHits, damageMask, QueryTriggerInteraction.Collide);
-        int damagedCount = 0;
         float dmg = GetActiveDamage();
 
+        // Dedup theo toàn bộ swing (không chỉ trong một lần gọi): kể cả khi
+        // ApplyAttackDamage chạy nhiều lần cho cùng một cú vung (Animation Event +
+        // fallback), mỗi enemy chỉ nhận đúng một lần dame.
         for (int i = 0; i < hitCount; i++)
         {
             CharacterHealth targetHealth = ResolveEnemyHealth(attackHits[i]);
-            if (targetHealth == null || HasAlreadyDamaged(targetHealth, damagedCount))
+            if (targetHealth == null || !swingDamagedTargets.Add(targetHealth))
             {
                 continue;
             }
 
             targetHealth.TakeDamage(dmg);
             ApplyKnockback(targetHealth);
-            damagedTargets[damagedCount] = targetHealth;
-            damagedCount++;
         }
     }
 
@@ -517,19 +518,6 @@ public class PlayerCombatController : MonoBehaviour
 
         Vector3 direction = targetHealth.transform.position - transform.position;
         knockback.Apply(direction, enemyKnockbackDistance, enemyKnockbackDuration);
-    }
-
-    private bool HasAlreadyDamaged(CharacterHealth targetHealth, int damagedCount)
-    {
-        for (int i = 0; i < damagedCount; i++)
-        {
-            if (damagedTargets[i] == targetHealth)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void AssignDefaultDamageMask()

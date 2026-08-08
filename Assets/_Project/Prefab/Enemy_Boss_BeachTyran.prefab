@@ -965,7 +965,7 @@ Animator:
   m_GameObject: {fileID: 4604233392114813644}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 22100000, guid: e9e116087441e41be9090564240729bf, type: 2}
+  m_Controller: {fileID: 9100000, guid: 432fe5071d5bc4055b2dbc710d2ceb6c, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -1181,6 +1181,7 @@ MonoBehaviour:
   lowHealthRetreatCooldown: 8
   lowHealthRetreatOnlyOnce: 1
   useHitAnimation: 1
+  forceHitReactionOnAnyDamage: 1
   hitStunDuration: 0.25
   hurtCooldown: 0.6
   staggerDuration: 1.2

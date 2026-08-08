@@ -19,6 +19,9 @@ public sealed class AncientNoteUIController : MonoBehaviour
         "Hidden near its roots lies a map that will guide you to the place where the great tyrant must fall.\n\n" +
         "Only then may peace return to this island.";
 
+    private const string DefaultTitle = "✦  ANCIENT NOTE  ✦";
+    private const string DefaultSubtitle = "A whisper left behind by the fallen guardian";
+
     private static AncientNoteUIController instance;
     private static AncientNoteUIController prefabTemplate;
 
@@ -35,6 +38,9 @@ public sealed class AncientNoteUIController : MonoBehaviour
     [SerializeField] private Button continueButton;
     [SerializeField] private Button closeButton;
     [SerializeField] private AudioSource audioSource;
+    [SerializeField] private TMP_Text titleText;
+    [SerializeField] private TMP_Text subtitleText;
+    [SerializeField] private TMP_Text messageBodyText;
 
     private Sequence transition;
     private Action onAccepted;
@@ -45,6 +51,9 @@ public sealed class AncientNoteUIController : MonoBehaviour
     private CursorLockMode previousLockMode;
     private bool previousCursorVisible;
     private bool initialized;
+    private string titleValue;
+    private string subtitleValue;
+    private string messageValue;
 
     public static void Show(
         Sprite floatingTreeClue,
@@ -52,7 +61,10 @@ public sealed class AncientNoteUIController : MonoBehaviour
         Action onAccepted,
         Action onCancelled = null,
         AudioClip openSfx = null,
-        AncientNoteUIController prefab = null)
+        AncientNoteUIController prefab = null,
+        string title = null,
+        string subtitle = null,
+        string message = null)
     {
         if (prefab != null)
         {
@@ -60,7 +72,7 @@ public sealed class AncientNoteUIController : MonoBehaviour
         }
 
         EnsureInstance();
-        instance.Open(floatingTreeClue, tyrantMapClue, onAccepted, onCancelled, openSfx);
+        instance.Open(floatingTreeClue, tyrantMapClue, onAccepted, onCancelled, openSfx, title, subtitle, message);
     }
 
     private static void EnsureInstance()
@@ -186,8 +198,56 @@ public sealed class AncientNoteUIController : MonoBehaviour
             BuildUi();
         }
 
+        FindTextReferences();
         WireButtons();
         initialized = true;
+    }
+
+    private void FindTextReferences()
+    {
+        if (parchment == null)
+        {
+            return;
+        }
+
+        Transform header = parchment.Find("Header");
+        if (header != null)
+        {
+            titleText ??= header.GetChild(0) != null
+                ? header.GetChild(0).GetComponent<TMP_Text>()
+                : null;
+            subtitleText ??= header.childCount > 1
+                ? header.GetChild(1).GetComponent<TMP_Text>()
+                : null;
+        }
+
+        Transform messageSection = parchment.Find("AncientMessage");
+        if (messageSection != null)
+        {
+            messageBodyText ??= messageSection.Find("Text") != null
+                ? messageSection.Find("Text").GetComponent<TMP_Text>()
+                : null;
+        }
+    }
+
+    private void ApplyNoteContent()
+    {
+        if (titleText != null)
+        {
+            titleText.text = string.IsNullOrEmpty(titleValue) ? DefaultTitle : titleValue;
+        }
+
+        if (subtitleText != null)
+        {
+            subtitleText.text = string.IsNullOrEmpty(subtitleValue) ? DefaultSubtitle : subtitleValue;
+        }
+
+        if (messageBodyText != null)
+        {
+            string resolved = string.IsNullOrEmpty(messageValue) ? AncientMessage : messageValue;
+            messageBodyText.text = resolved;
+            messageBodyText.fontSize = resolved.Length > 900 ? 19f : 23f;
+        }
     }
 
     private void Update()
@@ -198,7 +258,15 @@ public sealed class AncientNoteUIController : MonoBehaviour
         }
     }
 
-    private void Open(Sprite treeSprite, Sprite routeSprite, Action accepted, Action cancelled, AudioClip sfx)
+    private void Open(
+        Sprite treeSprite,
+        Sprite routeSprite,
+        Action accepted,
+        Action cancelled,
+        AudioClip sfx,
+        string title,
+        string subtitle,
+        string message)
     {
         if (isOpen)
         {
@@ -207,12 +275,17 @@ public sealed class AncientNoteUIController : MonoBehaviour
 
         onAccepted = accepted;
         onCancelled = cancelled;
+        titleValue = title;
+        subtitleValue = subtitle;
+        messageValue = message;
         isOpen = true;
         isClosing = false;
         clueImage.sprite = treeSprite;
         clueImage.enabled = treeSprite != null;
         mapImage.sprite = routeSprite;
         mapImage.enabled = routeSprite != null;
+
+        ApplyNoteContent();
 
         previousTimeScale = Time.timeScale;
         previousLockMode = Cursor.lockState;
@@ -334,10 +407,12 @@ public sealed class AncientNoteUIController : MonoBehaviour
 
         TMP_Text title = CreateText(header, "✦  ANCIENT NOTE  ✦", 38f, new Color(0.24f, 0.08f, 0.28f, 1f), TextAlignmentOptions.Center);
         title.fontStyle = FontStyles.Bold;
+        titleText = title;
         TMP_Text subtitle = CreateText(header, "A whisper left behind by the fallen guardian", 17f, new Color(0.36f, 0.18f, 0.25f, 0.92f), TextAlignmentOptions.Center);
         subtitle.rectTransform.anchorMin = new Vector2(0f, 0f);
         subtitle.rectTransform.anchorMax = new Vector2(1f, 0.36f);
         subtitle.rectTransform.offsetMin = subtitle.rectTransform.offsetMax = Vector2.zero;
+        subtitleText = subtitle;
         title.rectTransform.anchorMin = new Vector2(0f, 0.3f);
         title.rectTransform.anchorMax = Vector2.one;
         title.rectTransform.offsetMin = title.rectTransform.offsetMax = Vector2.zero;
@@ -360,6 +435,7 @@ public sealed class AncientNoteUIController : MonoBehaviour
         message.rectTransform.anchorMax = Vector2.one;
         message.rectTransform.offsetMin = new Vector2(34f, 28f);
         message.rectTransform.offsetMax = new Vector2(-34f, -28f);
+        messageBodyText = message;
     }
 
     private void AddClueSections()

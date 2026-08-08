@@ -370,7 +370,7 @@ public static class EnemyBossAncientForestBuilder
 
         AnimatorState death = sm.AddState("Death", new Vector3(260f, 300f));
         death.motion = clips.Death;
-        death.speed = 0.45f;
+        death.speed = 1f;
         AddAnyTrigger(sm, death, "Die", 0.05f);
         AnimatorStateTransition deadBool = sm.AddAnyStateTransition(death);
         deadBool.hasExitTime = false;
@@ -466,8 +466,8 @@ public static class EnemyBossAncientForestBuilder
                 "TailWhip", "atk_ancient_forest_tail_whip", "TailWhip", "TailWhip",
                 EnemyAttackRangeType.MeleeAOE, 0f, 5.5f, 2.2f,
                 clips.TailWhip, 0.54f, 0.28f, 1.18f, 55f,
-                EnemyAttackHitbox.HitShape.Box, new Vector3(4.8f, 1.2f, 2.7f),
-                new Vector3(0f, 1.25f, -2.4f), 6f, 0.28f),
+                EnemyAttackHitbox.HitShape.Sphere, Vector3.one * 1.2f,
+                Vector3.zero, 6f, 0.28f),
             UpsertPattern(
                 "PoisonRoar", "atk_ancient_forest_poison_roar", "Poison Roar", "Roar",
                 EnemyAttackRangeType.ProjectileAOE, 6f, 10f, 2.05f,
@@ -764,8 +764,10 @@ public static class EnemyBossAncientForestBuilder
             aiSo.FindProperty("hitStunDuration").floatValue = 0.12f;
             aiSo.FindProperty("hurtCooldown").floatValue = 0.35f;
             aiSo.FindProperty("staggerDuration").floatValue = 0.45f;
+            SetFloatIfPresent(aiSo, "hitReactionFallbackDuration", 0.9f);
+            SetFloatIfPresent(aiSo, "staggerReactionFallbackDuration", 1.1f);
             aiSo.FindProperty("useDeathAnimation").boolValue = true;
-            aiSo.FindProperty("deathAnimationDuration").floatValue = 3f;
+            aiSo.FindProperty("deathAnimationDuration").floatValue = 2.5f;
             aiSo.FindProperty("useTackle").boolValue = false;
             aiSo.FindProperty("maxCombatVerticalDifference").floatValue = 3.5f;
             aiSo.FindProperty("attackStateTimeout").floatValue = 6f;
@@ -781,7 +783,7 @@ public static class EnemyBossAncientForestBuilder
 
             SerializedObject dissolveSo = new SerializedObject(dissolve);
             dissolveSo.FindProperty("characterHealth").objectReferenceValue = health;
-            dissolveSo.FindProperty("startDelay").floatValue = 2.5f;
+            dissolveSo.FindProperty("startDelay").floatValue = 3f;
             dissolveSo.FindProperty("dissolveDuration").floatValue = 2.14f;
             dissolveSo.ApplyModifiedPropertiesWithoutUndo();
 
@@ -791,6 +793,23 @@ public static class EnemyBossAncientForestBuilder
             marker.Configure(data.displayName, health);
             marker.ConfigureLockedArena(true);
             marker.ConfigureBossMusic(AssetDatabase.LoadAssetAtPath<AudioClip>(BossMusicPath));
+
+            // Phần thưởng chắc chắn khi chết: 2 bình máu + đánh dấu boss đã hạ
+            // (mở Floating Tree → Note #2). One-time-only.
+            BossDeathRewardConfig reward = Ensure<BossDeathRewardConfig>(root);
+            SerializedObject rewardSo = new SerializedObject(reward);
+            rewardSo.FindProperty("healthPotionCount").intValue = 2;
+            rewardSo.FindProperty("markAncientForestBossDefeated").boolValue = true;
+            rewardSo.FindProperty("potionSpawnDelay").floatValue = 2.5f;
+            SerializedProperty rewardOffsets = rewardSo.FindProperty("potionDropOffsets");
+            rewardOffsets.ClearArray();
+            rewardOffsets.InsertArrayElementAtIndex(0);
+            rewardOffsets.GetArrayElementAtIndex(0).vector3Value = new Vector3(-1.1f, 0.6f, 1.2f);
+            rewardOffsets.InsertArrayElementAtIndex(1);
+            rewardOffsets.GetArrayElementAtIndex(1).vector3Value = new Vector3(1.1f, 0.6f, 1.2f);
+            rewardSo.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(reward);
+            marker.ConfigureBossDeathReward(reward);
 
             PrefabUtility.SaveAsPrefabAsset(root, BossPrefabPath);
         }

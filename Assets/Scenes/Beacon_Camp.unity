@@ -1536,6 +1536,14 @@ PrefabInstance:
       propertyPath: mainCamera
       value: 
       objectReference: {fileID: 330585545}
+    - target: {fileID: 8959512889844034880, guid: 23cbad50d76514bddb111da528f00f2b, type: 3}
+      propertyPath: proximityVoice
+      value:
+      objectReference: {fileID: 8300000, guid: faa48d8a0be274130ac576e726abba57, type: 3}
+    - target: {fileID: 8959512889844034880, guid: 23cbad50d76514bddb111da528f00f2b, type: 3}
+      propertyPath: playProximityVoiceOncePerScene
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

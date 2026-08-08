@@ -33,12 +33,21 @@ public class NPCDialogueTrigger : MonoBehaviour
     [TextArea(2, 5)]
     [SerializeField] private string message = "Chạy đi! Nơi này đã bị chiếm đóng bởi sinh vật tha hóa...";
 
+    [Header("Voice khi lại gần")]
+    [Tooltip("Bật nếu NPC chỉ được nói một lần trong mỗi lần load scene. Tắt để nói lại mỗi lần Player rời rồi quay lại.")]
+    [SerializeField] private AudioClip proximityVoice;
+    [SerializeField, Range(0f, 1f)] private float proximityVoiceVolume = 1f;
+    [SerializeField] private bool playProximityVoiceOncePerScene = true;
+
     [Header("Hiệu ứng fade")]
     [Tooltip("Tốc độ fade in/out (alpha mỗi giây).")]
     [SerializeField] private float fadeSpeed = 4f;
 
     // CanvasGroup dùng để fade alpha
     private CanvasGroup canvasGroup;
+    private AudioSource proximityVoiceSource;
+    private bool playerWasNearby;
+    private bool proximityVoicePlayed;
 
     private void Awake()
     {
@@ -58,6 +67,8 @@ public class NPCDialogueTrigger : MonoBehaviour
                 Debug.LogWarning($"[NPCDialogueTrigger] Không tìm thấy Camera.main. Hãy gán tag 'MainCamera' cho camera chính.");
         }
 
+        CreateProximityVoiceSource();
+
         if (dialogueCanvas == null)
         {
             Debug.LogWarning($"[NPCDialogueTrigger] Chưa gán 'dialogueCanvas' trên NPC '{name}'.");
@@ -76,15 +87,33 @@ public class NPCDialogueTrigger : MonoBehaviour
         // Bắt đầu ẩn hoàn toàn
         canvasGroup.alpha = 0f;
         dialogueCanvas.SetActive(false);
+
     }
 
     private void Update()
     {
-        if (player == null || dialogueCanvas == null) return;
+        if (player == null) return;
 
         // Tính khoảng cách giữa NPC và Player
         float distance = Vector3.Distance(transform.position, player.position);
         bool shouldShow = distance <= showDistance;
+
+        if (shouldShow && !playerWasNearby)
+        {
+            PlayProximityVoice();
+        }
+        else if (!shouldShow && playerWasNearby && proximityVoiceSource != null)
+        {
+            // Rời vùng nghe thì dừng câu cũ, lần quay lại sẽ đọc lại sạch sẽ,
+            // không bị hai voice chồng lên nhau.
+            proximityVoiceSource.Stop();
+        }
+        playerWasNearby = shouldShow;
+
+        if (dialogueCanvas == null)
+        {
+            return;
+        }
 
         // Khi cần hiện mà canvas đang tắt, bật lên để bắt đầu fade in
         if (shouldShow && !dialogueCanvas.activeSelf)
@@ -111,6 +140,37 @@ public class NPCDialogueTrigger : MonoBehaviour
             if (!shouldShow && canvasGroup.alpha <= 0f)
                 dialogueCanvas.SetActive(false);
         }
+    }
+
+    private void CreateProximityVoiceSource()
+    {
+        if (proximityVoice == null)
+        {
+            return;
+        }
+
+        GameObject sourceObject = new GameObject("NPCProximityVoice");
+        sourceObject.transform.SetParent(transform, false);
+        proximityVoiceSource = sourceObject.AddComponent<AudioSource>();
+        proximityVoiceSource.playOnAwake = false;
+        proximityVoiceSource.spatialBlend = 1f;
+        proximityVoiceSource.rolloffMode = AudioRolloffMode.Linear;
+        proximityVoiceSource.minDistance = 1.5f;
+        proximityVoiceSource.maxDistance = Mathf.Max(8f, showDistance * 3f);
+        proximityVoiceSource.volume = Mathf.Clamp01(proximityVoiceVolume);
+    }
+
+    private void PlayProximityVoice()
+    {
+        if (proximityVoice == null ||
+            proximityVoiceSource == null ||
+            (playProximityVoiceOncePerScene && proximityVoicePlayed))
+        {
+            return;
+        }
+
+        proximityVoicePlayed = true;
+        proximityVoiceSource.PlayOneShot(proximityVoice, Mathf.Clamp01(proximityVoiceVolume));
     }
 
     // Vẽ vòng tròn bán kính trong Scene view để dễ tinh chỉnh

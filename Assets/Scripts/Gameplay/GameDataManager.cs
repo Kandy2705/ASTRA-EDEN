@@ -22,6 +22,9 @@ public class GameDataManager : MonoBehaviour
     private const string PlayerExperienceKey = "ASTRA_PLAYER_EXPERIENCE";
     private const string CurrentObjectiveKey = "ASTRA_CURRENT_OBJECTIVE";
     private const string AncientNoteCollectedKey = "ASTRA_ANCIENT_NOTE_FLOATING_TREE_COLLECTED";
+    private const string AncientNote2CollectedKey = "ASTRA_ANCIENT_NOTE_FLOATING_TREE_02_COLLECTED";
+    private const string AncientForestBossDefeatedKey = "ASTRA_ANCIENT_FOREST_BOSS_DEFEATED";
+    private const string FloatingTreeSecondNoteSpawnedKey = "ASTRA_FLOATING_TREE_SECOND_NOTE_SPAWNED";
 
     [Header("Tiền tệ")]
     [SerializeField] private int currency;
@@ -42,6 +45,9 @@ public class GameDataManager : MonoBehaviour
     [Header("Tiến trình cốt truyện")]
     [SerializeField] private string currentObjective = "";
     [SerializeField] private bool ancientNoteCollected;
+    [SerializeField] private bool ancientNote2Collected;
+    [SerializeField] private bool ancientForestBossDefeated;
+    [SerializeField] private bool floatingTreeSecondNoteSpawned;
 
     [Header("Item Database")]
     [SerializeField] private List<ItemData> itemDatabase = new List<ItemData>();
@@ -125,6 +131,12 @@ public class GameDataManager : MonoBehaviour
     public string CurrentObjective => currentObjective;
 
     public bool IsAncientNoteCollected => ancientNoteCollected;
+
+    public bool IsAncientNote2Collected => ancientNote2Collected;
+
+    public bool IsAncientForestBossDefeated => ancientForestBossDefeated;
+
+    public bool IsFloatingTreeSecondNoteSpawned => floatingTreeSecondNoteSpawned;
 
     public bool HasSave => PlayerPrefs.GetInt(HasSaveKey, 0) == 1;
 
@@ -512,6 +524,72 @@ public class GameDataManager : MonoBehaviour
         FlushPlayerPrefs();
     }
 
+    public void MarkAncientNote2Collected()
+    {
+        if (ancientNote2Collected)
+        {
+            return;
+        }
+
+        ancientNote2Collected = true;
+        PlayerPrefs.SetInt(AncientNote2CollectedKey, 1);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+        FlushPlayerPrefs();
+    }
+
+    public void MarkAncientForestBossDefeated()
+    {
+        if (ancientForestBossDefeated)
+        {
+            return;
+        }
+
+        ancientForestBossDefeated = true;
+        PlayerPrefs.SetInt(AncientForestBossDefeatedKey, 1);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+        FlushPlayerPrefs();
+    }
+
+    public void MarkFloatingTreeSecondNoteSpawned()
+    {
+        if (floatingTreeSecondNoteSpawned)
+        {
+            return;
+        }
+
+        floatingTreeSecondNoteSpawned = true;
+        PlayerPrefs.SetInt(FloatingTreeSecondNoteSpawnedKey, 1);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+        FlushPlayerPrefs();
+    }
+
+    /// <summary>
+    /// Reset trạng thái "chưa nhặt tờ giấy hướng dẫn" (Note #1 + Note #2 + cờ tree đã
+    /// spawn Note + cờ boss đã hạ) để demo lại khúc: hạ boss Ancient Forest → cây →
+    /// bấm F → Note #2 rơi. Xóa luôn cờ boss hạ (ancientForestBossDefeated) để bắt
+    /// buộc phải hạ lại boss thứ 2 thì F mới nhả giấy.
+    /// </summary>
+    public void ResetAncientNoteProgressForDemo()
+    {
+        ancientNoteCollected = false;
+        PlayerPrefs.DeleteKey(AncientNoteCollectedKey);
+
+        ancientNote2Collected = false;
+        PlayerPrefs.DeleteKey(AncientNote2CollectedKey);
+
+        floatingTreeSecondNoteSpawned = false;
+        PlayerPrefs.DeleteKey(FloatingTreeSecondNoteSpawnedKey);
+
+        ancientForestBossDefeated = false;
+        PlayerPrefs.DeleteKey(AncientForestBossDefeatedKey);
+
+        FlushPlayerPrefs();
+        Debug.Log("[GameDataManager] Đã reset trạng thái nhặt giấy + boss đã hạ (demo).");
+    }
+
     public void SaveScenePosition(string sceneName, Vector3 position)
     {
         scenePositions[sceneName] = position;
@@ -669,8 +747,14 @@ public class GameDataManager : MonoBehaviour
         playerExperience = 0;
         PlayerPrefs.DeleteKey(CurrentObjectiveKey);
         PlayerPrefs.DeleteKey(AncientNoteCollectedKey);
+        PlayerPrefs.DeleteKey(AncientNote2CollectedKey);
+        PlayerPrefs.DeleteKey(AncientForestBossDefeatedKey);
+        PlayerPrefs.DeleteKey(FloatingTreeSecondNoteSpawnedKey);
         currentObjective = string.Empty;
         ancientNoteCollected = false;
+        ancientNote2Collected = false;
+        ancientForestBossDefeated = false;
+        floatingTreeSecondNoteSpawned = false;
 
         MarkPlayerPrefsDirty();
         FlushPlayerPrefs();
@@ -693,6 +777,9 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetInt(PlayerExperienceKey, playerExperience);
         PlayerPrefs.SetString(CurrentObjectiveKey, currentObjective ?? string.Empty);
         PlayerPrefs.SetInt(AncientNoteCollectedKey, ancientNoteCollected ? 1 : 0);
+        PlayerPrefs.SetInt(AncientNote2CollectedKey, ancientNote2Collected ? 1 : 0);
+        PlayerPrefs.SetInt(AncientForestBossDefeatedKey, ancientForestBossDefeated ? 1 : 0);
+        PlayerPrefs.SetInt(FloatingTreeSecondNoteSpawnedKey, floatingTreeSecondNoteSpawned ? 1 : 0);
 
         MarkPlayerPrefsDirty();
     }
@@ -708,6 +795,9 @@ public class GameDataManager : MonoBehaviour
         playerExperience = Mathf.Max(0, PlayerPrefs.GetInt(PlayerExperienceKey, 0));
         currentObjective = PlayerPrefs.GetString(CurrentObjectiveKey, string.Empty);
         ancientNoteCollected = PlayerPrefs.GetInt(AncientNoteCollectedKey, 0) == 1;
+        ancientNote2Collected = PlayerPrefs.GetInt(AncientNote2CollectedKey, 0) == 1;
+        ancientForestBossDefeated = PlayerPrefs.GetInt(AncientForestBossDefeatedKey, 0) == 1;
+        floatingTreeSecondNoteSpawned = PlayerPrefs.GetInt(FloatingTreeSecondNoteSpawnedKey, 0) == 1;
 
         LoadAllScenePositionsFromPrefs();
     }

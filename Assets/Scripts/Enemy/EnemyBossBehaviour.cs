@@ -49,6 +49,16 @@ public abstract class EnemyBossBehaviour : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Hook dành cho boss cần hitbox bám một bone đang animation. Mặc định giữ
+    /// nguyên hitbox root để không đổi behaviour các enemy/boss khác.
+    /// </summary>
+    public virtual void ConfigureAttackHitbox(
+        EnemyAttackHitbox hitbox,
+        AttackPatternData pattern)
+    {
+    }
+
     protected static bool IsProjectile(AttackPatternData pattern)
     {
         return pattern != null &&

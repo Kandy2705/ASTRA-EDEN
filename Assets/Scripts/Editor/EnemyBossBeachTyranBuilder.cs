@@ -128,8 +128,15 @@ public static class EnemyBossBeachTyranBuilder
             return;
         }
 
-        // Prefer LoadPrefabContents so FBX hierarchy/materials stay intact.
-        GameObject root = PrefabUtility.LoadPrefabContents(SourceModelPath);
+        // LoadPrefabContents chỉ nhận .prefab, không nhận .fbx — nguồn là model prefab (FBX)
+        // nên instantiate root từ sourceAsset để giữ nguyên hierarchy/material.
+        GameObject root = (GameObject)PrefabUtility.InstantiatePrefab(sourceAsset);
+        if (root == null)
+        {
+            Debug.LogError($"[BeachBossTyran] Failed to instantiate model prefab: {SourceModelPath}");
+            return;
+        }
+
         root.name = "Enemy_Boss_BeachTyran";
         root.transform.localPosition = Vector3.zero;
         root.transform.localRotation = Quaternion.identity;
@@ -169,7 +176,10 @@ public static class EnemyBossBeachTyranBuilder
         }
         finally
         {
-            PrefabUtility.UnloadPrefabContents(root);
+            if (root != null)
+            {
+                Object.DestroyImmediate(root);
+            }
         }
     }
 
@@ -321,8 +331,14 @@ public static class EnemyBossBeachTyranBuilder
         // T-Rex forward usually +Z; start false (toggle in Inspector if chase faces wrong).
         aiSo.FindProperty("flipForward180").boolValue = false;
         aiSo.FindProperty("useDeathAnimation").boolValue = true;
-        aiSo.FindProperty("deathAnimationDuration").floatValue = 3f;
+        aiSo.FindProperty("deathAnimationDuration").floatValue = 2f;
         aiSo.FindProperty("useHitAnimation").boolValue = true;
+        aiSo.FindProperty("forceHitReactionOnAnyDamage").boolValue = true;
+        aiSo.FindProperty("hitStunDuration").floatValue = 0.12f;
+        aiSo.FindProperty("hurtCooldown").floatValue = 0.35f;
+        aiSo.FindProperty("staggerDuration").floatValue = 0.45f;
+        aiSo.FindProperty("hitReactionFallbackDuration").floatValue = 0.9f;
+        aiSo.FindProperty("staggerReactionFallbackDuration").floatValue = 1.1f;
         aiSo.FindProperty("useTackle").boolValue = true;
         aiSo.FindProperty("attacksBeforeTackle").intValue = 2;
         aiSo.FindProperty("tackleRange").floatValue = 5.5f;
@@ -384,6 +400,16 @@ public static class EnemyBossBeachTyranBuilder
         marker.Configure(displayName, health);
         marker.ConfigureLockedArena(true);
         marker.ConfigureBossMusic(AssetDatabase.LoadAssetAtPath<AudioClip>(BossMusicPath));
+
+        // Phần thưởng chắc chắn khi chết: 1 bình máu (one-time-only).
+        BossDeathRewardConfig reward = Ensure<BossDeathRewardConfig>(root);
+        SerializedObject rewardSo = new SerializedObject(reward);
+        rewardSo.FindProperty("healthPotionCount").intValue = 1;
+        rewardSo.FindProperty("markAncientForestBossDefeated").boolValue = false;
+        rewardSo.FindProperty("potionSpawnDelay").floatValue = 2f;
+        rewardSo.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(reward);
+        marker.ConfigureBossDeathReward(reward);
 
         // Kill tracker: true = do not count as normal trash kill (boss has own objective).
         EnemyKillTracker tracker = Ensure<EnemyKillTracker>(root);

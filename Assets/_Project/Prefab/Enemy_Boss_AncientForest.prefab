@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 3700881302726761691}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.84, y: 2.4893432, z: 0.07}
+  m_LocalPosition: {x: -1.4697266, y: 2.4893432, z: 0.61259156}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -55,6 +55,7 @@ GameObject:
   - component: {fileID: 7122642123909542985}
   - component: {fileID: 2132535136025571619}
   - component: {fileID: 8251171050904125631}
+  - component: {fileID: 2680694039968296261}
   m_Layer: 0
   m_Name: Enemy_Boss_AncientForest
   m_TagString: Untagged
@@ -101,8 +102,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.8361816, y: 3.1855164, z: 2.1937256}
-  m_Center: {x: 0.06384277, y: 1.479866, z: -0.029693604}
+  m_Size: {x: 6.1054688, y: 3.1855164, z: 2.1937256}
+  m_Center: {x: 0.5595703, y: 1.479866, z: -0.029693604}
 --- !u!54 &7873569650683906542
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -300,11 +301,13 @@ MonoBehaviour:
   lowHealthRetreatOnlyOnce: 1
   useHitAnimation: 1
   hitStunDuration: 0.12
+  hitReactionFallbackDuration: 0.9
   hurtCooldown: 0.35
   staggerDuration: 0.45
+  staggerReactionFallbackDuration: 1.1
   poiseRegenAfterStagger: 0
   useDeathAnimation: 1
-  deathAnimationDuration: 3
+  deathAnimationDuration: 2.5
   flipForward180: 0
   modelVisualRoot: {fileID: 0}
   modelYawOffset: 0
@@ -335,6 +338,7 @@ MonoBehaviour:
   debugLogStateMachine: 0
   debugLogChaseTick: 0
   debugLogCombatResponse: 0
+  debugLogHitReaction: 0
 --- !u!114 &8034495848359176664
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -388,8 +392,8 @@ MonoBehaviour:
   dissolveProperty: _Dissolve
   baseMapProperty: _BaseMap
   baseColorProperty: _BaseColor
-  startDelay: 2.5
-  dissolveDuration: 2
+  startDelay: 3
+  dissolveDuration: 2.14
   destroyDelayAfterDissolve: 0.5
   dissolveVfxPrefab: {fileID: 0}
   vfxLocalOffset: {x: 0, y: 0.2, z: 0}
@@ -431,6 +435,7 @@ MonoBehaviour:
   bossMusicFadeOut: 1.5
   ancientNotePrefab: {fileID: 0}
   ancientNoteDropOffset: {x: 0, y: 0.3, z: 2.2}
+  bossDeathRewardConfig: {fileID: 2680694039968296261}
 --- !u!114 &50835372047178820
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -525,6 +530,28 @@ MonoBehaviour:
   faceCamera: 1
   copyCameraRotation: 1
   rangeCheckInterval: 0.12
+--- !u!114 &2680694039968296261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4999798807128010360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05f05b9d8dd7b44b6bfc88e24fe05643, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossDeathRewardConfig
+  healthPotionItemId: item_health_potion_small
+  healthPotionCount: 2
+  potionSpawnDelay: 2.5
+  potionDropOffsets:
+  - {x: -1.1, y: 0.6, z: 1.2}
+  - {x: 1.1, y: 0.6, z: 1.2}
+  pickupPrefabOverride: {fileID: 0}
+  pickupWorldRadius: 0.4
+  logDrops: 1
+  markAncientForestBossDefeated: 1
 --- !u!1 &6431659303338035448
 GameObject:
   m_ObjectHideFlags: 0
@@ -550,7 +577,7 @@ Transform:
   m_GameObject: {fileID: 6431659303338035448}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.9, y: 2.03, z: 0.03}
+  m_LocalPosition: {x: -1.4697266, y: 2.1393433, z: 0.61259156}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -618,34 +645,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9043535381137956387}
     m_Modifications:
-    - target: {fileID: 2026777689948641853, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
-      propertyPath: enemyHUD
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 2026777689948641853, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
-      propertyPath: healthFill
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 2064154164786213322, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
-      propertyPath: eye
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 4011861005523586290, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
-      propertyPath: aiOwner
-      value: 
-      objectReference: {fileID: 5395080136971159269}
-    - target: {fileID: 6000334420105508540, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
-      propertyPath: eyeSensor
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7350750990211990767, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
-      propertyPath: spawnPoint
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8494208026636647632, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
-      propertyPath: attackHitbox
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: -9142736106571689193, guid: 1c184628064764e20916598d8c5e14b9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 34.879536
@@ -1526,6 +1525,34 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -17.6197
       objectReference: {fileID: 0}
+    - target: {fileID: 2026777689948641853, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+      propertyPath: enemyHUD
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2026777689948641853, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+      propertyPath: healthFill
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 2064154164786213322, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+      propertyPath: eye
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4011861005523586290, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+      propertyPath: aiOwner
+      value: 
+      objectReference: {fileID: 5395080136971159269}
+    - target: {fileID: 6000334420105508540, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+      propertyPath: eyeSensor
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7350750990211990767, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+      propertyPath: spawnPoint
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8494208026636647632, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
+      propertyPath: attackHitbox
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 2656210681017299916, guid: 113a2a5707f834c3891412e4357cd758, type: 3}
@@ -1740,7 +1767,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7545697527050844945, guid: fa745443765c841d69018969febe4e4d, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9184837387111442400, guid: fa745443765c841d69018969febe4e4d, type: 3}
       propertyPath: m_Pivot.x

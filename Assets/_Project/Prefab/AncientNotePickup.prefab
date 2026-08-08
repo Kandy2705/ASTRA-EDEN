@@ -76,5 +76,5 @@ MonoBehaviour:
   rotationSpeed: 18
   parchmentColor: {r: 1, g: 0.82, b: 0.45, a: 1}
   magicColor: {r: 0.58, g: 0.24, b: 1, a: 1}
-  openSfx: {fileID: 0}
+  openSfx: {fileID: 8300000, guid: bcdcd887275a14f5492b29a5c7be4122, type: 3}
   collectSfx: {fileID: 0}

@@ -98,11 +98,17 @@ public class EnemyAIController : MonoBehaviour
     [Header("Hurt / Stagger")]
     [Tooltip("Bật anim Hit khi mất HP nhưng poise còn.")]
     [SerializeField] private bool useHitAnimation = true;
+    [Tooltip("Chỉ dùng cho boss/enemy cần bị ngắt ngay khi mất HP: bỏ qua hyper armor, cooldown Hurt và ưu tiên Hit reaction.")]
+    [SerializeField] private bool forceHitReactionOnAnyDamage = false;
     [SerializeField, Min(0f)] private float hitStunDuration = 0.1f;
+    [Tooltip("Thời gian tối đa đợi animation Hit chạy gần hết rồi mới rời Hurt. Nếu clip Hit không có event kết thúc, dùng timer này làm fallback (0 = dùng hitStunDuration).")]
+    [SerializeField, Min(0f)] private float hitReactionFallbackDuration = 0.9f;
     [Tooltip("Tối thiểu giữa các flinch (Hurt) liên tiếp — chống spam đứng đơ khi bị combo nhỏ.")]
     [SerializeField, Min(0f)] private float hurtCooldown = 0f;
     [Tooltip("Stagger duration khi poise vỡ.")]
     [SerializeField, Min(0f)] private float staggerDuration = 0.1f;
+    [Tooltip("Thời gian tối đa đợi animation Hit/Stagger chạy xong rồi mới rời Stagger (0 = dùng staggerDuration).")]
+    [SerializeField, Min(0f)] private float staggerReactionFallbackDuration = 1.1f;
     [Tooltip("Poise hồi/giây sau khi stagger kết thúc.")]
     [SerializeField, Min(0f)] private float poiseRegenAfterStagger = 0f;
 
@@ -167,6 +173,8 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField] private bool debugLogChaseTick = false;
     [Tooltip("Log đếm combo, quyết định né và retreat HP thấp.")]
     [SerializeField] private bool debugLogCombatResponse = false;
+    [Tooltip("Log gọn từng damage transaction và reaction được chọn. Chỉ bật khi trace boss hit.")]
+    [SerializeField] private bool debugLogHitReaction = false;
 
     NavMeshAgent agent;
     Transform player;
@@ -184,7 +192,8 @@ public class EnemyAIController : MonoBehaviour
     bool deathSequenceFinished;
     float lastKnownHP = float.NaN;
     float currentPoise;
-    float lastHitReactionTime;
+    int incomingDamageTransactionId;
+    int lastReactionTransactionId = -1;
     AttackPatternData currentAttack;
     AttackPatternData lastAttackPattern;
     int currentAttackTriggerHash;
@@ -1079,6 +1088,19 @@ public class EnemyAIController : MonoBehaviour
     // ---------- State transitions ----------
     void EnterState(AIState next)
     {
+        // Một transaction damage không được restart chính state reaction đang chạy.
+        // Điều này là lớp bảo vệ cuối nếu có callback trùng lặp từ collider/event.
+        if ((next == AIState.Hurt || next == AIState.Stagger) && currentState == next)
+        {
+            if (debugLogHitReaction)
+            {
+                Debug.Log(
+                    $"[BOSS-HIT-TRACE] {name} ignore reaction re-entry | state={currentState} | transaction={incomingDamageTransactionId}",
+                    this);
+            }
+            return;
+        }
+
         if (debugLogStateMachine)
         {
             float dist = player != null ? HorizontalDistance(player.position) : -1f;
@@ -1153,18 +1175,31 @@ public class EnemyAIController : MonoBehaviour
                 holdingInAttackRange = false;
                 HoldAgentStill();
                 CancelActiveAttack();
-                hitStunTimer = hitStunDuration;
+                RefreshHitReactionTimer();
                 PlayHitAnimation();
                 break;
             case AIState.Stagger:
+                EndTackle();
                 holdingInAttackRange = false;
                 HoldAgentStill();
                 CancelActiveAttack();
-                staggerTimer = staggerDuration;
+                RefreshStaggerTimer();
                 if (animator != null && HasParam(StaggerHash, AnimatorControllerParameterType.Trigger))
                 {
-                    animator.ResetTrigger(AttackHash);
+                    ResetAnimatorTriggerIfPresent(AttackHash);
+                    ResetAnimatorTriggerIfPresent(Attack2Hash);
+                    ResetAnimatorTriggerIfPresent(HeadButtHash);
+                    ResetAnimatorTriggerIfPresent(TailWhipHash);
+                    ResetAnimatorTriggerIfPresent(RoarHash);
+                    ResetAnimatorTriggerIfPresent(HitHash);
+                    ResetAnimatorTriggerIfPresent(StaggerHash);
                     animator.SetTrigger(StaggerHash);
+                }
+                else
+                {
+                    // Một số controller cũ (Beach Tyran) chỉ có Hit, không có
+                    // Stagger. Vẫn phải có visual reaction khi poise vỡ.
+                    PlayHitAnimation();
                 }
                 break;
             case AIState.Retreat:
@@ -1714,8 +1749,9 @@ public class EnemyAIController : MonoBehaviour
 
     void TickHurt()
     {
-        // Hard timeout — phòng trường hợp hitStunTimer bị reset bởi knockback/dame liên tiếp.
-        if (hitStunTimer <= 0f || stateTimer >= hitStunDuration + 0.1f)
+        // Đợi animation Hit chạy gần hết rồi mới rời Hurt — chống tình trạng
+        // Hit bị nháy rồi boss lập tức Chase/Attack (hit animation không hiện đủ).
+        if (HitReactionFinished() || hitStunTimer <= 0f)
         {
             EnterPostHitResponse();
         }
@@ -1723,7 +1759,7 @@ public class EnemyAIController : MonoBehaviour
 
     void TickStagger()
     {
-        if (staggerTimer <= 0f)
+        if (HitReactionFinished() || staggerTimer <= 0f)
         {
             currentPoise = MaxPoise;
             EnterPostHitResponse();
@@ -1732,6 +1768,51 @@ public class EnemyAIController : MonoBehaviour
         {
             currentPoise = Mathf.Min(MaxPoise, currentPoise + poiseRegenAfterStagger * Time.deltaTime);
         }
+    }
+
+    void RefreshHitReactionTimer()
+    {
+        hitStunTimer = hitReactionFallbackDuration > 0f
+            ? hitReactionFallbackDuration
+            : Mathf.Max(0f, hitStunDuration);
+    }
+
+    void RefreshStaggerTimer()
+    {
+        staggerTimer = staggerReactionFallbackDuration > 0f
+            ? staggerReactionFallbackDuration
+            : Mathf.Max(0f, staggerDuration);
+    }
+
+    /// <summary>
+    /// True khi animation phản ứng bị trúng (Hit/Stagger) đã chạy gần hết clip
+    /// hoặc đã chuyển về state thường. Không có anim Hit → fallback về timer.
+    /// </summary>
+    bool HitReactionFinished()
+    {
+        if (!useHitAnimation || animator == null)
+        {
+            return true;
+        }
+
+        if (animator.IsInTransition(0))
+        {
+            return false;
+        }
+
+        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
+        bool inReactionState = info.IsName("Hit")
+            || info.IsName("Base Layer.Hit")
+            || info.IsName("Stagger")
+            || info.IsName("Base Layer.Stagger");
+
+        if (inReactionState)
+        {
+            return info.normalizedTime >= 0.95f;
+        }
+
+        // Đã rời khỏi state Hit/Stagger → animation hit đã chạy xong.
+        return true;
     }
 
     void TickRetreat()
@@ -2234,6 +2315,8 @@ public class EnemyAIController : MonoBehaviour
     void EnterDead()
     {
         StopAgent();
+        // Chặn mọi tấn công còn dang dở ngay khi HP = 0 (không gây dame trong lúc chết).
+        CancelActiveAttack();
         attackPhase = AttackPhase.None;
 
         if (animator != null)
@@ -2401,6 +2484,7 @@ public class EnemyAIController : MonoBehaviour
         if (attackHitbox != null)
         {
             attackHitbox.ApplyPatternConfiguration(currentAttack);
+            bossBehaviour?.ConfigureAttackHitbox(attackHitbox, currentAttack);
         }
 
         currentAttackTriggerHash = AttackHash;
@@ -2516,8 +2600,19 @@ public class EnemyAIController : MonoBehaviour
         return best;
     }
 
+    /// <summary>
+    /// Chặn mọi đường gây dame tấn công (melee/projectile) khi không ở state Attack.
+    /// Animation Event cũ sót lại sau khi đòn bị cancel (Hurt/Stagger/Dead) sẽ
+    /// không thể gây dame — boss KHÔNG được đánh trong lúc phản ứng trúng đòn.
+    /// </summary>
+    bool CanDealOffensiveDamage()
+    {
+        return currentState == AIState.Attack;
+    }
+
     void ResolveHit()
     {
+        if (!CanDealOffensiveDamage()) return;
         if (hitResolvedThisSwing || currentAttack == null) return;
         hitResolvedThisSwing = true;
 
@@ -2553,8 +2648,15 @@ public class EnemyAIController : MonoBehaviour
         if (!float.IsNaN(lastKnownHP) && current < lastKnownHP - 0.001f && currentState != AIState.Dead && !h.IsDead)
         {
             float dmg = lastKnownHP - current;
+            int transactionId = ++incomingDamageTransactionId;
+            if (debugLogHitReaction)
+            {
+                Debug.Log(
+                    $"[BOSS-HIT-TRACE] {name} damageId={transactionId} | hp={lastKnownHP:F1}->{current:F1} | stateBefore={currentState} | poise={currentPoise:F1}",
+                    this);
+            }
             RegisterPressureHit();
-            ApplyPoiseDamage(dmg);
+            ApplyPoiseDamage(dmg, transactionId);
         }
         lastKnownHP = current;
     }
@@ -2630,14 +2732,15 @@ public class EnemyAIController : MonoBehaviour
         EnterState(AIState.Chase);
     }
 
-    void ApplyPoiseDamage(float dmg)
+    void ApplyPoiseDamage(float dmg, int transactionId)
     {
         bool interruptingAttack = currentState == AIState.Attack || attackPhase != AttackPhase.None;
 
         // Tackle và pattern có hyper armor phải chạy trọn animation. Vẫn mất HP,
         // chỉ không để một hit thường vô tình giải phóng/khởi động lại state Boss.
-        if (isTackling ||
-            (interruptingAttack && currentAttack != null && !currentAttack.canBeInterrupted))
+        if (!forceHitReactionOnAnyDamage &&
+            (isTackling ||
+             (interruptingAttack && currentAttack != null && !currentAttack.canBeInterrupted)))
         {
             currentPoise = Mathf.Max(0f, currentPoise - Mathf.Max(0f, dmg));
             return;
@@ -2648,9 +2751,10 @@ public class EnemyAIController : MonoBehaviour
             currentPoise = Mathf.Max(0f, currentPoise - dmg);
             if (currentPoise <= 0f)
             {
-                // EnterState(AIState.Stagger);
                 currentPoise = MaxPoise;
-                EnterState(AIState.Hurt);
+                // Poise vỡ: chỉ được có MỘT reaction Stagger, không vào Hurt rồi
+                // lại gửi Stagger trigger cho cùng transaction.
+                TryEnterDamageReaction(AIState.Stagger, transactionId, "poise broken");
                 return;
             }
         }
@@ -2660,10 +2764,18 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
+        // Boss 1 cần ưu tiên animation Hit cho mọi HP damage hợp lệ; đây là
+        // setting theo prefab, mặc định tắt nên không đổi Boss 2/other enemies.
+        if (forceHitReactionOnAnyDamage)
+        {
+            TryEnterDamageReaction(AIState.Hurt, transactionId, "force hit on damage");
+            return;
+        }
+
         // Đang căn đòn / đang Attack → luôn ưu tiên Hit, bỏ qua cooldown và ngưỡng damage nhỏ.
         if (interruptingAttack)
         {
-            EnterState(AIState.Hurt);
+            TryEnterDamageReaction(AIState.Hurt, transactionId, "interrupted attack");
             return;
         }
 
@@ -2674,14 +2786,7 @@ public class EnemyAIController : MonoBehaviour
 
         if (currentState == AIState.Hurt)
         {
-            CancelActiveAttack();
-            hitStunTimer = hitStunDuration;
-            if (Time.time - lastHitReactionTime > 0.35f)
-            {
-                PlayHitAnimation();
-                lastHitReactionTime = Time.time;
-            }
-
+            // Hit mới vẫn gây HP damage, nhưng không restart Hit animation đang chạy.
             return;
         }
 
@@ -2691,8 +2796,54 @@ public class EnemyAIController : MonoBehaviour
         }
 
         nextHurtAllowedAt = Time.time + hurtCooldown;
-        lastHitReactionTime = Time.time;
-        EnterState(AIState.Hurt);
+        TryEnterDamageReaction(AIState.Hurt, transactionId, "normal damage");
+    }
+
+    /// <summary>
+    /// Chỉ commit một reaction cho một lần HP thực sự giảm. Tách rõ priority
+    /// Stagger/Hurt để một hit không thể gửi cả hai Animator trigger.
+    /// </summary>
+    void TryEnterDamageReaction(AIState requestedReaction, int transactionId, string reason)
+    {
+        if (requestedReaction != AIState.Hurt && requestedReaction != AIState.Stagger)
+        {
+            return;
+        }
+
+        if (transactionId == lastReactionTransactionId)
+        {
+            if (debugLogHitReaction)
+            {
+                Debug.Log(
+                    $"[BOSS-HIT-TRACE] {name} ignore duplicate damageId={transactionId} | requested={requestedReaction}",
+                    this);
+            }
+            return;
+        }
+
+        // Khi Stagger đang chạy, hit mới không được restart visual. Khi Hurt đang
+        // chạy, chỉ một poise-break của hit MỚI mới được phép nâng thành Stagger.
+        if (currentState == AIState.Stagger ||
+            (currentState == AIState.Hurt && requestedReaction == AIState.Hurt))
+        {
+            lastReactionTransactionId = transactionId;
+            if (debugLogHitReaction)
+            {
+                Debug.Log(
+                    $"[BOSS-HIT-TRACE] {name} keep current {currentState} | damageId={transactionId} | requested={requestedReaction}",
+                    this);
+            }
+            return;
+        }
+
+        lastReactionTransactionId = transactionId;
+        if (debugLogHitReaction)
+        {
+            Debug.Log(
+                $"[BOSS-HIT-TRACE] {name} damageId={transactionId} | requestedReaction={requestedReaction} | reason={reason} | enteredState={requestedReaction}",
+                this);
+        }
+        EnterState(requestedReaction);
     }
 
     void CancelActiveAttack()
@@ -2730,10 +2881,12 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
-        if (HasParam(AttackHash, AnimatorControllerParameterType.Trigger))
-        {
-            animator.ResetTrigger(AttackHash);
-        }
+        ResetAnimatorTriggerIfPresent(AttackHash);
+        ResetAnimatorTriggerIfPresent(Attack2Hash);
+        ResetAnimatorTriggerIfPresent(HeadButtHash);
+        ResetAnimatorTriggerIfPresent(TailWhipHash);
+        ResetAnimatorTriggerIfPresent(RoarHash);
+        ResetAnimatorTriggerIfPresent(StaggerHash);
 
         if (HasParam(HitHash, AnimatorControllerParameterType.Trigger))
         {
@@ -2741,9 +2894,13 @@ public class EnemyAIController : MonoBehaviour
             animator.SetTrigger(HitHash);
         }
 
-        animator.Play("Hit", 0, 0f);
-        animator.Update(0f);
-        lastHitReactionTime = Time.time;
+        // Chỉ dùng trigger. Không gọi Animator.Play("Hit") ở đây vì controller
+        // đã có Any State → Hit; chạy đồng thời hai cơ chế khiến HitToStun có thể
+        // bị restart thêm một lần tùy timing Animator update.
+        if (debugLogHitReaction)
+        {
+            Debug.Log($"[BOSS-HIT-TRACE] {name} PlayHitAnimation | Hit trigger set | direct Play skipped", this);
+        }
     }
 
     void OnDied(CharacterHealth h)
@@ -3046,9 +3203,22 @@ public class EnemyAIController : MonoBehaviour
         return false;
     }
 
+    void ResetAnimatorTriggerIfPresent(int hash)
+    {
+        if (HasParam(hash, AnimatorControllerParameterType.Trigger))
+        {
+            animator.ResetTrigger(hash);
+        }
+    }
+
     // Animation Event hooks (gọi từ animator clip hoặc EnemyAnimationEventRelay)
     public void Anim_OnAttackStart()
     {
+        if (!CanDealOffensiveDamage())
+        {
+            return;
+        }
+
         if (attackHitbox != null)
         {
             if (attackHitbox.TargetLayer.value == 0) attackHitbox.SetTargetLayer(playerLayer);

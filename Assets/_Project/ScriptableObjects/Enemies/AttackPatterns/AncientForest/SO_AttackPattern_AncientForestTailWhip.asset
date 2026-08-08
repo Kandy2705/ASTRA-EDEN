@@ -27,10 +27,10 @@ MonoBehaviour:
   poiseDamage: 55
   element: 0
   overrideHitbox: 1
-  hitboxShape: 1
+  hitboxShape: 0
   hitboxRadius: 1.2
-  hitboxHalfExtents: {x: 4.8, y: 1.2, z: 2.7}
-  hitboxLocalOffset: {x: 0, y: 1.25, z: -2.4}
+  hitboxHalfExtents: {x: 1.2, y: 1.2, z: 1.2}
+  hitboxLocalOffset: {x: 0, y: 0, z: 0}
   knockbackDistance: 6
   knockbackDuration: 0.28
   knockbackVerticalLift: 0.22

@@ -36,6 +36,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     private TMP_Text deathRecoveryNoticeText;
     private PopupTween deathRecoveryNoticeTween;
     private Coroutine deathRecoveryNoticeRoutine;
+    private InteractPromptUI interactPromptUI;
 
     private void Awake()
     {
@@ -43,6 +44,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         ApplyHubVisibility();
         WirePlayerStatusHud();
         EnsurePlayerDebugUi();
+        EnsureInteractPromptUi();
     }
 
     private void Start()
@@ -50,6 +52,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         // Player có thể spawn sau UI 1 frame (hub / portal).
         WirePlayerStatusHud();
         EnsurePlayerDebugUi();
+        EnsureInteractPromptUi();
     }
 
     private void Update()
@@ -219,12 +222,63 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         debugUiInitialized = playerDebugPanel != null;
     }
 
+    private void EnsureInteractPromptUi()
+    {
+        if (interactPromptUI != null)
+        {
+            return;
+        }
+
+        Transform hudCanvas = FindChildRecursive(transform, "HUD_Canvas");
+        if (hudCanvas == null)
+        {
+            return;
+        }
+
+        RectTransform root = CreateUiObject(
+            "InteractPromptRoot",
+            hudCanvas,
+            new Vector2(560f, 70f),
+            new Vector2(0f, -150f));
+        root.anchorMin = new Vector2(0.5f, 0.5f);
+        root.anchorMax = new Vector2(0.5f, 0.5f);
+        root.pivot = new Vector2(0.5f, 0.5f);
+
+        RectTransform panel = CreateUiObject(
+            "PromptPanel",
+            root,
+            new Vector2(560f, 70f),
+            Vector2.zero);
+        Image background = panel.gameObject.AddComponent<Image>();
+        background.color = new Color(0.03f, 0.06f, 0.08f, 0.85f);
+        background.raycastTarget = false;
+
+        Outline outline = panel.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0.92f, 0.67f, 0.2f, 0.9f);
+        outline.effectDistance = new Vector2(1.5f, -1.5f);
+
+        TMP_Text text = CreateLabel(
+            panel,
+            string.Empty,
+            Vector2.zero,
+            Vector2.zero,
+            22f,
+            new Color(1f, 0.9f, 0.72f, 1f),
+            TextAlignmentOptions.Center);
+        text.fontStyle = FontStyles.Bold;
+        StretchRect(text.rectTransform, 10f, 10f, 4f, 4f);
+
+        interactPromptUI = root.gameObject.AddComponent<InteractPromptUI>();
+        interactPromptUI.Initialize(panel.gameObject, text);
+        panel.gameObject.SetActive(false);
+    }
+
     private void BuildPlayerDebugPanel(Transform canvasTransform)
     {
         RectTransform panelRect = CreateUiObject(
             "PlayerDebugPanel",
             canvasTransform,
-            new Vector2(460f, 400f),
+            new Vector2(460f, 450f),
             Vector2.zero);
         playerDebugPanel = panelRect.gameObject;
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -334,10 +388,19 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             new Color(1f, 0.78f, 0.3f, 1f),
             TextAlignmentOptions.Center);
 
+        Button resetNoteButton = CreateButton(
+            panelRect,
+            "Button_ResetNote",
+            "RESET NHẶC GIẤY",
+            new Vector2(0f, -126f),
+            new Vector2(320f, 36f),
+            new Color(0.38f, 0.24f, 0.52f, 1f));
+        resetNoteButton.onClick.AddListener(ResetAncientNoteProgress);
+
         debugStatusText = CreateLabel(
             panelRect,
             "Đang tìm Player...",
-            new Vector2(0f, -165f),
+            new Vector2(0f, -172f),
             new Vector2(410f, 44f),
             18f,
             new Color(0.82f, 0.9f, 0.94f, 1f),
@@ -520,6 +583,18 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         debugPlayerHealth.SetCurrentHealthForDebug(lowHealth);
         ReviveDebugPlayerIfNeeded();
         RefreshDebugStatus();
+    }
+
+    private void ResetAncientNoteProgress()
+    {
+        if (GameDataManager.Instance == null)
+        {
+            SetDebugMessage("Không có GameDataManager.");
+            return;
+        }
+
+        GameDataManager.Instance.ResetAncientNoteProgressForDemo();
+        SetDebugMessage("Đã reset — hạ boss Ancient Forest lại thì F mới nhả giấy.");
     }
 
     private void OnTimeSpeedChanged(float multiplier)
