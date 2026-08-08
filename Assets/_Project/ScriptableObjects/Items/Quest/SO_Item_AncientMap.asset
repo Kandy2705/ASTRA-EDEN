@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74af38f1ebbb40919697c02f12600f46, type: 3}
+  m_Name: SO_Item_AncientMap
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemId: ancient_map_note_01
+  displayName: Ancient Map
+  type: 6
+  rarity: 4
+  itemPrefab: {fileID: 0}
+  stackable: 0
+  maxStack: 1
+  icon: {fileID: 21300000, guid: 3d7f244bf402346e8962c244e991a490, type: 3}
+  description: An ancient map carried in a glowing parchment. Its forgotten route is revealed only when the map is read.
+  restoreHP: 0
+  restoreStamina: 0
+  restoreEnergy: 0

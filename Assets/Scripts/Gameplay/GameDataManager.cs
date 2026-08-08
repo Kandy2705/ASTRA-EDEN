@@ -25,6 +25,10 @@ public class GameDataManager : MonoBehaviour
     private const string AncientNote2CollectedKey = "ASTRA_ANCIENT_NOTE_FLOATING_TREE_02_COLLECTED";
     private const string AncientForestBossDefeatedKey = "ASTRA_ANCIENT_FOREST_BOSS_DEFEATED";
     private const string FloatingTreeSecondNoteSpawnedKey = "ASTRA_FLOATING_TREE_SECOND_NOTE_SPAWNED";
+    private const string AncientMapUsedKey = "ASTRA_ANCIENT_MAP_USED";
+    private const string AncientMapGuidanceUnlockedKey = "ASTRA_ANCIENT_MAP_GUIDANCE_UNLOCKED";
+    private const string AncientMap2UsedKey = "ASTRA_ANCIENT_MAP_02_USED";
+    private const string AncientMap2GuidanceUnlockedKey = "ASTRA_ANCIENT_MAP_02_GUIDANCE_UNLOCKED";
 
     [Header("Tiền tệ")]
     [SerializeField] private int currency;
@@ -48,6 +52,10 @@ public class GameDataManager : MonoBehaviour
     [SerializeField] private bool ancientNote2Collected;
     [SerializeField] private bool ancientForestBossDefeated;
     [SerializeField] private bool floatingTreeSecondNoteSpawned;
+    [SerializeField] private bool ancientMapUsed;
+    [SerializeField] private bool ancientMapGuidanceUnlocked;
+    [SerializeField] private bool ancientMap2Used;
+    [SerializeField] private bool ancientMap2GuidanceUnlocked;
 
     [Header("Item Database")]
     [SerializeField] private List<ItemData> itemDatabase = new List<ItemData>();
@@ -137,6 +145,14 @@ public class GameDataManager : MonoBehaviour
     public bool IsAncientForestBossDefeated => ancientForestBossDefeated;
 
     public bool IsFloatingTreeSecondNoteSpawned => floatingTreeSecondNoteSpawned;
+
+    public bool IsAncientMapUsed => ancientMapUsed;
+
+    public bool IsAncientMapGuidanceUnlocked => ancientMapGuidanceUnlocked;
+
+    public bool IsAncientMap2Used => ancientMap2Used;
+
+    public bool IsAncientMap2GuidanceUnlocked => ancientMap2GuidanceUnlocked;
 
     public bool HasSave => PlayerPrefs.GetInt(HasSaveKey, 0) == 1;
 
@@ -566,6 +582,38 @@ public class GameDataManager : MonoBehaviour
         FlushPlayerPrefs();
     }
 
+    public void MarkAncientMapUsed()
+    {
+        bool changed = !ancientMapUsed || !ancientMapGuidanceUnlocked;
+        ancientMapUsed = true;
+        ancientMapGuidanceUnlocked = true;
+        PlayerPrefs.SetInt(AncientMapUsedKey, 1);
+        PlayerPrefs.SetInt(AncientMapGuidanceUnlockedKey, 1);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+
+        if (changed)
+        {
+            FlushPlayerPrefs();
+        }
+    }
+
+    public void MarkAncientMap2Used()
+    {
+        bool changed = !ancientMap2Used || !ancientMap2GuidanceUnlocked;
+        ancientMap2Used = true;
+        ancientMap2GuidanceUnlocked = true;
+        PlayerPrefs.SetInt(AncientMap2UsedKey, 1);
+        PlayerPrefs.SetInt(AncientMap2GuidanceUnlockedKey, 1);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+
+        if (changed)
+        {
+            FlushPlayerPrefs();
+        }
+    }
+
     /// <summary>
     /// Reset trạng thái "chưa nhặt tờ giấy hướng dẫn" (Note #1 + Note #2 + cờ tree đã
     /// spawn Note + cờ boss đã hạ) để demo lại khúc: hạ boss Ancient Forest → cây →
@@ -583,9 +631,53 @@ public class GameDataManager : MonoBehaviour
         floatingTreeSecondNoteSpawned = false;
         PlayerPrefs.DeleteKey(FloatingTreeSecondNoteSpawnedKey);
 
+        ancientMapUsed = false;
+        ancientMapGuidanceUnlocked = false;
+        PlayerPrefs.DeleteKey(AncientMapUsedKey);
+        PlayerPrefs.DeleteKey(AncientMapGuidanceUnlockedKey);
+
+        ancientMap2Used = false;
+        ancientMap2GuidanceUnlocked = false;
+        PlayerPrefs.DeleteKey(AncientMap2UsedKey);
+        PlayerPrefs.DeleteKey(AncientMap2GuidanceUnlockedKey);
+
+        PlayerInventoryService inventory = PlayerInventoryService.FindForPlayer();
+        ItemData ancientMap = AncientMapProgression.ResolveMapItem();
+        ItemData ancientMap2 = AncientMapProgression.ResolveMapItem(null, true);
+        if (inventory != null)
+        {
+            RemoveAllFromInventory(inventory, ancientMap);
+            RemoveAllFromInventory(inventory, ancientMap2);
+        }
+        else
+        {
+            Dictionary<string, int> savedInventory = LoadInventory();
+            bool removed = savedInventory.Remove(AncientMapProgression.ItemId);
+            removed |= savedInventory.Remove(AncientMapProgression.Item2Id);
+            if (removed)
+            {
+                SaveInventory(savedInventory);
+            }
+        }
+
+        static void RemoveAllFromInventory(PlayerInventoryService targetInventory, ItemData item)
+        {
+            if (targetInventory == null || item == null)
+            {
+                return;
+            }
+
+            int quantity = targetInventory.GetQuantity(item);
+            if (quantity > 0)
+            {
+                targetInventory.RemoveItem(item, quantity);
+            }
+        }
+
         ancientForestBossDefeated = false;
         PlayerPrefs.DeleteKey(AncientForestBossDefeatedKey);
 
+        MarkPlayerPrefsDirty();
         FlushPlayerPrefs();
         Debug.Log("[GameDataManager] Đã reset trạng thái nhặt giấy + boss đã hạ (demo).");
     }
@@ -750,11 +842,19 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey(AncientNote2CollectedKey);
         PlayerPrefs.DeleteKey(AncientForestBossDefeatedKey);
         PlayerPrefs.DeleteKey(FloatingTreeSecondNoteSpawnedKey);
+        PlayerPrefs.DeleteKey(AncientMapUsedKey);
+        PlayerPrefs.DeleteKey(AncientMapGuidanceUnlockedKey);
+        PlayerPrefs.DeleteKey(AncientMap2UsedKey);
+        PlayerPrefs.DeleteKey(AncientMap2GuidanceUnlockedKey);
         currentObjective = string.Empty;
         ancientNoteCollected = false;
         ancientNote2Collected = false;
         ancientForestBossDefeated = false;
         floatingTreeSecondNoteSpawned = false;
+        ancientMapUsed = false;
+        ancientMapGuidanceUnlocked = false;
+        ancientMap2Used = false;
+        ancientMap2GuidanceUnlocked = false;
 
         MarkPlayerPrefsDirty();
         FlushPlayerPrefs();
@@ -780,6 +880,10 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetInt(AncientNote2CollectedKey, ancientNote2Collected ? 1 : 0);
         PlayerPrefs.SetInt(AncientForestBossDefeatedKey, ancientForestBossDefeated ? 1 : 0);
         PlayerPrefs.SetInt(FloatingTreeSecondNoteSpawnedKey, floatingTreeSecondNoteSpawned ? 1 : 0);
+        PlayerPrefs.SetInt(AncientMapUsedKey, ancientMapUsed ? 1 : 0);
+        PlayerPrefs.SetInt(AncientMapGuidanceUnlockedKey, ancientMapGuidanceUnlocked ? 1 : 0);
+        PlayerPrefs.SetInt(AncientMap2UsedKey, ancientMap2Used ? 1 : 0);
+        PlayerPrefs.SetInt(AncientMap2GuidanceUnlockedKey, ancientMap2GuidanceUnlocked ? 1 : 0);
 
         MarkPlayerPrefsDirty();
     }
@@ -798,6 +902,10 @@ public class GameDataManager : MonoBehaviour
         ancientNote2Collected = PlayerPrefs.GetInt(AncientNote2CollectedKey, 0) == 1;
         ancientForestBossDefeated = PlayerPrefs.GetInt(AncientForestBossDefeatedKey, 0) == 1;
         floatingTreeSecondNoteSpawned = PlayerPrefs.GetInt(FloatingTreeSecondNoteSpawnedKey, 0) == 1;
+        ancientMapUsed = PlayerPrefs.GetInt(AncientMapUsedKey, 0) == 1;
+        ancientMapGuidanceUnlocked = PlayerPrefs.GetInt(AncientMapGuidanceUnlockedKey, ancientMapUsed ? 1 : 0) == 1;
+        ancientMap2Used = PlayerPrefs.GetInt(AncientMap2UsedKey, 0) == 1;
+        ancientMap2GuidanceUnlocked = PlayerPrefs.GetInt(AncientMap2GuidanceUnlockedKey, ancientMap2Used ? 1 : 0) == 1;
 
         LoadAllScenePositionsFromPrefs();
     }

@@ -140,6 +140,7 @@ public class InventoryScreenController : MonoBehaviour
     public void RefreshNow()
     {
         BindInventoryService();
+        inventoryService?.EnsureCollectedAncientMapItems();
 
         Refresh();
     }
@@ -393,12 +394,14 @@ public class InventoryScreenController : MonoBehaviour
 
         if (useButton != null)
         {
-            useButton.interactable = selectedItemData.type == ItemType.Consumable && owned > 0;
+            useButton.interactable = inventoryService.CanUseItem(selectedItemData);
         }
 
         if (dropButton != null)
         {
-            dropButton.interactable = owned > 0 && selectedItemData.type != ItemType.Currency;
+            dropButton.interactable = owned > 0 &&
+                                      selectedItemData.type != ItemType.Currency &&
+                                      !AncientMapProgression.IsMapItem(selectedItemData);
         }
     }
 
@@ -618,7 +621,18 @@ public class InventoryScreenController : MonoBehaviour
             return;
         }
 
-        bool used = inventoryService.UseConsumable(selectedItemData);
+        if (AncientMapProgression.IsMapItem(selectedItemData))
+        {
+            if (inventoryToggleController == null)
+            {
+                inventoryToggleController = FindFirstObjectByType<InventoryToggleController>(FindObjectsInactive.Include);
+            }
+
+            // Đóng inventory trước để popup parchment sở hữu pause/cursor state.
+            inventoryToggleController?.CloseInventory();
+        }
+
+        bool used = inventoryService.UseItem(selectedItemData);
 
         if (!used)
         {
@@ -629,6 +643,11 @@ public class InventoryScreenController : MonoBehaviour
     private void HandleDropClicked()
     {
         if (selectedItemData == null || inventoryService == null)
+        {
+            return;
+        }
+
+        if (AncientMapProgression.IsMapItem(selectedItemData))
         {
             return;
         }

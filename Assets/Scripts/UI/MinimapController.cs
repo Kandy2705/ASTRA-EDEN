@@ -53,6 +53,12 @@ public class MinimapController : MonoBehaviour
     [Tooltip("Vị trí panel khoảng cách tính từ chính giữa mép trên HUD Canvas.")]
     [SerializeField] private Vector2 objectiveDistanceScreenOffset = new Vector2(0f, -48f);
 
+    [Header("Ancient Map destination (optional)")]
+    [Tooltip("Đích cho objective Follow the Ancient Map. Để trống thì objective vẫn hiện nhưng không có marker/route.")]
+    [SerializeField] private Transform ancientMapDestination;
+    [SerializeField] private string ancientMapDestinationName = "";
+    [SerializeField] private string ancientMapDestinationLabel = "ANCIENT DESTINATION";
+
     [Header("Hướng xoay")]
     [Tooltip("Tắt (mặc định): bản đồ cố định hướng Bắc (N luôn trên). Bật: bản đồ xoay theo player.")]
     [SerializeField] private bool rotateWithPlayer = false;
@@ -81,6 +87,14 @@ public class MinimapController : MonoBehaviour
     private Transform objectiveTarget;
     private float findPlayerTimer;
     private float findObjectiveTimer;
+    private ObjectiveGuideKind activeGuideKind;
+
+    private enum ObjectiveGuideKind
+    {
+        None,
+        FloatingTree,
+        AncientMap
+    }
 
     private void Start()
     {
@@ -367,36 +381,38 @@ public class MinimapController : MonoBehaviour
 
     private void UpdateObjectiveMarker()
     {
-        if (objectiveMarker == null || !ShouldShowFloatingTreeObjective())
+        ObjectiveGuideKind requestedKind = GetObjectiveGuideKind();
+        if (objectiveMarker == null || requestedKind == ObjectiveGuideKind.None)
         {
+            activeGuideKind = ObjectiveGuideKind.None;
+            objectiveTarget = null;
             SetObjectiveGuideActive(false, false);
             return;
         }
 
+        if (activeGuideKind != requestedKind)
+        {
+            activeGuideKind = requestedKind;
+            objectiveTarget = null;
+            findObjectiveTimer = 0f;
+        }
+
+        if (!TryResolveObjectiveTarget(requestedKind, out Transform resolvedTarget))
+        {
+            bool showLocating = requestedKind == ObjectiveGuideKind.FloatingTree;
+            SetObjectiveGuideActive(false, showLocating);
+            if (showLocating && objectiveDistanceText != null)
+            {
+                objectiveDistanceText.text = "FLOATING TREE  |  LOCATING...";
+            }
+
+            return;
+        }
+
+        objectiveTarget = resolvedTarget;
         if (objectiveDistancePanel != null && !objectiveDistancePanel.activeSelf)
         {
             objectiveDistancePanel.SetActive(true);
-        }
-
-        if (objectiveTarget == null)
-        {
-            findObjectiveTimer -= Time.unscaledDeltaTime;
-            if (findObjectiveTimer <= 0f)
-            {
-                GameObject targetObject = GameObject.Find(objectiveTargetName);
-                objectiveTarget = targetObject != null ? targetObject.transform : null;
-                findObjectiveTimer = 1f;
-            }
-
-            if (objectiveTarget == null)
-            {
-                SetObjectiveGuideActive(false, true);
-                if (objectiveDistanceText != null)
-                {
-                    objectiveDistanceText.text = "FLOATING TREE  |  LOCATING...";
-                }
-                return;
-            }
         }
 
         Vector3 offset = objectiveTarget.position - player.position;
@@ -407,7 +423,7 @@ public class MinimapController : MonoBehaviour
             SetObjectiveGuideActive(false, true);
             if (objectiveDistanceText != null)
             {
-                objectiveDistanceText.text = "FLOATING TREE  |  ARRIVED";
+                objectiveDistanceText.text = $"{GetObjectiveLabel(requestedKind)}  |  ARRIVED";
             }
             return;
         }
@@ -453,10 +469,70 @@ public class MinimapController : MonoBehaviour
 
         if (objectiveDistanceText != null)
         {
+            string label = GetObjectiveLabel(requestedKind);
             objectiveDistanceText.text = distance >= 1000f
-                ? $"FLOATING TREE  |  {distance / 1000f:0.0} km"
-                : $"FLOATING TREE  |  {Mathf.RoundToInt(distance)} m";
+                ? $"{label}  |  {distance / 1000f:0.0} km"
+                : $"{label}  |  {Mathf.RoundToInt(distance)} m";
         }
+    }
+
+    public void SetAncientMapDestination(Transform destination, string label = null)
+    {
+        ancientMapDestination = destination;
+        if (!string.IsNullOrWhiteSpace(label))
+        {
+            ancientMapDestinationLabel = label.Trim();
+        }
+
+        if (activeGuideKind == ObjectiveGuideKind.AncientMap)
+        {
+            objectiveTarget = destination;
+            findObjectiveTimer = 0f;
+        }
+    }
+
+    private bool TryResolveObjectiveTarget(ObjectiveGuideKind kind, out Transform target)
+    {
+        if (kind == ObjectiveGuideKind.AncientMap && ancientMapDestination != null)
+        {
+            target = ancientMapDestination;
+            return true;
+        }
+
+        string targetName = kind == ObjectiveGuideKind.FloatingTree
+            ? objectiveTargetName
+            : ancientMapDestinationName;
+        if (string.IsNullOrWhiteSpace(targetName))
+        {
+            target = null;
+            return false;
+        }
+
+        if (objectiveTarget == null)
+        {
+            findObjectiveTimer -= Time.unscaledDeltaTime;
+            if (findObjectiveTimer <= 0f)
+            {
+                GameObject targetObject = GameObject.Find(targetName.Trim());
+                objectiveTarget = targetObject != null ? targetObject.transform : null;
+                findObjectiveTimer = 1f;
+            }
+        }
+
+        target = objectiveTarget;
+        return target != null;
+    }
+
+    private string GetObjectiveLabel(ObjectiveGuideKind kind)
+    {
+        if (kind == ObjectiveGuideKind.FloatingTree)
+        {
+            return "FLOATING TREE";
+        }
+
+        return string.IsNullOrWhiteSpace(ancientMapDestinationLabel)
+            ? "ANCIENT DESTINATION"
+            : ancientMapDestinationLabel.Trim().ToUpperInvariant();
     }
 
     private void UpdateRouteLine(RectTransform line, Vector2 destination, float thickness)
@@ -485,17 +561,29 @@ public class MinimapController : MonoBehaviour
         if (objectiveDistancePanel != null) objectiveDistancePanel.SetActive(showDistancePanel);
     }
 
-    private static bool ShouldShowFloatingTreeObjective()
+    private static ObjectiveGuideKind GetObjectiveGuideKind()
     {
         string currentObjective = ZoneObjectiveManager.Instance != null
             ? ZoneObjectiveManager.Instance.CurrentObjective
             : GameDataManager.Instance != null
                 ? GameDataManager.Instance.CurrentObjective
                 : string.Empty;
-        return string.Equals(
-            currentObjective,
-            "Find the Floating Tree",
-            System.StringComparison.OrdinalIgnoreCase);
+        if (string.Equals(currentObjective, "Find the Floating Tree", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return GameDataManager.Instance != null &&
+                   GameDataManager.Instance.IsAncientMapGuidanceUnlocked
+                ? ObjectiveGuideKind.FloatingTree
+                : ObjectiveGuideKind.None;
+        }
+
+        if (AncientMapProgression.IsGuidanceObjective(currentObjective) &&
+            GameDataManager.Instance != null &&
+            GameDataManager.Instance.IsAncientMap2GuidanceUnlocked)
+        {
+            return ObjectiveGuideKind.AncientMap;
+        }
+
+        return ObjectiveGuideKind.None;
     }
 
     private void AcquirePlayer()

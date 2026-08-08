@@ -71,6 +71,8 @@ MonoBehaviour:
   floatingTreeClue: {fileID: 21300000, guid: 58c7a20fb69943318fe59099bdafd046, type: 3}
   tyrantMapClue: {fileID: 21300000, guid: b78b91cd33564c2fba3584e928f66a46, type: 3}
   noteUiPrefab: {fileID: 5381400642266364740, guid: 5088545c969c4ae988055540d010d380, type: 3}
+  ancientMapItem: {fileID: 11400000, guid: de96a69936b04b408257f04f59f4cc6f, type: 2}
+  collectIntoInventory: 1
   hoverHeight: 0.16
   hoverSpeed: 1.35
   rotationSpeed: 18

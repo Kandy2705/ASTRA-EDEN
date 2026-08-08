@@ -113,6 +113,8 @@ MonoBehaviour:
     th\u1EADn.\n\nC\xF3 th\u1EE9 g\xEC \u0111\xF3 v\u1EABn \u0111ang d\xF5i theo
     t\u1EEBng b\u01B0\u1EDBc ch\xE2n c\u1EE7a ng\u01B0\u01A1i."
   nextDestination: {fileID: 0}
+  ancientMapItem: {fileID: 11400000, guid: a39561c3cd9540a0a4710fbe47a8cb82, type: 2}
+  collectIntoInventory: 1
   hoverHeight: 0.16
   hoverSpeed: 1.35
   rotationSpeed: 18

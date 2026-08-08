@@ -13,6 +13,7 @@ public static class FloatingTreeNote2Setup
 {
     const string BaseNotePath = "Assets/_Project/Prefab/AncientNotePickup.prefab";
     const string Note2Path = "Assets/_Project/Prefab/AncientNotePickupNote2.prefab";
+    const string AncientMapItemPath = "Assets/_Project/ScriptableObjects/Items/Quest/SO_Item_AncientMap02.asset";
     const string TreeObjectName = "Flying_Tree_Zone_2";
 
     [MenuItem("ASTRA EDEN/Floating Tree/Build Note #2 Prefab")]
@@ -47,6 +48,12 @@ public static class FloatingTreeNote2Setup
 
             SerializedObject so = new SerializedObject(pickup);
             so.FindProperty("noteId").stringValue = AncientNotePickup.Note2Id;
+            SerializedProperty mapItemProperty = so.FindProperty("ancientMapItem");
+            if (mapItemProperty != null)
+            {
+                mapItemProperty.objectReferenceValue =
+                    AssetDatabase.LoadAssetAtPath<ItemData>(AncientMapItemPath);
+            }
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(root, Note2Path);

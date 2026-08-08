@@ -165,6 +165,12 @@ public sealed class AncientNoteUIController : MonoBehaviour
 
         rootGroup ??= GetComponent<CanvasGroup>();
         audioSource ??= GetComponent<AudioSource>();
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
+            audioSource.ignoreListenerPause = true;
+        }
         parchment ??= transform.Find("Parchment") as RectTransform;
         if (parchment != null)
         {

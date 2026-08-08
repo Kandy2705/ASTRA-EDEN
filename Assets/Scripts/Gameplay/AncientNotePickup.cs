@@ -61,6 +61,12 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
     [Tooltip("Điểm đến tiếp theo trên bản đồ cổ. Để trống: vẫn hoàn tất Note #2 và đặt objective nhưng KHÔNG tạo destination marker.")]
     [SerializeField] private Transform nextDestination;
 
+    [Header("Note 2 - Inventory Pickup")]
+    [Tooltip("Key Item tương ứng với noteId. Note #1 dùng ancient_map_note_01, Note #2 dùng ancient_map_note_02.")]
+    [SerializeField] private ItemData ancientMapItem;
+    [Tooltip("Bật: bấm F chỉ nhặt giấy vào inventory; popup/objective chỉ mở khi bấm Use.")]
+    [SerializeField] private bool collectIntoInventory = true;
+
     [Header("World Visual")]
     [SerializeField, Min(0f)] private float hoverHeight = 0.16f;
     [SerializeField, Min(0.1f)] private float hoverSpeed = 1.35f;
@@ -174,6 +180,12 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
             return;
         }
 
+        if (collectIntoInventory)
+        {
+            CollectAncientMap(interactor);
+            return;
+        }
+
         opening = true;
         AncientNoteUIController.Show(
             floatingTreeClue,
@@ -189,7 +201,47 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
 
     public string GetInteractPrompt()
     {
-        return "Read Ancient Note [F]";
+        if (!collectIntoInventory)
+        {
+            return "Read Ancient Note [F]";
+        }
+
+        return IsNote2 ? "Collect Ancient Map [F]" : "Collect Ancient Note [F]";
+    }
+
+    private void CollectAncientMap(Transform interactor)
+    {
+        PlayerInventoryService inventory = interactor.GetComponentInParent<PlayerInventoryService>() ??
+                                           PlayerInventoryService.FindForPlayer();
+        ItemData mapItem = AncientMapProgression.ResolveMapItem(ancientMapItem, IsNote2);
+        if (inventory == null || mapItem == null)
+        {
+            Debug.LogWarning(
+                "[AncientMap] Không thể nhặt map: thiếu PlayerInventoryService hoặc SO_Item_AncientMap.",
+                this);
+            return;
+        }
+
+        opening = true;
+        if (inventory.GetQuantity(mapItem) <= 0 && !inventory.AddItem(mapItem, 1))
+        {
+            opening = false;
+            return;
+        }
+
+        if (IsNote2)
+        {
+            GameDataManager.Instance?.MarkAncientNote2Collected();
+        }
+        else
+        {
+            GameDataManager.Instance?.MarkAncientNoteCollected();
+        }
+
+        Debug.Log(
+            $"[AncientMap] '{mapItem.displayName}' acquired — mở Inventory/Quest và bấm Use để đọc.",
+            this);
+        BeginCollectDisappear();
     }
 
     private void CompleteCollection()
@@ -199,33 +251,23 @@ public sealed class AncientNotePickup : MonoBehaviour, IWorldInteractable
             return;
         }
 
-        consumed = true;
-        opening = false;
         Debug.Log($"[AncientNote] Collected '{noteId}'.", this);
 
-        if (IsNote2)
-        {
-            GameDataManager.Instance?.MarkAncientNote2Collected();
-            SetObjective("Follow the Ancient Map");
+        GameDataManager.Instance?.MarkAncientNoteCollected();
+        SetObjective("Find the Floating Tree");
 
-            if (nextDestination == null)
-            {
-                Debug.Log(
-                    "[AncientNote] nextDestination rỗng — vẫn hoàn tất Note #2, " +
-                    "không tạo destination marker.", this);
-            }
-            else
-            {
-                Debug.Log(
-                    $"[AncientNote] nextDestination = '{nextDestination.name}' — " +
-                    "tạo destination marker chưa được implement, bỏ qua.", this);
-            }
-        }
-        else
+        BeginCollectDisappear();
+    }
+
+    private void BeginCollectDisappear()
+    {
+        if (consumed)
         {
-            GameDataManager.Instance?.MarkAncientNoteCollected();
-            SetObjective("Find the Floating Tree");
+            return;
         }
+
+        consumed = true;
+        opening = false;
 
         if (collectSfx != null)
         {

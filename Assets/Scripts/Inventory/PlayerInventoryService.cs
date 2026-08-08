@@ -18,6 +18,7 @@ public class PlayerInventoryService : MonoBehaviour
     public event Action OnInventoryChanged;
 
     private bool hasLoadedFromSave;
+    private bool ensuringCollectedDocuments;
 
     public static PlayerInventoryService FindForPlayer()
     {
@@ -38,6 +39,8 @@ public class PlayerInventoryService : MonoBehaviour
     private void Start()
     {
         TryLoadFromGameData();
+
+        EnsureCollectedAncientMapItems();
 
         if (!hasLoadedFromSave)
         {
@@ -348,6 +351,70 @@ public class PlayerInventoryService : MonoBehaviour
         // TODO: stamina/energy hooks khi co system, hien tai chua co CharacterStamina/CharacterEnergy component.
         RemoveItem(itemData, 1);
         return true;
+    }
+
+    public bool CanUseItem(ItemData itemData)
+    {
+        if (itemData == null || !HasItem(itemData, 1))
+        {
+            return false;
+        }
+
+        return itemData.type == ItemType.Consumable || AncientMapProgression.IsMapItem(itemData);
+    }
+
+    public bool UseItem(ItemData itemData)
+    {
+        if (!CanUseItem(itemData))
+        {
+            return false;
+        }
+
+        if (itemData.type == ItemType.Consumable)
+        {
+            return UseConsumable(itemData);
+        }
+
+        return AncientMapProgression.TryUse(itemData);
+    }
+
+    public void EnsureCollectedAncientMapItems()
+    {
+        if (ensuringCollectedDocuments || GameDataManager.Instance == null)
+        {
+            return;
+        }
+
+        ensuringCollectedDocuments = true;
+        try
+        {
+            if (GameDataManager.Instance.IsAncientNoteCollected)
+            {
+                RestoreCollectedDocument(AncientMapProgression.ResolveMapItem());
+            }
+
+            if (GameDataManager.Instance.IsAncientNote2Collected)
+            {
+                RestoreCollectedDocument(AncientMapProgression.ResolveMapItem(null, true));
+            }
+        }
+        finally
+        {
+            ensuringCollectedDocuments = false;
+        }
+    }
+
+    private void RestoreCollectedDocument(ItemData document)
+    {
+        if (document == null || GetQuantity(document) > 0)
+        {
+            return;
+        }
+
+        // Migration/safety: save cũ đã nhặt giấy vẫn nhận đúng Key Item riêng,
+        // nhưng không tự mở khóa objective/route nếu người chơi chưa bấm Use.
+        AddItem(document, 1);
+        Debug.Log($"[AncientMap] Restored '{document.itemId}' into inventory.", this);
     }
 
     private InventoryItemStack FindStack(ItemData itemData)
