@@ -4173,6 +4173,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAIController
   enemyData: {fileID: 11400000, guid: b6d80bc81321749a1babee34020d69b7, type: 2}
   initializeFromEnemyData: 1
+  bossBehaviour: {fileID: 0}
   sensor: {fileID: 3050342808870459031}
   health: {fileID: 5327314098521213196}
   knockback: {fileID: 8578823923300559423}
@@ -4203,24 +4204,33 @@ MonoBehaviour:
   lowHealthRetreatCooldown: 8
   lowHealthRetreatOnlyOnce: 1
   useHitAnimation: 1
+  forceHitReactionOnAnyDamage: 0
   hitStunDuration: 0.25
+  hitReactionFallbackDuration: 0.9
   hurtCooldown: 0.6
   staggerDuration: 1.2
+  staggerReactionFallbackDuration: 1.1
   poiseRegenAfterStagger: 0
   useDeathAnimation: 1
   deathAnimationDuration: 2
   flipForward180: 1
+  modelVisualRoot: {fileID: 0}
+  modelYawOffset: 0
   animatorDampTime: 0.1
   movingThreshold: 0.05
   useTackle: 0
   attacksBeforeTackle: 2
   tackleRange: 3.2
   tackleCooldown: 6
+  tackleHitOpenNormalized: 0.28
+  tackleHitCloseNormalized: 0.68
+  tackleFallbackDuration: 2.2
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
   playerResolveInterval: 0.75
   useProximitySphereFallback: 1
+  maxCombatVerticalDifference: 3
   enableRandomWalkWhenNoPatrol: 1
   randomWalkRange: 8
   randomWalkArriveDistance: 1
@@ -4233,6 +4243,7 @@ MonoBehaviour:
   debugLogStateMachine: 0
   debugLogChaseTick: 0
   debugLogCombatResponse: 0
+  debugLogHitReaction: 0
 --- !u!114 &8578823923300559423
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4379,6 +4390,7 @@ MonoBehaviour:
   projectileSpeed: 10
   maxTravelDistance: 18
   projectileRadius: 0.18
+  targetHeightOffset: 0.9
   knockbackDistance: 4
   knockbackDuration: 0.22
   verticalLift: 0.25
@@ -5016,6 +5028,8 @@ MonoBehaviour:
   pushDistance: 4.2
   pushDuration: 0.18
   verticalLift: 0.15
+  ownerAttackDamageMultiplier: 1.5
+  flatDamageBonus: 0
 --- !u!1 &8024666011248786196
 GameObject:
   m_ObjectHideFlags: 0
