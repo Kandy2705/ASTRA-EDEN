@@ -17,6 +17,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Loading.unity
     guid: b6811dfd935a74250b025a636c636f03
+  - enabled: 1
+    path: Assets/Scenes/CutScenes/CutScene 1.unity
+    guid: fe96629ff585b4818833e780cc9e1ba5
+  - enabled: 1
+    path: Assets/Scenes/CutScenes/CutScene 2.unity
+    guid: e730c2e0a6eaa4f198569b14f1bcde0e
+  - enabled: 1
+    path: Assets/Scenes/CutScenes/CutScene 3.unity
+    guid: 5e95cda4525564d42b8ebe6e942a5289
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
