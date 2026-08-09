@@ -36,7 +36,7 @@ public class HUDTopStatusController : MonoBehaviour
     [Range(18f, 23f)]
     [SerializeField] private float nightStartsHour = 20f;
     [Tooltip("Cường độ ánh sáng thấp nhất vào ban đêm.")]
-    [SerializeField, Range(0f, 1f)] private float minimumLightingIntensity = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float minimumLightingIntensity = 0.8f;
     [Tooltip("Cường độ ánh sáng cao nhất vào ban ngày.")]
     [SerializeField, Range(0f, 1f)] private float maximumLightingIntensity = 1f;
     [Tooltip("Màu cố định của Directional Light trong toàn bộ chu kỳ ngày/đêm.")]
@@ -275,8 +275,8 @@ public class HUDTopStatusController : MonoBehaviour
 
         if (sunLight != null)
         {
-            float solarAngle = (hour - 6f) * 15f;
-            sunLight.transform.rotation = Quaternion.Euler(solarAngle, sunYaw, 0f);
+            // Giữ cố định góc mặt trời (không xoay theo giờ nữa) để terrain/cây
+            // luôn nhận được ánh sáng trực tiếp; chỉ đổi cường độ theo ngày/đêm.
             sunLight.intensity = lightingIntensity;
             sunLight.color = lightingColor;
         }

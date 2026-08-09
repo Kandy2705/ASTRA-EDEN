@@ -8469,7 +8469,7 @@ MonoBehaviour:
   midnightSkybox: {fileID: 2100000, guid: 97637a2a763b7f24b8da4e139e4144ca, type: 2}
   fullyBrightHour: 10
   nightStartsHour: 20
-  minimumLightingIntensity: 0.1
+  minimumLightingIntensity: 0.8
   maximumLightingIntensity: 1
   lightingColor: {r: 1, g: 0.9294118, b: 0.7803922, a: 1}
   networkText: {fileID: 8995251284107684141}
