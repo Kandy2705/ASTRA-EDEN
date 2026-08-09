@@ -282,7 +282,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         RectTransform panelRect = CreateUiObject(
             "PlayerDebugPanel",
             canvasTransform,
-            new Vector2(460f, 600f),
+            new Vector2(460f, 680f),
             Vector2.zero);
         playerDebugPanel = panelRect.gameObject;
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -428,10 +428,19 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             new Color(0.4f, 0.2f, 0.5f, 1f));
         teleportBoss2Button.onClick.AddListener(TeleportNearBoss2);
 
+        Button resetIntroButton = CreateButton(
+            panelRect,
+            "Button_ResetOpeningIntro",
+            "SET INTRO = CHƯA XEM",
+            new Vector2(0f, -210f),
+            new Vector2(320f, 38f),
+            new Color(0.36f, 0.16f, 0.5f, 1f));
+        resetIntroButton.onClick.AddListener(ResetOpeningIntroForDemo);
+
         debugStatusText = CreateLabel(
             panelRect,
             "Đang tìm Player...",
-            new Vector2(0f, -210f),
+            new Vector2(0f, -260f),
             new Vector2(410f, 44f),
             18f,
             new Color(0.82f, 0.9f, 0.94f, 1f),
@@ -440,7 +449,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "Bấm lại icon mặt trời để đóng",
-            new Vector2(0f, -252f),
+            new Vector2(0f, -306f),
             new Vector2(410f, 28f),
             15f,
             new Color(0.62f, 0.68f, 0.72f, 1f),
@@ -626,6 +635,12 @@ public class GameplayUISceneBootstrap : MonoBehaviour
 
         GameDataManager.Instance.ResetAncientNoteProgressForDemo();
         SetDebugMessage("Đã reset — hạ boss Ancient Forest lại thì F mới nhả giấy.");
+    }
+
+    private void ResetOpeningIntroForDemo()
+    {
+        IntroSequenceFlow.ResetIntroForDemo();
+        SetDebugMessage("Intro = CHƯA XEM. Về Main Menu và bấm Start để chạy lại 4 cutscene.");
     }
 
     private void TeleportNearBoss1()

@@ -5,7 +5,10 @@ public static class SceneTransitionService
 {
     public const string LoadingSceneName = "Loading";
 
-    public static void Load(string targetSceneName, bool useLoadingScreen = true)
+    public static void Load(
+        string targetSceneName,
+        bool useLoadingScreen = true,
+        bool suppressLoadingAudio = false)
     {
         if (string.IsNullOrWhiteSpace(targetSceneName))
         {
@@ -13,10 +16,18 @@ public static class SceneTransitionService
             return;
         }
 
-        AudioManager.EnsureInstance()?.NotifyTransitionToLoading(targetSceneName);
-
         if (useLoadingScreen && IsSceneInBuildSettings(LoadingSceneName))
         {
+            AudioManager manager = AudioManager.EnsureInstance();
+            if (suppressLoadingAudio)
+            {
+                manager?.NotifyTransitionToLoadingSilently(targetSceneName);
+            }
+            else
+            {
+                manager?.NotifyTransitionToLoading(targetSceneName);
+            }
+
             LoadingScreenController.TargetSceneName = targetSceneName;
             SceneManager.LoadScene(LoadingSceneName);
             return;

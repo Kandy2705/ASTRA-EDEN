@@ -13,6 +13,7 @@ public class LoadingScreenController : MonoBehaviour
     [SerializeField] private Image loadingBarFill;
     [SerializeField] private TMP_Text loadingPercentText;
     [SerializeField] private float minLoadingDuration = 1.5f; // Thời gian tối thiểu để hiển thị loading (không load xong quá nhanh)
+    [SerializeField] private string defaultTargetSceneName = "MainMenu";
 
     // Static để ScenePortalFade truyền tên scene cần load
     public static string TargetSceneName { get; set; } = "";
@@ -32,19 +33,23 @@ public class LoadingScreenController : MonoBehaviour
         // Chờ 1 frame để scene xong setup
         yield return new WaitForEndOfFrame();
 
-        if (!string.IsNullOrWhiteSpace(TargetSceneName))
+        string sceneToLoad = string.IsNullOrWhiteSpace(TargetSceneName)
+            ? defaultTargetSceneName
+            : TargetSceneName;
+
+        if (!string.IsNullOrWhiteSpace(sceneToLoad))
         {
-            StartCoroutine(LoadSceneAsync(TargetSceneName));
+            StartCoroutine(LoadSceneAsync(sceneToLoad));
         }
         else
         {
-            Debug.LogWarning("[LoadingScreenController] Chưa set TargetSceneName!");
+            Debug.LogWarning("[LoadingScreenController] Chưa set TargetSceneName/defaultTargetSceneName!");
         }
     }
 
     private IEnumerator LoadSceneAsync(string sceneName)
     {
-        startTime = Time.time;
+        startTime = Time.unscaledTime;
         targetAudioPrimed = false;
 
         asyncLoad = SceneManager.LoadSceneAsync(sceneName);
@@ -58,7 +63,7 @@ public class LoadingScreenController : MonoBehaviour
             float realProgress = Mathf.Clamp01(asyncLoad.progress / 0.9f);
 
             // Ép loading chạy tối thiểu theo thời gian
-            float timeProgress = Mathf.Clamp01((Time.time - startTime) / minLoadingDuration);
+            float timeProgress = Mathf.Clamp01((Time.unscaledTime - startTime) / minLoadingDuration);
 
             // Lấy progress nhỏ hơn để thanh không chạy 100% quá sớm
             float targetProgress = Mathf.Min(realProgress, timeProgress);
@@ -67,7 +72,7 @@ public class LoadingScreenController : MonoBehaviour
             displayedProgress = Mathf.MoveTowards(
                 displayedProgress,
                 targetProgress,
-                Time.deltaTime * 0.6f
+                Time.unscaledDeltaTime * 0.6f
             );
 
             UpdateProgressBar(displayedProgress);
@@ -93,14 +98,14 @@ public class LoadingScreenController : MonoBehaviour
             displayedProgress = Mathf.MoveTowards(
                 displayedProgress,
                 1f,
-                Time.deltaTime * 1.2f
+                Time.unscaledDeltaTime * 1.2f
             );
 
             UpdateProgressBar(displayedProgress);
             yield return null;
         }
 
-        yield return new WaitForSeconds(0.25f);
+        yield return new WaitForSecondsRealtime(0.25f);
 
         asyncLoad.allowSceneActivation = true;
 

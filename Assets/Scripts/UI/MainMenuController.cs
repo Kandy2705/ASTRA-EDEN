@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class MainMenuController : MonoBehaviour
 {
     [Header("Scene Names")]
-    public string newGameSceneName = "Beacon_Camp";
+    public string newGameSceneName = "World_Eden7";
     public string fallbackContinueSceneName = "Beacon_Camp";
 
     [Header("UI References")]
@@ -16,6 +16,8 @@ public class MainMenuController : MonoBehaviour
 
     private void Start()
     {
+        IntroSequenceFlow.CancelActiveSequence();
+
         if (settingsPanel != null)
         {
             settingsTween = GetOrCreateTween(settingsPanel);
@@ -41,6 +43,13 @@ public class MainMenuController : MonoBehaviour
 
     public void ContinueGame()
     {
+        if (IntroSequenceFlow.ShouldPlayIntro)
+        {
+            Debug.Log("[MainMenu] Intro chưa xem -> chạy đủ 4 opening cutscene.");
+            IntroSequenceFlow.BeginIntroSequence();
+            return;
+        }
+
         if (GameDataManager.Instance == null)
         {
             Debug.LogWarning("[MainMenu] Không có GameDataManager trong scene. Load game mới.");
@@ -72,7 +81,8 @@ public class MainMenuController : MonoBehaviour
             GameDataManager.Instance.DeleteSaveData();
         }
 
-        SceneTransitionService.Load(newGameSceneName);
+        IntroSequenceFlow.ResetIntroForDemo();
+        IntroSequenceFlow.BeginIntroSequence();
     }
 
     public void ShowDeleteConfirmPanel()

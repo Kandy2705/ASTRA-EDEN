@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Loading.unity
+    guid: b6811dfd935a74250b025a636c636f03
+  - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: f01f0d6a08e8e44b39d59ecf78c865b6
   - enabled: 1
@@ -14,9 +17,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/World_Eden7.unity
     guid: 565db450102e511409619c0e510f2f11
-  - enabled: 1
-    path: Assets/Scenes/Loading.unity
-    guid: b6811dfd935a74250b025a636c636f03
   - enabled: 1
     path: Assets/Scenes/CutScenes/CutScene 1.unity
     guid: fe96629ff585b4818833e780cc9e1ba5

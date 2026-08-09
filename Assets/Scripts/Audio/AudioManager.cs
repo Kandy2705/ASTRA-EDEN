@@ -268,6 +268,16 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public void NotifyTransitionToLoadingSilently(string targetSceneName)
+    {
+        pendingTargetScene = targetSceneName;
+        ClearMusicOverrideState();
+        FadeBeachVolume(0f, 0.2f);
+        CrossfadeMusic(null, loop: false, targetVolume: 0f, duration: 0.2f);
+        CrossfadeAmbient(null, loop: false, targetVolume: 0f, duration: 0.2f);
+        Debug.Log($"[AudioManager] Loading tới '{targetSceneName}' ở chế độ im lặng (intro).");
+    }
+
     public void NotifyTargetSceneReady(string targetSceneName)
     {
         if (catalog == null)

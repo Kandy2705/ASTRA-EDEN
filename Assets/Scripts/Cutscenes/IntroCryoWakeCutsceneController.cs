@@ -530,6 +530,11 @@ public sealed class IntroCryoWakeCutsceneController : MonoBehaviour
         }
 
         transitionRequested = true;
+        if (IntroSequenceFlow.IsSequenceActive)
+        {
+            IntroSequenceFlow.MarkIntroCompleted();
+        }
+
         if (!SceneTransitionService.IsSceneInBuildSettings(nextSceneName))
         {
             Debug.LogError($"[IntroCryoWake] Scene gameplay '{nextSceneName}' chưa có trong Build Settings.");
@@ -537,7 +542,10 @@ public sealed class IntroCryoWakeCutsceneController : MonoBehaviour
         }
 
         Debug.Log($"[IntroCryoWake] Timeline hoàn tất. Chuyển sang gameplay scene '{nextSceneName}'.");
-        SceneTransitionService.Load(nextSceneName, useLoadingScreen);
+        SceneTransitionService.Load(
+            nextSceneName,
+            useLoadingScreen,
+            suppressLoadingAudio: true);
     }
 
 #if UNITY_EDITOR
