@@ -1110,7 +1110,7 @@ MonoBehaviour:
   arenaBarrierColor: {r: 0.2, g: 0.82, b: 1, a: 0.22}
   arenaBarrierPulseAmount: 0.055
   arenaBarrierPulseSpeed: 2
-  bossMusic: {fileID: 0}
+  bossMusic: {fileID: 8300000, guid: c7539e82f49a8554cae4b061c0ff1227, type: 3}
   bossMusicVolume: 1
   bossMusicFadeIn: 1.2
   bossMusicFadeOut: 1.5

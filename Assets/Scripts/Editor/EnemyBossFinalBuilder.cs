@@ -28,6 +28,7 @@ public static class EnemyBossFinalBuilder
     const string SkillRVfxPath = "Assets/VFX/Free Slash VFX/Prefabs/Multiple Slashes.prefab";
     const string SwordSlashSfxPath = "Assets/_Project/Audio/mixkit-sword-slash-swoosh-1476.mp3";
     const string BossDamagedSfxPath = "Assets/_Project/Audio/female_hurt_grunts_groans_1.ogg";
+    const string BossMusicPath = "Assets/Sounds/25 Rpg Game Tracks/Action 4 (Loop).wav";
     const string WorldScenePath = "Assets/Scenes/World_Eden7.unity";
     const string ArenaMarkerName = "Poi swaning";
 
@@ -658,6 +659,7 @@ public static class EnemyBossFinalBuilder
             MiniBossMarker marker = EnsureSingle<MiniBossMarker>(root);
             marker.Configure(data.displayName, health);
             marker.ConfigureLockedArena(true);
+            marker.ConfigureBossMusic(AssetDatabase.LoadAssetAtPath<AudioClip>(BossMusicPath));
             SerializedObject markerSo = new SerializedObject(marker);
             SetFloat(markerSo, "arenaRadius", 18f);
             SetFloat(markerSo, "arenaEngageDistance", 17f);
