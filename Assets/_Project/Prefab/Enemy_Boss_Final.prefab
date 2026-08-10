@@ -774,7 +774,7 @@ MonoBehaviour:
   meleeImpactSfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
   skillESfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
   skillRSfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
-  bossDamagedSfx: {fileID: 8300000, guid: e9fc3462c4ae141a1abef311cf700392, type: 3}
+  bossDamagedSfx: {fileID: 8300000, guid: a2acab9271e6e4409bc8736fab3e8ecb, type: 3}
   meleeSwingVolume: 0.72
   meleeImpactVolume: 0.9
   skillVolume: 1

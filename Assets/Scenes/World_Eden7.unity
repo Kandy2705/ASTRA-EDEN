@@ -130,11 +130,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &54950276 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4817674281682719191, guid: 9369ae5f294cf427ba582a96f25ca61d, type: 3}
-  m_PrefabInstance: {fileID: 1557968266}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &73486420
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3272,14 +3267,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1774646910439626745, guid: 9369ae5f294cf427ba582a96f25ca61d, type: 3}
-      propertyPath: bossDamagedSfx
-      value: 
-      objectReference: {fileID: 8300000, guid: 4a17f7b268fec47dd9d5eb18b24d5420, type: 3}
-    - target: {fileID: 1774646910439626745, guid: 9369ae5f294cf427ba582a96f25ca61d, type: 3}
-      propertyPath: skillVfxOrigin
-      value: 
-      objectReference: {fileID: 54950276}
     - target: {fileID: 4817674281682719191, guid: 9369ae5f294cf427ba582a96f25ca61d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1685.8665
