@@ -35,6 +35,20 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
     [SerializeField] private AudioClip summonSfx;
     [SerializeField] private AudioSource audioSource;
 
+    [Header("Commander Combat Audio")]
+    [Tooltip("Âm vung kiếm của đòn thường. Không phát nếu vung trượt vẫn cần âm vung.")]
+    [SerializeField] private AudioClip meleeSwingSfx;
+    [Tooltip("Chỉ phát khi hitbox của Commander thật sự gây damage cho Player.")]
+    [SerializeField] private AudioClip meleeImpactSfx;
+    [SerializeField] private AudioClip skillESfx;
+    [SerializeField] private AudioClip skillRSfx;
+    [Tooltip("Âm va chạm khi Commander bị Player đánh trúng.")]
+    [SerializeField] private AudioClip bossDamagedSfx;
+    [SerializeField, Range(0f, 1f)] private float meleeSwingVolume = 0.72f;
+    [SerializeField, Range(0f, 1f)] private float meleeImpactVolume = 0.9f;
+    [SerializeField, Range(0f, 1f)] private float skillVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float bossDamagedVolume = 0.75f;
+
     [Header("Phase 2")]
     [SerializeField, Range(0.05f, 0.95f)] private float phase2HealthThreshold = 0.5f;
     [SerializeField, Min(0.25f)] private float powerUpDuration = 1.8f;
@@ -93,6 +107,7 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
 
     EnemyAIController owner;
     CharacterHealth ownerHealth;
+    EnemyAttackHitbox ownerAttackHitbox;
     Animator ownerAnimator;
     ExclusiveAction activeAction;
     bool phase2Pending;
@@ -105,6 +120,8 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
     float nextSpecialSkillAllowedTime;
     int actionToken;
     Vector3 summonArenaCenter;
+    float lastObservedHealthForSfx = float.NaN;
+    float nextBossDamagedSfxTime;
 
     public string BossDisplayName => bossDisplayName;
     public int ActiveSummonCount => activeSummons.Count;
@@ -116,6 +133,7 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
         base.Initialize(controller);
         owner = controller;
         ownerHealth = GetComponent<CharacterHealth>();
+        ownerAttackHitbox = GetComponentInChildren<EnemyAttackHitbox>(true);
         ownerAnimator = GetComponentInChildren<Animator>(true);
         summonArenaCenter = transform.position;
 
@@ -125,7 +143,16 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
             ownerHealth.Changed += HandleOwnerHealthChanged;
             ownerHealth.Died -= HandleOwnerDied;
             ownerHealth.Died += HandleOwnerDied;
+            lastObservedHealthForSfx = ownerHealth.RuntimeStats != null
+                ? ownerHealth.RuntimeStats.currentHP
+                : float.NaN;
             EvaluateHealthThresholds();
+        }
+
+        if (ownerAttackHitbox != null)
+        {
+            ownerAttackHitbox.DamageApplied -= HandleMeleeDamageApplied;
+            ownerAttackHitbox.DamageApplied += HandleMeleeDamageApplied;
         }
 
         if (audioSource == null)
@@ -140,6 +167,11 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
         {
             ownerHealth.Changed -= HandleOwnerHealthChanged;
             ownerHealth.Died -= HandleOwnerDied;
+        }
+
+        if (ownerAttackHitbox != null)
+        {
+            ownerAttackHitbox.DamageApplied -= HandleMeleeDamageApplied;
         }
 
         UnsubscribeAllSummons();
@@ -392,6 +424,7 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
     /// </summary>
     public void Anim_SpawnSkillEVfx()
     {
+        PlayCombatSfx(skillESfx, skillVolume, 0.92f);
         SpawnSkillVfx(skillEVfxPrefab, skillEVfxYawOffset, skillVfxHeightOffset, skillEVfxLocalOffset, skillEVfxScale, true, skillEAttackId);
     }
 
@@ -403,6 +436,27 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
     public void Anim_SpawnSkillRVfx()
     {
         SpawnSkillVfx(skillRVfxPrefab, skillRVfxYawOffset, skillRVfxHeightOffset, Vector3.zero, skillRVfxScale, false, skillRAttackId);
+    }
+
+    /// <summary>Called from the reused Player animation event OnPlaySlashSound.</summary>
+    public void Anim_PlayAttackSwingSfx()
+    {
+        if (owner == null || owner.State != EnemyAIController.AIState.Attack ||
+            ownerHealth == null || ownerHealth.IsDead)
+        {
+            return;
+        }
+
+        // Great Sword Casting (Skill R) already calls OnPlaySlashSound. Use
+        // its dedicated sound here rather than stacking the ordinary swing.
+        AttackPatternData pattern = owner.CurrentAttackPattern;
+        if (pattern != null && pattern.attackId == skillRAttackId)
+        {
+            PlayCombatSfx(skillRSfx, skillVolume, 0.72f);
+            return;
+        }
+
+        PlayCombatSfx(meleeSwingSfx, meleeSwingVolume, 1f);
     }
 
     public void RequestExclusiveActionEnd(int expectedToken)
@@ -439,7 +493,43 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
 
     void HandleOwnerHealthChanged(CharacterHealth _)
     {
+        if (ownerHealth != null && ownerHealth.RuntimeStats != null)
+        {
+            float current = ownerHealth.RuntimeStats.currentHP;
+            if (!float.IsNaN(lastObservedHealthForSfx) &&
+                current < lastObservedHealthForSfx - 0.001f &&
+                !ownerHealth.IsDead &&
+                Time.time >= nextBossDamagedSfxTime)
+            {
+                PlayCombatSfx(bossDamagedSfx, bossDamagedVolume, 0.78f);
+                nextBossDamagedSfxTime = Time.time + 0.08f;
+            }
+
+            lastObservedHealthForSfx = current;
+        }
+
         EvaluateHealthThresholds();
+    }
+
+    void HandleMeleeDamageApplied(int _)
+    {
+        if (owner == null || owner.State != EnemyAIController.AIState.Attack ||
+            ownerHealth == null || ownerHealth.IsDead)
+        {
+            return;
+        }
+
+        PlayCombatSfx(meleeImpactSfx, meleeImpactVolume, 0.82f);
+    }
+
+    void PlayCombatSfx(AudioClip clip, float volume, float pitch)
+    {
+        if (clip == null) return;
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) return;
+
+        audioSource.pitch = Mathf.Clamp(pitch, 0.1f, 3f);
+        audioSource.PlayOneShot(clip, Mathf.Clamp01(volume));
     }
 
     void HandleOwnerDied(CharacterHealth _)

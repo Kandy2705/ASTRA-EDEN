@@ -154,8 +154,8 @@ public class EnemyAnimationEventRelay : MonoBehaviour
 
     public void OnPlaySlashSound()
     {
-        // Optional Final Boss slash AudioClip can be added later. Keeping this
-        // receiver avoids invoking the Player audio controller.
+        FinalBossBehaviour finalBoss = GetComponentInParent<FinalBossBehaviour>();
+        finalBoss?.Anim_PlayAttackSwingSfx();
     }
 
     public void SpawnSlashFireVFX_X180()

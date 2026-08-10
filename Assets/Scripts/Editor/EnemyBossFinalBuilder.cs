@@ -26,6 +26,8 @@ public static class EnemyBossFinalBuilder
     const string SwordPrefabPath = "Assets/Prefabs/Environment/Hovl Studio/Package Magic sword/Prefabs/MagicSword_Iron.prefab";
     const string SkillEVfxPath = "Assets/VFX/Free Slash VFX/Prefabs/Slash Fire VFX.prefab";
     const string SkillRVfxPath = "Assets/VFX/Free Slash VFX/Prefabs/Multiple Slashes.prefab";
+    const string SwordSlashSfxPath = "Assets/_Project/Audio/mixkit-sword-slash-swoosh-1476.mp3";
+    const string BossDamagedSfxPath = "Assets/_Project/Audio/female_hurt_grunts_groans_1.ogg";
     const string WorldScenePath = "Assets/Scenes/World_Eden7.unity";
     const string ArenaMarkerName = "Poi swaning";
 
@@ -97,7 +99,9 @@ public static class EnemyBossFinalBuilder
                      Require<AttackPatternData>(PoisonPatternPath, "Poison Orb attack pattern") &&
                      Require<GameObject>(SwordPrefabPath, "Player MagicSword_Iron prefab") &&
                      Require<GameObject>(SkillEVfxPath, "Player Slash Fire VFX") &&
-                     Require<GameObject>(SkillRVfxPath, "Player Multiple Slashes VFX");
+                     Require<GameObject>(SkillRVfxPath, "Player Multiple Slashes VFX") &&
+                     Require<AudioClip>(SwordSlashSfxPath, "Commander sword combat SFX") &&
+                     Require<AudioClip>(BossDamagedSfxPath, "Commander damaged SFX");
 
         string[] clips =
         {
@@ -589,6 +593,16 @@ public static class EnemyBossFinalBuilder
             SetFloat(behaviourSo, "specialSkillCooldown", 5.5f);
             SetFloat(behaviourSo, "summonArenaRadius", 15.5f);
             SetObject(behaviourSo, "audioSource", audio);
+            AudioClip swordSlashSfx = AssetDatabase.LoadAssetAtPath<AudioClip>(SwordSlashSfxPath);
+            SetObject(behaviourSo, "meleeSwingSfx", swordSlashSfx);
+            SetObject(behaviourSo, "meleeImpactSfx", swordSlashSfx);
+            SetObject(behaviourSo, "skillESfx", swordSlashSfx);
+            SetObject(behaviourSo, "skillRSfx", swordSlashSfx);
+            SetObject(behaviourSo, "bossDamagedSfx", AssetDatabase.LoadAssetAtPath<AudioClip>(BossDamagedSfxPath));
+            SetFloat(behaviourSo, "meleeSwingVolume", 0.72f);
+            SetFloat(behaviourSo, "meleeImpactVolume", 0.9f);
+            SetFloat(behaviourSo, "skillVolume", 1f);
+            SetFloat(behaviourSo, "bossDamagedVolume", 0.75f);
             SetObject(behaviourSo, "powerUpVfx", powerUpVfx.gameObject);
             SetObject(behaviourSo, "skillEVfxPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(SkillEVfxPath));
             SetObject(behaviourSo, "skillRVfxPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(SkillRVfxPath));

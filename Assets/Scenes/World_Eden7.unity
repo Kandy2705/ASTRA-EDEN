@@ -3273,6 +3273,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1774646910439626745, guid: 9369ae5f294cf427ba582a96f25ca61d, type: 3}
+      propertyPath: bossDamagedSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 4a17f7b268fec47dd9d5eb18b24d5420, type: 3}
+    - target: {fileID: 1774646910439626745, guid: 9369ae5f294cf427ba582a96f25ca61d, type: 3}
       propertyPath: skillVfxOrigin
       value: 
       objectReference: {fileID: 54950276}

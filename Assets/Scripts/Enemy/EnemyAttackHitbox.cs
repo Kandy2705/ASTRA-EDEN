@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -39,6 +40,13 @@ public class EnemyAttackHitbox : MonoBehaviour
     Transform dynamicAnchor;
 
     public LayerMask TargetLayer => targetLayer;
+
+    /// <summary>
+    /// Raised only after this swing actually damages at least one target. This
+    /// lets a boss play impact SFX without playing a false "hit" sound when it
+    /// swings into empty space.
+    /// </summary>
+    public event Action<int> DamageApplied;
 
     public void SetTargetLayer(LayerMask layer)
     {
@@ -167,6 +175,11 @@ public class EnemyAttackHitbox : MonoBehaviour
                 }
             }
             dealt++;
+        }
+
+        if (dealt > 0)
+        {
+            DamageApplied?.Invoke(dealt);
         }
 
         return dealt;

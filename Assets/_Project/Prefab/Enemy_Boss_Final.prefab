@@ -770,6 +770,15 @@ MonoBehaviour:
   summonVfxPrefab: {fileID: 0}
   summonSfx: {fileID: 0}
   audioSource: {fileID: 4114431406514720797}
+  meleeSwingSfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
+  meleeImpactSfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
+  skillESfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
+  skillRSfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
+  bossDamagedSfx: {fileID: 8300000, guid: e9fc3462c4ae141a1abef311cf700392, type: 3}
+  meleeSwingVolume: 0.72
+  meleeImpactVolume: 0.9
+  skillVolume: 1
+  bossDamagedVolume: 0.75
   phase2HealthThreshold: 0.5
   powerUpDuration: 1.8
   phase2MovementMultiplier: 1.15
