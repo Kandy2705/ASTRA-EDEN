@@ -59,6 +59,67 @@ public abstract class EnemyBossBehaviour : MonoBehaviour
     {
     }
 
+    /// <summary>
+    /// Cho boss ưu tiên một pattern cụ thể (vd. đòn R khi sắp hết máu).
+    /// Trả null để dùng random/weighted selection mặc định.
+    /// </summary>
+    public virtual AttackPatternData SelectPriorityAttackPattern(
+        EnemyData data,
+        float distanceToPlayer)
+    {
+        return null;
+    }
+
+    /// <summary>
+    /// Boss-specific action that temporarily owns the FSM (for example a
+    /// summon or phase transition). Regular enemies keep the default false.
+    /// </summary>
+    public virtual bool CanStartExclusiveAction(
+        EnemyData data,
+        float distanceToPlayer,
+        float attackCooldownRemaining)
+    {
+        return false;
+    }
+
+    public virtual void BeginExclusiveAction(Animator animator, Transform player)
+    {
+    }
+
+    /// <returns>True when the action is complete and AI may return to Chase.</returns>
+    public virtual bool TickExclusiveAction(float deltaTime, Animator animator, Transform player)
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// Called whenever Hurt/Stagger/Dead invalidates an exclusive action.
+    /// Implementations should invalidate delayed animation events here.
+    /// </summary>
+    public virtual void CancelExclusiveAction()
+    {
+    }
+
+    public virtual void Anim_OnExclusiveActionEvent()
+    {
+    }
+
+    public virtual void Anim_OnExclusiveActionEnd()
+    {
+    }
+
+    public virtual bool ExclusiveActionCanBeInterrupted => true;
+
+    public virtual float GetMovementSpeedMultiplier() => 1f;
+
+    public virtual float GetAttackDamageMultiplier() => 1f;
+
+    public virtual float GetAttackCooldownMultiplier() => 1f;
+
+    public virtual void OnOwnerDeath()
+    {
+    }
+
     protected static bool IsProjectile(AttackPatternData pattern)
     {
         return pattern != null &&

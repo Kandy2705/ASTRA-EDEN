@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9bf7a46e3fc45a7a1fb8d65971b233, type: 3}
+  m_Name: SO_Enemy_FinalBossRangedSummon
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyId: enemy_final_boss_ranged_summon
+  displayName: Modified Ranged Raptor
+  archetype: 1
+  rank: 0
+  zone: 4
+  enemyPrefab: {fileID: 2076336851688612957, guid: 727ae52895da8426fb9a5d4106c9a474, type: 3}
+  portrait: {fileID: 0}
+  icon: {fileID: 0}
+  baseStats:
+    maxHP: 320
+    attack: 18
+    defense: 15
+    poise: 30
+    moveSpeed: 3.4
+    turnSpeed: 650
+  sightRange: 20
+  sightAngle: 150
+  hearingRange: 10
+  aggroKeepRange: 30
+  attackRange: 12
+  attackCooldown: 2.25
+  attackPatterns:
+  - {fileID: 11400000, guid: f3c82f813fb7443aacb8b7b279f20861, type: 2}
+  expReward: 35
+  goldMin: 0
+  goldMax: 0
+  mainLootTable: {fileID: 0}
+  description: Lightweight ranged support summoned by the Final Commander.

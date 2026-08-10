@@ -17,6 +17,8 @@ public class EnemyAttackHitbox : MonoBehaviour
     [Header("Filter")]
     [SerializeField] private LayerMask targetLayer;
     [SerializeField, Min(1f)] private float minimumHitInterval = 1f;
+    [Tooltip("Bỏ qua sensor/interaction trigger của Player để melee chỉ trúng collider thân thật.")]
+    [SerializeField] private bool ignoreTriggerColliders;
 
     [Header("Debug Gizmo")]
     [SerializeField] private Color gizmoColor = new Color(1f, 0.3f, 0.3f, 0.4f);
@@ -110,15 +112,19 @@ public class EnemyAttackHitbox : MonoBehaviour
     public int PerformHit(float damage)
     {
         Vector3 worldCenter = GetWorldCenter();
+        QueryTriggerInteraction triggerInteraction = ignoreTriggerColliders
+            ? QueryTriggerInteraction.Ignore
+            : QueryTriggerInteraction.Collide;
         int count = shape == HitShape.Sphere
-            ? Physics.OverlapSphereNonAlloc(worldCenter, radius, HitBuffer, targetLayer, QueryTriggerInteraction.Collide)
-            : Physics.OverlapBoxNonAlloc(worldCenter, boxHalfExtents, HitBuffer, transform.rotation, targetLayer, QueryTriggerInteraction.Collide);
+            ? Physics.OverlapSphereNonAlloc(worldCenter, radius, HitBuffer, targetLayer, triggerInteraction)
+            : Physics.OverlapBoxNonAlloc(worldCenter, boxHalfExtents, HitBuffer, transform.rotation, targetLayer, triggerInteraction);
 
         int dealt = 0;
         for (int i = 0; i < count; i++)
         {
             Collider col = HitBuffer[i];
             if (col == null) continue;
+            if (ignoreTriggerColliders && col.isTrigger) continue;
 
             CharacterHealth health = col.GetComponentInParent<CharacterHealth>();
             if (health == null || health.IsDead) continue;

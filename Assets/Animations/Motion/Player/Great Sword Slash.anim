@@ -30168,9 +30168,9 @@ AnimationClip:
     m_LoopBlendPositionY: 1
     m_LoopBlendPositionXZ: 1
     m_KeepOriginalOrientation: 0
-    m_KeepOriginalPositionY: 1
+    m_KeepOriginalPositionY: 0
     m_KeepOriginalPositionXZ: 0
-    m_HeightFromFeet: 0
+    m_HeightFromFeet: 1
     m_Mirror: 0
   m_EditorCurves:
   - serializedVersion: 2
@@ -59140,7 +59140,7 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 0.76666665
+  - time: 0.73333335
     functionName: SpawnSlashFireVFX_X180
     data: 
     objectReferenceParameter: {fileID: 0}

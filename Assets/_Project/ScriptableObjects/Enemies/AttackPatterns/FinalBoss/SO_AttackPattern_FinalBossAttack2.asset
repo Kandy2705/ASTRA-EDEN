@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18547bc671f8d4ecdb57dcb03be901b8, type: 3}
+  m_Name: SO_AttackPattern_FinalBossAttack2
+  m_EditorClassIdentifier: Assembly-CSharp::AttackPatternData
+  attackId: final_skill_e
+  displayName: Commander Skill E
+  archetype: 7
+  rangeType: 0
+  minRange: 0
+  maxRange: 2.25
+  cooldown: 1.45
+  windup: 0.77
+  activeTime: 0.29333332
+  recovery: 0.7700001
+  animationTrigger: Attack2
+  damageMultiplier: 1.25
+  poiseDamage: 15
+  element: 0
+  overrideHitbox: 1
+  hitboxShape: 1
+  hitboxRadius: 0.6
+  hitboxHalfExtents: {x: 0.75, y: 0.9, z: 0.75}
+  hitboxLocalOffset: {x: 0, y: 1, z: 1.1}
+  knockbackDistance: 0
+  knockbackDuration: 0.2
+  knockbackVerticalLift: 0
+  canBeInterrupted: 1
+  telegraph: 'Humanoid Commander move using Player clip: Great Sword Slash.'

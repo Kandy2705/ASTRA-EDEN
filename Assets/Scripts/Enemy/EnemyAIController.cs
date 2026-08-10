@@ -28,6 +28,7 @@ public class EnemyAIController : MonoBehaviour
         Dead,
         // Append only: giữ nguyên numeric value của các state cũ đã serialize.
         Evade,
+        Special,
     }
 
     static readonly int BlendHash = Animator.StringToHash("Blend");
@@ -35,6 +36,8 @@ public class EnemyAIController : MonoBehaviour
     static readonly int VerticalHash = Animator.StringToHash("Vertical");
     static readonly int AttackHash = Animator.StringToHash("Attack");
     static readonly int Attack2Hash = Animator.StringToHash("Attack2");
+    static readonly int Attack3Hash = Animator.StringToHash("Attack3");
+    static readonly int HeavyAttackHash = Animator.StringToHash("HeavyAttack");
     static readonly int HeadButtHash = Animator.StringToHash("HeadButt");
     static readonly int TailWhipHash = Animator.StringToHash("TailWhip");
     static readonly int RoarHash = Animator.StringToHash("Roar");
@@ -125,6 +128,8 @@ public class EnemyAIController : MonoBehaviour
     [SerializeField, Range(-180f, 180f)] private float modelYawOffset = 0f;
     [SerializeField, Min(0f)] private float animatorDampTime = 0.1f;
     [SerializeField, Min(0f)] private float movingThreshold = 0.05f;
+    [Tooltip("Khi Chase và đang có vận tốc, ép locomotion sang Run để humanoid không lướt bằng Idle/Walk.")]
+    [SerializeField] private bool forceRunAnimationWhileChasing;
 
     [Header("Tackle Push")]
     [SerializeField] private bool useTackle = true;
@@ -353,7 +358,19 @@ public class EnemyAIController : MonoBehaviour
             lockedSpawnPosition = transform.position;
         }
     }
-    public float MoveSpeed => enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.moveSpeed : agent != null ? agent.speed : 3f;
+    public float MoveSpeed
+    {
+        get
+        {
+            float baseSpeed = enemyData != null && enemyData.baseStats != null
+                ? enemyData.baseStats.moveSpeed
+                : agent != null ? agent.speed : 3f;
+            float multiplier = bossBehaviour != null
+                ? Mathf.Max(0.1f, bossBehaviour.GetMovementSpeedMultiplier())
+                : 1f;
+            return baseSpeed * multiplier;
+        }
+    }
     /// <summary>Engage range = max(EnemyData.attackRange, max maxRange của attack patterns).
     /// Tránh case attackRange data nhỏ hơn reach thực của animation → enemy phải chạy sát mới đánh.</summary>
     public float AttackRange => effectiveAttackRange;
@@ -436,6 +453,8 @@ public class EnemyAIController : MonoBehaviour
         {
             AttackHash,
             Attack2Hash,
+            Attack3Hash,
+            HeavyAttackHash,
             HeadButtHash,
             TailWhipHash,
             RoarHash
@@ -873,6 +892,7 @@ public class EnemyAIController : MonoBehaviour
             case AIState.Chase:
             case AIState.Retreat:
             case AIState.Evade:
+            case AIState.Special:
                 agent.stoppingDistance = ChaseStoppingDistance;
                 break;
             default:
@@ -918,6 +938,7 @@ public class EnemyAIController : MonoBehaviour
         {
             EndTackle();
             CancelActiveAttack();
+            bossBehaviour?.CancelExclusiveAction();
             holdingInAttackRange = false;
             EnterState(AIState.Idle);
         }
@@ -959,6 +980,7 @@ public class EnemyAIController : MonoBehaviour
             case AIState.Retreat: TickRetreat(); break;
             case AIState.Evade: TickEvade(); break;
             case AIState.ReturnToOrigin: TickReturn(); break;
+            case AIState.Special: TickSpecial(); break;
         }
 
         ApplyMovementFacing();
@@ -1170,11 +1192,19 @@ public class EnemyAIController : MonoBehaviour
                 HoldAgentStill();
                 BeginAttackPattern();
                 break;
+            case AIState.Special:
+                holdingInAttackRange = false;
+                HoldAgentStill();
+                CancelActiveAttack();
+                FaceTarget();
+                bossBehaviour?.BeginExclusiveAction(animator, player);
+                break;
             case AIState.Hurt:
                 EndTackle();
                 holdingInAttackRange = false;
                 HoldAgentStill();
                 CancelActiveAttack();
+                bossBehaviour?.CancelExclusiveAction();
                 RefreshHitReactionTimer();
                 PlayHitAnimation();
                 break;
@@ -1183,6 +1213,7 @@ public class EnemyAIController : MonoBehaviour
                 holdingInAttackRange = false;
                 HoldAgentStill();
                 CancelActiveAttack();
+                bossBehaviour?.CancelExclusiveAction();
                 RefreshStaggerTimer();
                 if (animator != null && HasParam(StaggerHash, AnimatorControllerParameterType.Trigger))
                 {
@@ -1235,6 +1266,8 @@ public class EnemyAIController : MonoBehaviour
                 evadeDestinationValid = false;
                 lowHealthRetreatActive = false;
                 lowHealthRetreatDestinationValid = false;
+                bossBehaviour?.CancelExclusiveAction();
+                bossBehaviour?.OnOwnerDeath();
                 EnterDead();
                 break;
         }
@@ -1522,6 +1555,17 @@ public class EnemyAIController : MonoBehaviour
         }
 
         if (bossBehaviour != null &&
+            bossBehaviour.CanStartExclusiveAction(
+                enemyData,
+                distance,
+                attackCooldownTimer))
+        {
+            holdingInAttackRange = false;
+            EnterState(AIState.Special);
+            return;
+        }
+
+        if (bossBehaviour != null &&
             bossBehaviour.CanStartSpecialAttack(
                 enemyData,
                 distance,
@@ -1535,8 +1579,13 @@ public class EnemyAIController : MonoBehaviour
             return;
         }
 
-        // Tutorial: playerInAttackRange && playerInSightRange → Attack.
-        if (CanStartAttack(distance) || (playerInAttackRange && attackCooldownTimer <= 0f && distance <= AttackRange + 0.35f))
+        // Sensor contact của boss không được nới thêm +0.35m: với humanoid
+        // sẽ tạo cảnh đứng hở mà đã bắt đầu vung kiếm.
+        float sensorAttackRange = bossBehaviour != null
+            ? AttackRange
+            : AttackRange + 0.35f;
+        if (CanStartAttack(distance) ||
+            (playerInAttackRange && attackCooldownTimer <= 0f && distance <= sensorAttackRange))
         {
             if (bossBehaviour != null)
             {
@@ -1735,7 +1784,10 @@ public class EnemyAIController : MonoBehaviour
             float cooldown = currentAttack != null && currentAttack.cooldown > 0f
                 ? currentAttack.cooldown
                 : AttackCooldown;
-            cooldown = Mathf.Max(MinimumAttackInterval, cooldown);
+            float cooldownMultiplier = bossBehaviour != null
+                ? Mathf.Max(0.1f, bossBehaviour.GetAttackCooldownMultiplier())
+                : 1f;
+            cooldown = Mathf.Max(MinimumAttackInterval, cooldown * cooldownMultiplier);
             attackCooldownTimer = Mathf.Max(attackCooldownTimer, cooldown);
             RegisterCompletedAttackForTackle();
         }
@@ -1744,6 +1796,19 @@ public class EnemyAIController : MonoBehaviour
             // Pattern null / phase hỏng → không đứng Attack mãi.
             attackCooldownTimer = Mathf.Max(attackCooldownTimer, AttackCooldown * 0.35f);
             EnterState(AIState.Chase);
+        }
+    }
+
+    void TickSpecial()
+    {
+        HoldAgentStill();
+        FaceTarget();
+        UpdateAnimatorMovement(0f);
+
+        if (bossBehaviour == null ||
+            bossBehaviour.TickExclusiveAction(Time.deltaTime, animator, player))
+        {
+            EnterState(player != null ? AIState.Chase : AIState.ReturnToOrigin);
         }
     }
 
@@ -2453,8 +2518,9 @@ public class EnemyAIController : MonoBehaviour
         if (IsPlayerDeadForAi()) return false;
         if (!IsPlayerOnReachableCombatLevel()) return false;
         if (attackCooldownTimer > 0f) return false;
-        // Nhẹ nhàng nới range (hitbox/body size) — tránh đứng sát mà không đánh.
-        float range = AttackRange + 0.2f;
+        // Humanoid boss dùng reach animation dài hơn khoảng cách mở đòn;
+        // không nới thêm range để tránh đứng hở đã vung kiếm.
+        float range = AttackRange + (bossBehaviour != null ? 0f : 0.2f);
         if (distance > range && !playerInAttackRange) return false;
         return true;
     }
@@ -2553,6 +2619,15 @@ public class EnemyAIController : MonoBehaviour
         if (player == null) return enemyData.attackPatterns[0];
 
         float distance = HorizontalDistance(player.position);
+        AttackPatternData priority = bossBehaviour != null
+            ? bossBehaviour.SelectPriorityAttackPattern(enemyData, distance)
+            : null;
+        if (priority != null && enemyData.attackPatterns.Contains(priority))
+        {
+            lastAttackPattern = priority;
+            return priority;
+        }
+
         AttackPatternData best = null;
         int eligibleCount = 0;
         float nearestGap = float.PositiveInfinity;
@@ -2617,7 +2692,10 @@ public class EnemyAIController : MonoBehaviour
         hitResolvedThisSwing = true;
 
         float baseAtk = enemyData != null && enemyData.baseStats != null ? enemyData.baseStats.attack : 10f;
-        float damage = baseAtk * currentAttack.damageMultiplier;
+        float bossDamageMultiplier = bossBehaviour != null
+            ? Mathf.Max(0f, bossBehaviour.GetAttackDamageMultiplier())
+            : 1f;
+        float damage = baseAtk * currentAttack.damageMultiplier * bossDamageMultiplier;
 
         bool isProjectile =
             currentAttack.rangeType == EnemyAttackRangeType.Projectile ||
@@ -2735,6 +2813,16 @@ public class EnemyAIController : MonoBehaviour
     void ApplyPoiseDamage(float dmg, int transactionId)
     {
         bool interruptingAttack = currentState == AIState.Attack || attackPhase != AttackPhase.None;
+
+        // Phase transitions may intentionally have hyper armor. Summon remains
+        // interruptible, while PowerUp is allowed to finish exactly once.
+        if (currentState == AIState.Special &&
+            bossBehaviour != null &&
+            !bossBehaviour.ExclusiveActionCanBeInterrupted)
+        {
+            currentPoise = Mathf.Max(0f, currentPoise - Mathf.Max(0f, dmg));
+            return;
+        }
 
         // Tackle và pattern có hyper armor phải chạy trọn animation. Vẫn mất HP,
         // chỉ không để một hit thường vô tình giải phóng/khởi động lại state Boss.
@@ -3168,6 +3256,11 @@ public class EnemyAIController : MonoBehaviour
         switch (currentState)
         {
             case AIState.Chase:
+                if (forceRunAnimationWhileChasing)
+                {
+                    return 2f;
+                }
+                return Mathf.Lerp(0.5f, 2f, moving);
             case AIState.Retreat:
             case AIState.Evade:
             case AIState.ReturnToOrigin:
@@ -3233,6 +3326,26 @@ public class EnemyAIController : MonoBehaviour
     public void Anim_OnAttackEnd()
     {
         if (currentState == AIState.Attack) attackPhaseTimer = 0f;
+    }
+
+    public void Anim_OnExclusiveActionEvent()
+    {
+        if (currentState != AIState.Special || health == null || health.IsDead)
+        {
+            return;
+        }
+
+        bossBehaviour?.Anim_OnExclusiveActionEvent();
+    }
+
+    public void Anim_OnExclusiveActionEnd()
+    {
+        if (currentState != AIState.Special || health == null || health.IsDead)
+        {
+            return;
+        }
+
+        bossBehaviour?.Anim_OnExclusiveActionEnd();
     }
 
     public void Anim_OnTackleFinished()

@@ -10,6 +10,7 @@ public class EnemyAnimationEventRelay : MonoBehaviour
     [SerializeField] private EnemyPatrol patrolOwner;
     [SerializeField] private EnemyPushHitbox tacklePushHitbox;
     [SerializeField] private DinosaurVocalAudio vocalAudio;
+    private TrailRenderer[] weaponTrails;
 
     private void Reset()
     {
@@ -42,6 +43,8 @@ public class EnemyAnimationEventRelay : MonoBehaviour
         {
             vocalAudio = GetComponentInParent<DinosaurVocalAudio>();
         }
+
+        weaponTrails = GetComponentsInChildren<TrailRenderer>(true);
     }
 
     public void OnAttackStart()
@@ -110,5 +113,58 @@ public class EnemyAnimationEventRelay : MonoBehaviour
         {
             aiOwner.Anim_OnTackleFinished();
         }
+    }
+
+    public void OnSummonDinosaurs()
+    {
+        aiOwner?.Anim_OnExclusiveActionEvent();
+    }
+
+    public void OnSpecialActionEnd()
+    {
+        aiOwner?.Anim_OnExclusiveActionEnd();
+    }
+
+    // Compatibility receivers for the Player sword clips reused by the
+    // humanoid Final Boss. They prevent missing-receiver warnings without
+    // coupling the boss to PlayerCombatController.
+    public void StartTrail()
+    {
+        if (weaponTrails == null)
+        {
+            weaponTrails = GetComponentsInChildren<TrailRenderer>(true);
+        }
+
+        foreach (TrailRenderer trail in weaponTrails)
+        {
+            if (trail == null) continue;
+            trail.Clear();
+            trail.emitting = true;
+        }
+    }
+
+    public void StopTrail()
+    {
+        if (weaponTrails == null) return;
+        foreach (TrailRenderer trail in weaponTrails)
+        {
+            if (trail != null) trail.emitting = false;
+        }
+    }
+
+    public void OnPlaySlashSound()
+    {
+        // Optional Final Boss slash AudioClip can be added later. Keeping this
+        // receiver avoids invoking the Player audio controller.
+    }
+
+    public void SpawnSlashFireVFX_X180()
+    {
+        // Player-only VFX event; Final Boss uses its own null-safe VFX fields.
+    }
+
+    public void SpawnMultipleSlashesVFX()
+    {
+        // Player-only VFX event; intentionally not routed to Player skills.
     }
 }
