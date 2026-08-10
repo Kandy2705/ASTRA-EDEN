@@ -370,6 +370,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6991798949160909787}
   - component: {fileID: 7262230520471552820}
+  - component: {fileID: 5302414880230977737}
   m_Layer: 0
   m_Name: PowerUpVFX
   m_TagString: Untagged
@@ -457,6 +458,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &5302414880230977737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4435770400757180228}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &4532650041681099701
 GameObject:
   m_ObjectHideFlags: 0
@@ -748,6 +778,19 @@ MonoBehaviour:
   powerUpVfx: {fileID: 4435770400757180228}
   lowHealthRThreshold: 0.25
   skillRAttackId: final_skill_r
+  skillEVfxPrefab: {fileID: 5313456068782518071, guid: 50f1354827c77ef4b99c4dca0ee3411d, type: 3}
+  skillRVfxPrefab: {fileID: 1116249604692860204, guid: 8a02c4042c68dd244abad8cf394dab42, type: 3}
+  skillVfxOrigin: {fileID: 4817674281682719191}
+  skillEAttackId: final_skill_e
+  skillVfxHeightOffset: 2
+  skillRVfxHeightOffset: 0
+  skillEVfxLocalOffset: {x: 0, y: 0, z: 2.25}
+  skillEVfxYawOffset: 90
+  skillRVfxYawOffset: 0
+  skillEVfxScale: 0.7
+  skillRVfxScale: 1.5
+  skillVfxSimulationSpeed: 0.5
+  skillVfxFallbackLifetime: 6
   basicAttackId: final_basic_attack
   meleeEngageDistance: 1.45
   specialSkillChance: 0.3
@@ -907,7 +950,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1.2282715
+  MinDistance: 3.6600494
   MaxDistance: 500
   Pan2D: 0
   rolloffMode: 0

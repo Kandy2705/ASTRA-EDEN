@@ -242,6 +242,12 @@ public class EnemyAIController : MonoBehaviour
 
     public AIState State => currentState;
     public EnemyData Data => enemyData;
+    /// <summary>
+    /// Attack pattern currently owning the active attack window. Boss-specific
+    /// presentation can use this to reject Animation Events left over from an
+    /// interrupted/previous attack without duplicating AI state.
+    /// </summary>
+    public AttackPatternData CurrentAttackPattern => currentAttack;
 
     /// <summary>
     /// Spawn gắn vào Patrol (child local 0,0,0). Agent chỉ bật khi mesh sát + không teleport.

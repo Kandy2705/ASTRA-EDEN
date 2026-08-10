@@ -24,6 +24,8 @@ public static class EnemyBossFinalBuilder
     const string SummonDataPath = "Assets/_Project/ScriptableObjects/Enemies/Units/SO_Enemy_FinalBossRangedSummon.asset";
     const string PoisonPatternPath = "Assets/_Project/ScriptableObjects/Enemies/AttackPatterns/SO_AttackPattern_AtkVelociraptorPoisonOrb.asset";
     const string SwordPrefabPath = "Assets/Prefabs/Environment/Hovl Studio/Package Magic sword/Prefabs/MagicSword_Iron.prefab";
+    const string SkillEVfxPath = "Assets/VFX/Free Slash VFX/Prefabs/Slash Fire VFX.prefab";
+    const string SkillRVfxPath = "Assets/VFX/Free Slash VFX/Prefabs/Multiple Slashes.prefab";
     const string WorldScenePath = "Assets/Scenes/World_Eden7.unity";
     const string ArenaMarkerName = "Poi swaning";
 
@@ -93,7 +95,9 @@ public static class EnemyBossFinalBuilder
         bool valid = Require<GameObject>(BossPrefabPath, "existing Final Boss artist prefab") &&
                      Require<GameObject>(SummonSourcePath, "ranged Velociraptor source prefab") &&
                      Require<AttackPatternData>(PoisonPatternPath, "Poison Orb attack pattern") &&
-                     Require<GameObject>(SwordPrefabPath, "Player MagicSword_Iron prefab");
+                     Require<GameObject>(SwordPrefabPath, "Player MagicSword_Iron prefab") &&
+                     Require<GameObject>(SkillEVfxPath, "Player Slash Fire VFX") &&
+                     Require<GameObject>(SkillRVfxPath, "Player Multiple Slashes VFX");
 
         string[] clips =
         {
@@ -586,6 +590,17 @@ public static class EnemyBossFinalBuilder
             SetFloat(behaviourSo, "summonArenaRadius", 15.5f);
             SetObject(behaviourSo, "audioSource", audio);
             SetObject(behaviourSo, "powerUpVfx", powerUpVfx.gameObject);
+            SetObject(behaviourSo, "skillEVfxPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(SkillEVfxPath));
+            SetObject(behaviourSo, "skillRVfxPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(SkillRVfxPath));
+            SetObject(behaviourSo, "skillVfxOrigin", root.transform);
+            SetFloat(behaviourSo, "skillVfxHeightOffset", 2f);
+            SetFloat(behaviourSo, "skillRVfxHeightOffset", 0f);
+            SetVector3(behaviourSo, "skillEVfxLocalOffset", new Vector3(0f, 0f, 2.25f));
+            SetFloat(behaviourSo, "skillEVfxYawOffset", 90f);
+            SetFloat(behaviourSo, "skillRVfxYawOffset", 0f);
+            SetFloat(behaviourSo, "skillEVfxScale", 0.7f);
+            SetFloat(behaviourSo, "skillRVfxScale", 1.5f);
+            SetFloat(behaviourSo, "skillVfxSimulationSpeed", 0.5f);
             SetBool(behaviourSo, "cleanupSummonsOnBossDeath", true);
             behaviourSo.ApplyModifiedPropertiesWithoutUndo();
 

@@ -160,11 +160,13 @@ public class EnemyAnimationEventRelay : MonoBehaviour
 
     public void SpawnSlashFireVFX_X180()
     {
-        // Player-only VFX event; Final Boss uses its own null-safe VFX fields.
+        FinalBossBehaviour finalBoss = GetComponentInParent<FinalBossBehaviour>();
+        finalBoss?.Anim_SpawnSkillEVfx();
     }
 
     public void SpawnMultipleSlashesVFX()
     {
-        // Player-only VFX event; intentionally not routed to Player skills.
+        FinalBossBehaviour finalBoss = GetComponentInParent<FinalBossBehaviour>();
+        finalBoss?.Anim_SpawnSkillRVfx();
     }
 }

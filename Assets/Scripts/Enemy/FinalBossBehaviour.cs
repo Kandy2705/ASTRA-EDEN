@@ -47,6 +47,28 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
     [SerializeField, Range(0.05f, 0.5f)] private float lowHealthRThreshold = 0.25f;
     [SerializeField] private string skillRAttackId = "final_skill_r";
 
+    [Header("Player Skill VFX (E / R)")]
+    [Tooltip("Reuse the Player's Slash Fire VFX when Commander uses Skill E.")]
+    [SerializeField] private GameObject skillEVfxPrefab;
+    [Tooltip("Reuse the Player's Multiple Slashes VFX when Commander uses Skill R.")]
+    [SerializeField] private GameObject skillRVfxPrefab;
+    [Tooltip("Optional origin for spell visuals. Empty = Commander root.")]
+    [SerializeField] private Transform skillVfxOrigin;
+    [SerializeField] private string skillEAttackId = "final_skill_e";
+    [SerializeField, Min(0f)] private float skillVfxHeightOffset = 4f;
+    [Tooltip("Độ cao riêng của Multiple Slashes (Skill R). Giảm số này nếu hiệu ứng R đang bay quá cao.")]
+    [SerializeField, Min(0f)] private float skillRVfxHeightOffset = 2.5f;
+    [Tooltip("Tâm vòng Skill E theo local space của Commander. +Z là phía trước Boss.")]
+    [SerializeField] private Vector3 skillEVfxLocalOffset = new Vector3(0f, 0f, 2.25f);
+    [SerializeField] private float skillEVfxYawOffset = 90f;
+    [SerializeField] private float skillRVfxYawOffset;
+    [Tooltip("Scale diện rộng của Slash Fire khi Commander dùng Skill E.")]
+    [SerializeField, Min(0.01f)] private float skillEVfxScale = 0.7f;
+    [Tooltip("Scale của Multiple Slashes khi Commander dùng Skill R.")]
+    [SerializeField, Min(0.01f)] private float skillRVfxScale = 1.5f;
+    [SerializeField, Min(0.01f)] private float skillVfxSimulationSpeed = 0.5f;
+    [SerializeField, Min(0.1f)] private float skillVfxFallbackLifetime = 6f;
+
     [Header("Melee Skill Pacing")]
     [SerializeField] private string basicAttackId = "final_basic_attack";
     [Tooltip("Khoảng cách tâm-to-tâm phải áp sát trước khi Commander được phép bắt đầu động tác đánh.")]
@@ -363,6 +385,26 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
         RequestExclusiveActionEnd(actionToken);
     }
 
+    /// <summary>
+    /// Animation Event from the Player's Great Sword Slash clip reused by the
+    /// Commander. The current attack id gate prevents a stale event from an
+    /// interrupted clip from showing VFX during Hurt, Stagger or another move.
+    /// </summary>
+    public void Anim_SpawnSkillEVfx()
+    {
+        SpawnSkillVfx(skillEVfxPrefab, skillEVfxYawOffset, skillVfxHeightOffset, skillEVfxLocalOffset, skillEVfxScale, true, skillEAttackId);
+    }
+
+    /// <summary>
+    /// Animation Event from the Player's Great Sword Casting clip reused by
+    /// Commander Skill R. PowerUp intentionally reuses that clip too, so this
+    /// is limited to the actual final_skill_r attack pattern.
+    /// </summary>
+    public void Anim_SpawnSkillRVfx()
+    {
+        SpawnSkillVfx(skillRVfxPrefab, skillRVfxYawOffset, skillRVfxHeightOffset, Vector3.zero, skillRVfxScale, false, skillRAttackId);
+    }
+
     public void RequestExclusiveActionEnd(int expectedToken)
     {
         if (expectedToken == actionToken && activeAction != ExclusiveAction.None)
@@ -425,6 +467,47 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
     }
 
     AttackPatternData FindSkillR(EnemyData data) => FindPattern(data, skillRAttackId);
+
+    void SpawnSkillVfx(GameObject prefab, float yawOffset, float heightOffset, Vector3 localOffset, float scale, bool rotateX180, string requiredAttackId)
+    {
+        if (prefab == null || owner == null || ownerHealth == null || ownerHealth.IsDead ||
+            owner.State != EnemyAIController.AIState.Attack)
+        {
+            return;
+        }
+
+        AttackPatternData activePattern = owner.CurrentAttackPattern;
+        if (activePattern == null || activePattern.attackId != requiredAttackId)
+        {
+            return;
+        }
+
+        Transform origin = skillVfxOrigin != null ? skillVfxOrigin : transform;
+        Vector3 position = origin.TransformPoint(localOffset) + Vector3.up * heightOffset;
+        Quaternion rotation = Quaternion.Euler(0f, origin.eulerAngles.y + yawOffset, 0f);
+        if (rotateX180)
+        {
+            rotation *= Quaternion.Euler(180f, 0f, 0f);
+        }
+
+        GameObject instance = Instantiate(prefab, position, rotation);
+        instance.SetActive(true);
+        instance.transform.localScale = Vector3.one * scale;
+
+        foreach (ParticleSystem particles in instance.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            particles.gameObject.SetActive(true);
+            ParticleSystem.MainModule main = particles.main;
+            main.simulationSpeed = skillVfxSimulationSpeed;
+            particles.Clear(true);
+            particles.Play(true);
+        }
+
+        // The source Player controller does not own spawned effects. The boss
+        // does, so clean them after the presentation window to prevent old
+        // skill particles piling up over a long arena battle.
+        Destroy(instance, skillVfxFallbackLifetime);
+    }
 
     static AttackPatternData FindPattern(EnemyData data, string attackId)
     {
