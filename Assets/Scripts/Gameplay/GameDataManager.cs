@@ -29,6 +29,8 @@ public class GameDataManager : MonoBehaviour
     private const string AncientMapGuidanceUnlockedKey = "ASTRA_ANCIENT_MAP_GUIDANCE_UNLOCKED";
     private const string AncientMap2UsedKey = "ASTRA_ANCIENT_MAP_02_USED";
     private const string AncientMap2GuidanceUnlockedKey = "ASTRA_ANCIENT_MAP_02_GUIDANCE_UNLOCKED";
+    private const string FinalBossEncounterSeenKey = "ASTRA_FINAL_BOSS_ENCOUNTER_SEEN";
+    private const string FinalBossDefeatedKey = "ASTRA_FINAL_BOSS_DEFEATED";
 
     [Header("Tiền tệ")]
     [SerializeField] private int currency;
@@ -56,6 +58,8 @@ public class GameDataManager : MonoBehaviour
     [SerializeField] private bool ancientMapGuidanceUnlocked;
     [SerializeField] private bool ancientMap2Used;
     [SerializeField] private bool ancientMap2GuidanceUnlocked;
+    [SerializeField] private bool finalBossEncounterSeen;
+    [SerializeField] private bool finalBossDefeated;
 
     [Header("Item Database")]
     [SerializeField] private List<ItemData> itemDatabase = new List<ItemData>();
@@ -153,6 +157,10 @@ public class GameDataManager : MonoBehaviour
     public bool IsAncientMap2Used => ancientMap2Used;
 
     public bool IsAncientMap2GuidanceUnlocked => ancientMap2GuidanceUnlocked;
+
+    public bool IsFinalBossEncounterSeen => finalBossEncounterSeen;
+
+    public bool IsFinalBossDefeated => finalBossDefeated;
 
     public bool HasSave => PlayerPrefs.GetInt(HasSaveKey, 0) == 1;
 
@@ -614,6 +622,34 @@ public class GameDataManager : MonoBehaviour
         }
     }
 
+    public void MarkFinalBossEncounterSeen()
+    {
+        if (finalBossEncounterSeen)
+        {
+            return;
+        }
+
+        finalBossEncounterSeen = true;
+        PlayerPrefs.SetInt(FinalBossEncounterSeenKey, 1);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+        FlushPlayerPrefs();
+    }
+
+    public void MarkFinalBossDefeated()
+    {
+        if (finalBossDefeated)
+        {
+            return;
+        }
+
+        finalBossDefeated = true;
+        PlayerPrefs.SetInt(FinalBossDefeatedKey, 1);
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+        FlushPlayerPrefs();
+    }
+
     /// <summary>
     /// Reset trạng thái "chưa nhặt tờ giấy hướng dẫn" (Note #1 + Note #2 + cờ tree đã
     /// spawn Note + cờ boss đã hạ) để demo lại khúc: hạ boss Ancient Forest → cây →
@@ -640,6 +676,8 @@ public class GameDataManager : MonoBehaviour
         ancientMap2GuidanceUnlocked = false;
         PlayerPrefs.DeleteKey(AncientMap2UsedKey);
         PlayerPrefs.DeleteKey(AncientMap2GuidanceUnlockedKey);
+        PlayerPrefs.DeleteKey(FinalBossEncounterSeenKey);
+        PlayerPrefs.DeleteKey(FinalBossDefeatedKey);
 
         PlayerInventoryService inventory = PlayerInventoryService.FindForPlayer();
         ItemData ancientMap = AncientMapProgression.ResolveMapItem();
@@ -855,6 +893,8 @@ public class GameDataManager : MonoBehaviour
         ancientMapGuidanceUnlocked = false;
         ancientMap2Used = false;
         ancientMap2GuidanceUnlocked = false;
+        finalBossEncounterSeen = false;
+        finalBossDefeated = false;
 
         MarkPlayerPrefsDirty();
         FlushPlayerPrefs();
@@ -884,6 +924,8 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.SetInt(AncientMapGuidanceUnlockedKey, ancientMapGuidanceUnlocked ? 1 : 0);
         PlayerPrefs.SetInt(AncientMap2UsedKey, ancientMap2Used ? 1 : 0);
         PlayerPrefs.SetInt(AncientMap2GuidanceUnlockedKey, ancientMap2GuidanceUnlocked ? 1 : 0);
+        PlayerPrefs.SetInt(FinalBossEncounterSeenKey, finalBossEncounterSeen ? 1 : 0);
+        PlayerPrefs.SetInt(FinalBossDefeatedKey, finalBossDefeated ? 1 : 0);
 
         MarkPlayerPrefsDirty();
     }
@@ -906,6 +948,8 @@ public class GameDataManager : MonoBehaviour
         ancientMapGuidanceUnlocked = PlayerPrefs.GetInt(AncientMapGuidanceUnlockedKey, ancientMapUsed ? 1 : 0) == 1;
         ancientMap2Used = PlayerPrefs.GetInt(AncientMap2UsedKey, 0) == 1;
         ancientMap2GuidanceUnlocked = PlayerPrefs.GetInt(AncientMap2GuidanceUnlockedKey, ancientMap2Used ? 1 : 0) == 1;
+        finalBossEncounterSeen = PlayerPrefs.GetInt(FinalBossEncounterSeenKey, 0) == 1;
+        finalBossDefeated = PlayerPrefs.GetInt(FinalBossDefeatedKey, 0) == 1;
 
         LoadAllScenePositionsFromPrefs();
     }

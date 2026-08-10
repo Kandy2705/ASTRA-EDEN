@@ -250,6 +250,44 @@ public class EnemyAIController : MonoBehaviour
     public AttackPatternData CurrentAttackPattern => currentAttack;
 
     /// <summary>
+    /// Stops all combat output for an in-world cinematic. This is generic FSM
+    /// safety: no attack window, projectile event or active movement remains.
+    /// The component can then be disabled by the cinematic director.
+    /// </summary>
+    public void PauseForCinematic()
+    {
+        CancelActiveAttack();
+        EndTackle();
+        bossBehaviour?.CancelExclusiveAction();
+        StopAgent();
+        ResetAnimatorTriggerIfPresent(AttackHash);
+        ResetAnimatorTriggerIfPresent(Attack2Hash);
+        ResetAnimatorTriggerIfPresent(Attack3Hash);
+        ResetAnimatorTriggerIfPresent(HeavyAttackHash);
+        ResetAnimatorTriggerIfPresent(HeadButtHash);
+        ResetAnimatorTriggerIfPresent(TailWhipHash);
+        ResetAnimatorTriggerIfPresent(RoarHash);
+        ResetAnimatorTriggerIfPresent(TackleHash);
+    }
+
+    /// <summary>
+    /// Releases a living enemy from a cinematic in a neutral state. It never
+    /// resurrects/restarts a dead enemy and deliberately adds a short cooldown
+    /// so a boss cannot attack on the very first post-cutscene frame.
+    /// </summary>
+    public void ResumeFromCinematic(float initialAttackDelay = 0.65f)
+    {
+        if (health == null || health.IsDead || currentState == AIState.Dead)
+        {
+            return;
+        }
+
+        PauseForCinematic();
+        attackCooldownTimer = Mathf.Max(attackCooldownTimer, Mathf.Max(0f, initialAttackDelay));
+        EnterState(AIState.Idle);
+    }
+
+    /// <summary>
     /// Spawn gắn vào Patrol (child local 0,0,0). Agent chỉ bật khi mesh sát + không teleport.
     /// </summary>
     bool spawnPinnedToPatrol;
