@@ -110,20 +110,39 @@ public sealed class FinalBossEncounterCutscene : MonoBehaviour
         ApplyPresentation(director.time);
     }
 
-    public void TryStartCutscene(Transform enteringPlayer)
+    public bool TryStartCutscene(Transform enteringPlayer)
     {
-        if (playing || finalBoss == null || bossAi == null ||
-            (GameDataManager.Instance != null &&
+        return StartCutscene(enteringPlayer, false);
+    }
+
+    /// <summary>Debug-only friendly entry point: ignores the saved "already seen" flag.</summary>
+    public bool TryStartForDemo()
+    {
+        return StartCutscene(FindPlayer(), true);
+    }
+
+    bool StartCutscene(Transform enteringPlayer, bool ignoreProgression)
+    {
+        ResolveReferences();
+        if (playing || director == null || finalBoss == null || bossAi == null ||
+            (!ignoreProgression && GameDataManager.Instance != null &&
              (GameDataManager.Instance.IsFinalBossEncounterSeen || GameDataManager.Instance.IsFinalBossDefeated)))
         {
-            return;
+            if (!playing && (director == null || finalBoss == null || bossAi == null))
+            {
+                Debug.LogWarning(
+                    $"[FinalBossEncounter] Không thể chạy: Director={(director != null)}, " +
+                    $"FinalBoss={(finalBoss != null)}, BossAI={(bossAi != null)}.",
+                    this);
+            }
+            return false;
         }
 
         player = enteringPlayer != null ? enteringPlayer : FindPlayer();
         if (player == null)
         {
             Debug.LogWarning("[FinalBossEncounter] Không tìm thấy Player để bắt đầu cutscene.", this);
-            return;
+            return false;
         }
 
         CachePlayerComponents();
@@ -145,6 +164,7 @@ public sealed class FinalBossEncounterCutscene : MonoBehaviour
         director.Evaluate();
         director.Play();
         Debug.Log("[FinalBossEncounter] Bắt đầu TL_Boss_Encounter.", this);
+        return true;
     }
 
     void LockGameplay()

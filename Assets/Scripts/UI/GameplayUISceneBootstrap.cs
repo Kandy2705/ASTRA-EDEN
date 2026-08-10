@@ -282,7 +282,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         RectTransform panelRect = CreateUiObject(
             "PlayerDebugPanel",
             canvasTransform,
-            new Vector2(460f, 780f),
+            new Vector2(460f, 990f),
             Vector2.zero);
         playerDebugPanel = panelRect.gameObject;
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -299,7 +299,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "PLAYER DEBUG",
-            new Vector2(0f, 218f),
+            new Vector2(0f, 322f),
             new Vector2(360f, 42f),
             26f,
             new Color(1f, 0.78f, 0.3f, 1f),
@@ -309,7 +309,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             panelRect,
             "Button_CloseDebug",
             "×",
-            new Vector2(202f, 223f),
+            new Vector2(202f, 327f),
             new Vector2(40f, 40f),
             new Color(0.34f, 0.12f, 0.1f, 1f));
         closeButton.onClick.AddListener(ClosePlayerDebugPanel);
@@ -437,11 +437,47 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             new Color(0.52f, 0.12f, 0.18f, 1f));
         teleportBoss3Button.onClick.AddListener(TeleportNearBoss3);
 
+        CreateLabel(
+            panelRect,
+            "DEMO CUTSCENE BOSS CUỐI",
+            new Vector2(0f, -264f),
+            new Vector2(390f, 28f),
+            17f,
+            new Color(1f, 0.78f, 0.3f, 1f),
+            TextAlignmentOptions.Center);
+
+        Button playBossEncounterButton = CreateButton(
+            panelRect,
+            "Button_DemoFinalBossEncounter",
+            "XEM GẶP BOSS",
+            new Vector2(-102f, -310f),
+            new Vector2(180f, 42f),
+            new Color(0.3f, 0.2f, 0.62f, 1f));
+        playBossEncounterButton.onClick.AddListener(PlayFinalBossEncounterForDemo);
+
+        Button playBossVictoryButton = CreateButton(
+            panelRect,
+            "Button_DemoFinalBossVictory",
+            "XEM BOSS THẮNG",
+            new Vector2(102f, -310f),
+            new Vector2(180f, 42f),
+            new Color(0.5f, 0.36f, 0.12f, 1f));
+        playBossVictoryButton.onClick.AddListener(PlayFinalBossVictoryForDemo);
+
+        Button resetBossCutsceneButton = CreateButton(
+            panelRect,
+            "Button_ResetFinalBossCutscene",
+            "RESET CUTSCENE BOSS",
+            new Vector2(0f, -360f),
+            new Vector2(320f, 38f),
+            new Color(0.42f, 0.14f, 0.2f, 1f));
+        resetBossCutsceneButton.onClick.AddListener(ResetFinalBossCutsceneForDemo);
+
         Button resetIntroButton = CreateButton(
             panelRect,
             "Button_ResetOpeningIntro",
             "SET INTRO = CHƯA XEM",
-            new Vector2(0f, -262f),
+            new Vector2(0f, -414f),
             new Vector2(320f, 38f),
             new Color(0.36f, 0.16f, 0.5f, 1f));
         resetIntroButton.onClick.AddListener(ResetOpeningIntroForDemo);
@@ -449,7 +485,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         debugStatusText = CreateLabel(
             panelRect,
             "Đang tìm Player...",
-            new Vector2(0f, -312f),
+            new Vector2(0f, -466f),
             new Vector2(410f, 44f),
             18f,
             new Color(0.82f, 0.9f, 0.94f, 1f),
@@ -458,7 +494,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         CreateLabel(
             panelRect,
             "Bấm lại icon mặt trời để đóng",
-            new Vector2(0f, -358f),
+            new Vector2(0f, -512f),
             new Vector2(410f, 28f),
             15f,
             new Color(0.62f, 0.68f, 0.72f, 1f),
@@ -650,6 +686,61 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     {
         IntroSequenceFlow.ResetIntroForDemo();
         SetDebugMessage("Intro = CHƯA XEM. Về Main Menu và bấm Start để chạy lại 4 cutscene.");
+    }
+
+    private void PlayFinalBossEncounterForDemo()
+    {
+        FinalBossEncounterCutscene cutscene = FindFirstObjectByType<FinalBossEncounterCutscene>(FindObjectsInactive.Include);
+        if (cutscene == null)
+        {
+            SetDebugMessage("Chưa build TL_Boss_Encounter trong World_Eden7.");
+            return;
+        }
+
+        if (!cutscene.TryStartForDemo())
+        {
+            SetDebugMessage("Không thể chạy cảnh gặp Boss: kiểm tra Boss/Player/Timeline.");
+            return;
+        }
+
+        ClosePlayerDebugPanel();
+    }
+
+    private void PlayFinalBossVictoryForDemo()
+    {
+        FinalBossVictoryCutscene cutscene = FindFirstObjectByType<FinalBossVictoryCutscene>(FindObjectsInactive.Include);
+        if (cutscene == null)
+        {
+            SetDebugMessage("Chưa build TL_Boss_Victory trong World_Eden7.");
+            return;
+        }
+
+        if (!cutscene.TryPlayForDemo())
+        {
+            SetDebugMessage("Boss đang chết hoặc cảnh đang chạy. Reload scene rồi thử lại.");
+            return;
+        }
+
+        ClosePlayerDebugPanel();
+    }
+
+    private void ResetFinalBossCutsceneForDemo()
+    {
+        if (GameDataManager.Instance == null)
+        {
+            SetDebugMessage("Không có GameDataManager.");
+            return;
+        }
+
+        GameDataManager.Instance.ResetFinalBossCutsceneProgressForDemo();
+        FinalBossEncounterTrigger trigger = FindFirstObjectByType<FinalBossEncounterTrigger>(FindObjectsInactive.Include);
+        if (trigger != null && trigger.TryStartPlayerAlreadyInside())
+        {
+            ClosePlayerDebugPanel();
+            return;
+        }
+
+        SetDebugMessage("Đã reset Boss cuối. Đi RA NGOÀI rồi VÀO LẠI vùng, hoặc bấm XEM GẶP BOSS.");
     }
 
     private void TeleportNearBoss1()

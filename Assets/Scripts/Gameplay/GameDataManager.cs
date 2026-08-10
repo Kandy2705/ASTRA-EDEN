@@ -651,6 +651,20 @@ public class GameDataManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Chỉ reset cờ cinematic Commander để demo lại Encounter/Victory, không đụng
+    /// vào inventory, level, tiền hay tiến trình các boss khác.
+    /// </summary>
+    public void ResetFinalBossCutsceneProgressForDemo()
+    {
+        finalBossEncounterSeen = false;
+        finalBossDefeated = false;
+        PlayerPrefs.DeleteKey(FinalBossEncounterSeenKey);
+        PlayerPrefs.DeleteKey(FinalBossDefeatedKey);
+        MarkPlayerPrefsDirty();
+        FlushPlayerPrefs();
+    }
+
+    /// <summary>
     /// Reset trạng thái "chưa nhặt tờ giấy hướng dẫn" (Note #1 + Note #2 + cờ tree đã
     /// spawn Note + cờ boss đã hạ) để demo lại khúc: hạ boss Ancient Forest → cây →
     /// bấm F → Note #2 rơi. Xóa luôn cờ boss hạ (ancientForestBossDefeated) để bắt

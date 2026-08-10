@@ -291,7 +291,7 @@ public static class FinalBossCutsceneBuilder
 
     static void CreatePresentationCanvas(Transform parent, string name, out CanvasGroup subtitleGroup, out TMP_Text subtitleText, out CanvasGroup fadeGroup)
     {
-        GameObject canvasObject = new GameObject(name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        GameObject canvasObject = new GameObject(name, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         canvasObject.transform.SetParent(parent, false);
         Canvas canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -331,7 +331,11 @@ public static class FinalBossCutsceneBuilder
 
     static GameObject CreateUiObject(Transform parent, string name, params Type[] types)
     {
-        GameObject result = new GameObject(name, types);
+        Type[] components = new Type[types.Length + 2];
+        components[0] = typeof(RectTransform);
+        components[1] = typeof(CanvasRenderer);
+        Array.Copy(types, 0, components, 2, types.Length);
+        GameObject result = new GameObject(name, components);
         result.transform.SetParent(parent, false);
         return result;
     }

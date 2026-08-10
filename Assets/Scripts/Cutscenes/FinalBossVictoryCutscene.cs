@@ -60,9 +60,9 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
     PlayerInputReader playerInput;
     bool playing;
     bool transitionRequested;
+    bool previewMode;
     bool gameplayCameraWasEnabled;
     bool gameplayCameraControllerWasEnabled;
-    bool hudWasActive;
 
     void Awake()
     {
@@ -107,6 +107,24 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
         StartCoroutine(BeginAfterDeathState());
     }
 
+    /// <summary>
+    /// Plays the victory presentation without saving completion or loading the
+    /// ending. This exists solely for the in-game teacher/demo debug panel.
+    /// </summary>
+    public bool TryPlayForDemo()
+    {
+        ResolveReferences();
+        if (playing || director == null || finalBoss == null ||
+            (bossHealth != null && bossHealth.IsDead))
+        {
+            return false;
+        }
+
+        previewMode = true;
+        StartCoroutine(BeginPreview());
+        return true;
+    }
+
     IEnumerator BeginAfterDeathState()
     {
         // Let EnemyAIController consume Died and enter its Death animation.
@@ -118,19 +136,50 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
         }
 
         player = FindPlayer();
+        BeginVictoryPresentation(markDefeated: true);
+    }
+
+    IEnumerator BeginPreview()
+    {
+        yield return null;
+        if (playing || finalBoss == null || bossHealth == null || bossHealth.IsDead)
+        {
+            previewMode = false;
+            yield break;
+        }
+
+        Animator animator = finalBoss.GetComponentInChildren<Animator>(true);
+        if (animator != null)
+        {
+            animator.ResetTrigger("Hit");
+            animator.ResetTrigger("Stagger");
+            animator.SetTrigger("Die");
+        }
+
+        player = FindPlayer();
+        BeginVictoryPresentation(markDefeated: false);
+    }
+
+    void BeginVictoryPresentation(bool markDefeated)
+    {
         LockGameplay();
         bossAi?.PauseForCinematic();
         if (bossAi != null) bossAi.enabled = false;
         BossHUDController hud = FindFirstObjectByType<BossHUDController>(FindObjectsInactive.Include);
         hud?.ClearBoss();
-        GameDataManager.Instance?.MarkFinalBossDefeated();
+        if (markDefeated)
+        {
+            GameDataManager.Instance?.MarkFinalBossDefeated();
+        }
 
         EnableShotCameraAt(0d);
         playing = true;
         director.time = 0d;
         director.Evaluate();
         director.Play();
-        Debug.Log("[FinalBossVictory] Bắt đầu TL_Boss_Victory.", this);
+        Debug.Log(previewMode
+            ? "[FinalBossVictory] Bắt đầu preview TL_Boss_Victory."
+            : "[FinalBossVictory] Bắt đầu TL_Boss_Victory.", this);
     }
 
     void LockGameplay()
@@ -150,7 +199,6 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
         if (gameplayCameraController != null) gameplayCameraController.enabled = false;
         if (gameplayCamera != null) gameplayCamera.enabled = false;
 
-        hudWasActive = gameplayHudRoot != null && gameplayHudRoot.activeSelf;
         if (gameplayHudRoot != null) gameplayHudRoot.SetActive(false);
     }
 
@@ -189,7 +237,7 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
             fadeGroup.blocksRaycasts = fadeGroup.alpha > 0.01f;
         }
 
-        if (time >= closingFadeEnd - 0.02d)
+        if (!previewMode && time >= closingFadeEnd - 0.02d)
         {
             RequestEndingTransition();
         }
@@ -220,7 +268,48 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
     void HandleDirectorStopped(PlayableDirector stopped)
     {
         if (!playing || stopped != director) return;
+
+        if (previewMode)
+        {
+            EndPreview();
+            return;
+        }
+
         RequestEndingTransition();
+    }
+
+    void EndPreview()
+    {
+        playing = false;
+        previewMode = false;
+        transitionRequested = false;
+        foreach (CameraCue cue in cameraCues)
+        {
+            if (cue.camera != null) cue.camera.gameObject.SetActive(false);
+        }
+
+        if (subtitleGroup != null) subtitleGroup.alpha = 0f;
+        if (fadeGroup != null)
+        {
+            fadeGroup.alpha = 0f;
+            fadeGroup.blocksRaycasts = false;
+        }
+
+        if (gameplayHudRoot != null) gameplayHudRoot.SetActive(true);
+        if (gameplayCamera != null) gameplayCamera.enabled = gameplayCameraWasEnabled;
+        if (gameplayCameraController != null) gameplayCameraController.enabled = gameplayCameraControllerWasEnabled;
+        if (playerController != null) playerController.enabled = true;
+        if (playerCombat != null) playerCombat.enabled = true;
+        if (playerInput != null) playerInput.enabled = true;
+        if (bossAi != null)
+        {
+            bossAi.enabled = true;
+            bossAi.ResumeFromCinematic(0.75f);
+        }
+
+        Animator animator = finalBoss != null ? finalBoss.GetComponentInChildren<Animator>(true) : null;
+        animator?.Rebind();
+        Debug.Log("[FinalBossVictory] Preview hoàn tất — gameplay đã được khôi phục, không lưu trạng thái thắng.", this);
     }
 
     void RequestEndingTransition()
