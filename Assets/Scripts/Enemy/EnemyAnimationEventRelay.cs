@@ -44,6 +44,19 @@ public class EnemyAnimationEventRelay : MonoBehaviour
             vocalAudio = GetComponentInParent<DinosaurVocalAudio>();
         }
 
+        if (vocalAudio == null && GetComponentInParent<FinalBossBehaviour>() == null)
+        {
+            CharacterHealth enemyHealth = GetComponentInParent<CharacterHealth>();
+            GameObject vocalHost = enemyHealth != null
+                ? enemyHealth.gameObject
+                : transform.root.gameObject;
+            vocalAudio = vocalHost.GetComponent<DinosaurVocalAudio>();
+            if (vocalAudio == null)
+            {
+                vocalAudio = vocalHost.AddComponent<DinosaurVocalAudio>();
+            }
+        }
+
         weaponTrails = GetComponentsInChildren<TrailRenderer>(true);
     }
 
@@ -68,6 +81,13 @@ public class EnemyAnimationEventRelay : MonoBehaviour
 
     public void OnAttackHit()
     {
+        // Some raptor clips only contain OnAttackHit and no OnAttackStart.
+        // DinosaurVocalAudio guards against double playback when both exist.
+        if (vocalAudio != null)
+        {
+            vocalAudio.PlayAttack();
+        }
+
         if (aiOwner != null)
         {
             aiOwner.Anim_OnAttackHit();

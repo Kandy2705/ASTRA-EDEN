@@ -205,8 +205,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 11408400}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.11969839, y: -0.2970449, z: 0.03756213, w: 0.9465864}
-  m_LocalPosition: {x: 346.01105, y: 37.003693, z: 56.992626}
+  m_LocalRotation: {x: 0.11988977, y: -0.30039126, z: 0.038090352, w: 0.9454844}
+  m_LocalPosition: {x: 346.24164, y: 37.08055, z: 56.838905}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -373,8 +373,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 200845162}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08730369, y: 0.30578768, z: -0.02817056, w: 0.94767}
-  m_LocalPosition: {x: 331.30148, y: 35.429657, z: 60.20099}
+  m_LocalRotation: {x: 0.084620625, y: 0.24161124, z: -0.021155158, w: 0.96644497}
+  m_LocalPosition: {x: 334, y: 34.800003, z: 62}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -965,7 +965,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 513982442}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -1222,7 +1222,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 768778478}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.00000023841858, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0, y: -0.2658422, z: -0, w: 0.9640166}
   m_LocalPosition: {x: 338, y: 32, z: 67}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1395,8 +1395,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 816943023}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.06610573, y: -0.28900468, z: 0.020008594, w: 0.954833}
-  m_LocalPosition: {x: 342.01434, y: 34.50718, z: 62.97609}
+  m_LocalRotation: {x: 0.066176616, y: -0.28897446, z: 0.020027874, w: 0.9548368}
+  m_LocalPosition: {x: 342.01907, y: 34.509544, z: 62.9682}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1754,7 +1754,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: We hunted, explored, and survived together.
+  m_text: '<color=#FFEDC7><b>VILLAGE LEADER</b></color>
+
+    Today, it is your turn.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2138,9 +2140,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1404175141}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!114 &1404175143
 MonoBehaviour:
@@ -2382,7 +2384,7 @@ MonoBehaviour:
     start: 34
     end: 40
     startPosition: {x: -5.299988, y: 1.5, z: 8.349998}
-    endPosition: {x: -5.299988, y: 1.5000038, z: 16.349998}
+    endPosition: {x: -11.12, y: 1.5, z: 18.1}
     faceTravelDirection: 1
   - actorMarker: {fileID: 2065235858}
     start: 8
@@ -2519,8 +2521,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1935215031}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.044697013, y: -0.20453341, z: 0.0093496535, w: 0.9777939}
-  m_LocalPosition: {x: 345, y: 35.2, z: 61}
+  m_LocalRotation: {x: 0.0691121, y: -0.2291729, z: 0.016315155, w: 0.97079206}
+  m_LocalPosition: {x: 343, y: 35.2, z: 67}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2693,7 +2695,7 @@ Transform:
   m_GameObject: {fileID: 2065235857}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9770061, z: -0, w: 0.21321157}
-  m_LocalPosition: {x: 341.74707, y: 32.000004, z: 69.23163}
+  m_LocalPosition: {x: 344.69, y: 32.000004, z: 62.81}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2725,7 +2727,7 @@ Transform:
   m_GameObject: {fileID: 2147435106}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9707009, z: -0, w: 0.24029088}
-  m_LocalPosition: {x: 342.76257, y: 32.000004, z: 69.24525}
+  m_LocalPosition: {x: 346.03, y: 32.000004, z: 63.050003}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

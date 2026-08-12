@@ -9,6 +9,9 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class DinosaurVocalAudio : MonoBehaviour
 {
+    private const string DefaultCatalogResourcePath = "ASTRA/SO_EnemyVocalCatalog";
+    private const float AttackRepeatGuard = 0.7f;
+
     [SerializeField] private AudioClip[] growlClips;
     [SerializeField] private AudioClip[] sniffClips;
     [SerializeField] private AudioClip[] yelpClips;
@@ -25,9 +28,11 @@ public class DinosaurVocalAudio : MonoBehaviour
     private AudioSource source;
     private CharacterHealth health;
     private float lastPlayTime = -999f;
+    private float lastAttackPlayTime = -999f;
 
     private void Awake()
     {
+        ApplyDefaultCatalogIfNeeded();
         source = GetComponent<AudioSource>();
         health = GetComponentInParent<CharacterHealth>();
     }
@@ -81,7 +86,16 @@ public class DinosaurVocalAudio : MonoBehaviour
     public void Call() => PlayCall();
     public void OnCall() => PlayCall();
 
-    public void PlayAttack() => PlayRandom(roarClips, barkClips, growlClips);
+    public void PlayAttack()
+    {
+        if (Time.time < lastAttackPlayTime + AttackRepeatGuard)
+        {
+            return;
+        }
+
+        lastAttackPlayTime = Time.time;
+        PlayRandom(roarClips, barkClips, growlClips);
+    }
     public void Attack() => PlayAttack();
     public void OnAttack() => PlayAttack();
 
@@ -90,6 +104,60 @@ public class DinosaurVocalAudio : MonoBehaviour
     public void OnDeath() => PlayDeath();
 
     private void OnDied(CharacterHealth _) => PlayDeath();
+
+    private void ApplyDefaultCatalogIfNeeded()
+    {
+        if (HasAnyConfiguredClip())
+        {
+            return;
+        }
+
+        EnemyVocalCatalog catalog = Resources.Load<EnemyVocalCatalog>(
+            DefaultCatalogResourcePath);
+        if (catalog == null)
+        {
+            return;
+        }
+
+        growlClips = catalog.GrowlClips;
+        sniffClips = catalog.SniffClips;
+        yelpClips = catalog.YelpClips;
+        barkClips = catalog.BarkClips;
+        roarClips = catalog.RoarClips;
+        screechClips = catalog.ScreechClips;
+        callClips = catalog.CallClips;
+        deathClips = catalog.DeathClips;
+    }
+
+    private bool HasAnyConfiguredClip()
+    {
+        return HasClip(growlClips) ||
+               HasClip(sniffClips) ||
+               HasClip(yelpClips) ||
+               HasClip(barkClips) ||
+               HasClip(roarClips) ||
+               HasClip(screechClips) ||
+               HasClip(callClips) ||
+               HasClip(deathClips);
+    }
+
+    private static bool HasClip(AudioClip[] clips)
+    {
+        if (clips == null)
+        {
+            return false;
+        }
+
+        foreach (AudioClip clip in clips)
+        {
+            if (clip != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private void PlayRandom(params AudioClip[][] clipSets)
     {

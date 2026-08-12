@@ -80,11 +80,16 @@ public sealed class FinalBossEncounterCutscene : MonoBehaviour
     void Awake()
     {
         ResolveReferences();
+        ReleasePresentationRaycasts();
     }
 
     void OnEnable()
     {
         ResolveReferences();
+        if (!playing)
+        {
+            ReleasePresentationRaycasts();
+        }
         if (director != null)
         {
             director.stopped -= HandleDirectorStopped;
@@ -185,6 +190,8 @@ public sealed class FinalBossEncounterCutscene : MonoBehaviour
 
     void RestoreGameplay()
     {
+        ReleasePresentationRaycasts();
+
         foreach (CameraCue cue in cameraCues)
         {
             if (cue.camera != null) cue.camera.gameObject.SetActive(false);
@@ -296,11 +303,27 @@ public sealed class FinalBossEncounterCutscene : MonoBehaviour
     {
         if (!playing || stopped != director) return;
         playing = false;
-        if (subtitleGroup != null) subtitleGroup.alpha = 0f;
-        if (fadeGroup != null) fadeGroup.alpha = 0f;
+        ReleasePresentationRaycasts();
         RestoreGameplay();
         GameDataManager.Instance?.MarkFinalBossEncounterSeen();
         Debug.Log("[FinalBossEncounter] Hoàn tất — Commander chuyển Idle/Chase với attack delay an toàn.", this);
+    }
+
+    void ReleasePresentationRaycasts()
+    {
+        if (subtitleGroup != null)
+        {
+            subtitleGroup.alpha = 0f;
+            subtitleGroup.blocksRaycasts = false;
+            subtitleGroup.interactable = false;
+        }
+
+        if (fadeGroup != null)
+        {
+            fadeGroup.alpha = 0f;
+            fadeGroup.blocksRaycasts = false;
+            fadeGroup.interactable = false;
+        }
     }
 
     void ResolveReferences()

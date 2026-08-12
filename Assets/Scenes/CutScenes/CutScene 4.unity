@@ -146,9 +146,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 90464227}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
-  m_BlocksRaycasts: 0
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!114 &90464229
 MonoBehaviour:
@@ -774,8 +774,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1049917729}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.31752595, y: 0.07594138, z: -0.02552058, w: 0.9448592}
-  m_LocalPosition: {x: 2210, y: 96.8, z: 859.6}
+  m_LocalRotation: {x: 0.033656493, y: 0.36515972, z: -0.013211603, w: 0.9302425}
+  m_LocalPosition: {x: 2207.1636, y: 95.09814, z: 858.7491}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -897,8 +897,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1078277870}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.10345629, y: 0.7943144, z: -0.1412636, w: 0.58172673}
-  m_LocalPosition: {x: 2205, y: 96.9, z: 862.2}
+  m_LocalRotation: {x: 0.05675386, y: 0.8917263, z: -0.17240903, w: 0.41458213}
+  m_LocalPosition: {x: 2205.6638, y: 96.833626, z: 861.84155}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1067,11 +1067,11 @@ MonoBehaviour:
     lookTarget: {fileID: 1207804130}
     start: 23
     end: 34
-    startPosition: {x: 2210.5, y: 96.4, z: 858.7}
-    endPosition: {x: 2211, y: 96.4, z: 859.2}
+    startPosition: {x: 2209, y: 95.8, z: 859.2}
+    endPosition: {x: 2209, y: 96.1, z: 860.1}
     useManualRotation: 1
-    startEulerAngles: {x: 21.7, y: 329.7, z: 0}
-    endEulerAngles: {x: 22.9, y: -55.4, z: 0}
+    startEulerAngles: {x: 17.7, y: 373.9, z: 0}
+    endEulerAngles: {x: 27.9, y: 22.4, z: 0}
   - cameraTransform: {fileID: 1546413119}
     lookTarget: {fileID: 1668641444}
     start: 34
@@ -1369,7 +1369,7 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1113827522}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 12
   m_Type: 2
   m_Color: {r: 0.18, g: 0.82, b: 1, a: 1}
@@ -1587,8 +1587,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1266363525}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.1816781, y: 0.25895044, z: -0.049686693, w: -0.9473484}
-  m_LocalPosition: {x: 2210.5056, y: 96.4, z: 858.70557}
+  m_LocalRotation: {x: -0.15640235, y: -0.12259337, z: 0.01984779, w: -0.9798547}
+  m_LocalPosition: {x: 2209, y: 95.81304, z: 859.23914}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1618,8 +1618,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1319793469}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.13236359, y: -0.69512683, z: -0.693874, w: -0.13348176}
-  m_LocalPosition: {x: 2207.607, y: 94.67857, z: 859.79535}
+  m_LocalRotation: {x: 0.13249864, y: -0.694582, z: -0.694582, w: -0.13249864}
+  m_LocalPosition: {x: 2207.606, y: 94.68, z: 859.794}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2102,7 +2102,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1538171212}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.58778524, y: 0, z: 0, w: 0.80901706}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2472,8 +2472,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1727119307}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.9124775, z: -0, w: -0.4091269}
-  m_LocalPosition: {x: 2209.6, y: 93.6, z: 861.9}
+  m_LocalRotation: {x: -0, y: -0.04972137, z: -0, w: 0.99876314}
+  m_LocalPosition: {x: 2209.83, y: 93.6, z: 855.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3035,7 +3035,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: TEN YEARS LATER
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3142,7 +3142,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2073077738}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -3174,8 +3174,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 12
   m_Type: 2
-  m_Color: {r: 1, g: 0.12, b: 0.05, a: 1}
-  m_Intensity: 1.26
+  m_Color: {r: 0.18, g: 0.82, b: 1, a: 1}
+  m_Intensity: 2.8
   m_Range: 3
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208

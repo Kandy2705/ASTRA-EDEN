@@ -10,6 +10,7 @@ public class PlayerAudioController : MonoBehaviour
     [Header("Audio Clips")]
     [SerializeField] private AudioClip swordSlashClip;
     [SerializeField] private AudioClip[] attackClips; // Các âm thanh attack khác nhau
+    [SerializeField] private AudioClip[] impactClips; // Chỉ phát khi đòn đánh trúng mục tiêu
     [SerializeField] private AudioClip scoreClip; // Âm thanh khi chấm điểm
     [SerializeField] private AudioClip[] skillClips; // Âm thanh cho các skill
     [SerializeField] private AudioClip hurtClip;
@@ -18,11 +19,14 @@ public class PlayerAudioController : MonoBehaviour
     [Header("Settings")]
     [SerializeField, Range(0f, 2f)] private float attackPitch = 1f;
     [SerializeField, Range(0f, 0.5f)] private float attackPitchRandomRange = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float impactVolume = 0.85f;
+    [SerializeField, Range(0.5f, 1.5f)] private float impactPitch = 0.92f;
     [SerializeField, Range(0f, 1f)] private float hurtVolume = 1f;
     [SerializeField, Range(0f, 1f)] private float jumpVolume = 1f;
 
     private PlayerCombatController combatController;
     private int lastAttackClipIndex = -1;
+    private int lastImpactClipIndex = -1;
 
     private void Reset()
     {
@@ -71,6 +75,30 @@ public class PlayerAudioController : MonoBehaviour
 
         lastAttackClipIndex = randomIndex;
         PlayAttackSound(attackClips[randomIndex]);
+    }
+
+    public void PlayRandomImpactSound()
+    {
+        if (impactClips == null || impactClips.Length == 0)
+        {
+            return;
+        }
+
+        int randomIndex;
+        do
+        {
+            randomIndex = Random.Range(0, impactClips.Length);
+        } while (impactClips.Length > 1 && randomIndex == lastImpactClipIndex);
+
+        lastImpactClipIndex = randomIndex;
+        AudioClip clip = impactClips[randomIndex];
+        if (clip != null && AudioManager.Instance != null)
+        {
+            float randomPitch = impactPitch + Random.Range(
+                -attackPitchRandomRange,
+                attackPitchRandomRange);
+            AudioManager.Instance.PlaySfx(clip, impactVolume, randomPitch);
+        }
     }
 
     /// <summary>
@@ -135,8 +163,7 @@ public class PlayerAudioController : MonoBehaviour
         if (AudioManager.Instance != null)
         {
             float randomPitch = attackPitch + Random.Range(-attackPitchRandomRange, attackPitchRandomRange);
-            AudioManager.Instance.PlaySfx(clip, 1f);
-            // Note: AudioManager.PlaySfx hiện tại chưa hỗ trợ pitch, có thể thêm sau
+            AudioManager.Instance.PlaySfx(clip, 1f, randomPitch);
         }
         else
         {
@@ -200,8 +227,17 @@ public class PlayerAudioController : MonoBehaviour
     /// </summary>
     public void OnAttackHitSound()
     {
-        // Phát âm thanh khi trúng địch (lúc này animation đang ở frame impact)
-        PlaySlashSound();
+        OnAttackHitSound(landedHit: false);
+    }
+
+    public void OnAttackHitSound(bool landedHit)
+    {
+        // Chọn biến thể khác nhau tại frame vung/chạm của animation.
+        PlayRandomAttackSound();
+        if (landedHit)
+        {
+            PlayRandomImpactSound();
+        }
     }
 
     /// <summary>

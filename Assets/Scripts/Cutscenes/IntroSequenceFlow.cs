@@ -106,12 +106,20 @@ internal static class IntroSequenceRuntimeBootstrap
 
     private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        bool isOpeningIntroScene = IsOpeningIntroScene(scene.name);
+        if (isOpeningIntroScene)
+        {
+            // Also provides music when a cutscene is played directly in the
+            // Editor, outside the full Main Menu opening sequence.
+            AudioManager.EnsureInstance()?.ApplySceneByName(scene.name);
+        }
+
         if (!IntroSequenceFlow.IsSequenceActive)
         {
             return;
         }
 
-        if (IsOpeningIntroScene(scene.name))
+        if (isOpeningIntroScene)
         {
             IntroSequenceSkipUI.Install();
         }

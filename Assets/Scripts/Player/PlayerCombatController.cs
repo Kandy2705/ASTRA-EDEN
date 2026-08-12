@@ -200,6 +200,8 @@ public class PlayerCombatController : MonoBehaviour
             audioController.OnAttackStarted(currentSkillIndex);
         }
 
+        PlayConfiguredSkillSfx(currentSkillIndex);
+
         if (!useAnimationEventDamage && currentSkillIndex != areaDamageSkillIndex)
         {
             ApplyAttackDamage();
@@ -251,7 +253,14 @@ public class PlayerCombatController : MonoBehaviour
     {
         if (IsAreaSkillActive())
         {
+            bool isFirstAreaImpact = areaDamageRoutine == null;
             OnAreaDamageStart();
+            if (isFirstAreaImpact && audioController != null)
+            {
+                // Temporary impact variation until Crystal Burst receives its
+                // dedicated crystal/explosion clip in SkillData.sfx.
+                audioController.OnAttackHitSound();
+            }
             return;
         }
 
@@ -261,12 +270,12 @@ public class PlayerCombatController : MonoBehaviour
         }
 
         swingHitResolved = true;
-        ApplyAttackDamage();
+        bool landedHit = ApplyAttackDamage();
 
         // Phát âm thanh khi trúng (OnAttackHit)
         if (audioController != null)
         {
-            audioController.OnAttackHitSound();
+            audioController.OnAttackHitSound(landedHit);
         }
     }
 
@@ -371,6 +380,24 @@ public class PlayerCombatController : MonoBehaviour
         return currentSkillIndex == areaDamageSkillIndex && (swingActive || IsAttacking || areaDamageWindowOpen);
     }
 
+    private void PlayConfiguredSkillSfx(int skillIndex)
+    {
+        if (skillIndex <= 0 ||
+            skillBindings == null ||
+            skillIndex >= skillBindings.Length)
+        {
+            return;
+        }
+
+        SkillData skill = skillBindings[skillIndex];
+        if (skill == null || skill.sfx == null)
+        {
+            return;
+        }
+
+        AudioManager.EnsureInstance()?.PlaySfx(skill.sfx, 1f);
+    }
+
     private void ApplyAreaDamageTick()
     {
         float damage = areaDamagePerTick > 0f
@@ -398,7 +425,7 @@ public class PlayerCombatController : MonoBehaviour
         }
     }
 
-    private void ApplyAttackDamage()
+    private bool ApplyAttackDamage()
     {
         Vector3 center = attackPoint != null
             ? attackPoint.position
@@ -406,6 +433,7 @@ public class PlayerCombatController : MonoBehaviour
 
         int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, attackHits, damageMask, QueryTriggerInteraction.Collide);
         float dmg = GetActiveDamage();
+        bool landedHit = false;
 
         // Dedup theo toàn bộ swing (không chỉ trong một lần gọi): kể cả khi
         // ApplyAttackDamage chạy nhiều lần cho cùng một cú vung (Animation Event +
@@ -420,7 +448,10 @@ public class PlayerCombatController : MonoBehaviour
 
             targetHealth.TakeDamage(dmg);
             ApplyKnockback(targetHealth);
+            landedHit = true;
         }
+
+        return landedHit;
     }
 
     private Vector3 GetAreaDamageCenter()

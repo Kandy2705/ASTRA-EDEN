@@ -15,5 +15,9 @@ MonoBehaviour:
   loadingProfile: {fileID: 11400000, guid: 7aee2c9adc2bc4e2986513d29d5e0a9a, type: 2}
   sceneProfiles:
   - {fileID: 11400000, guid: 9701eec0d48f34c75afc0514f57f80f7, type: 2}
+  - {fileID: 11400000, guid: a17c3e4f5b6d47889a0b1c2d3e4f5061, type: 2}
+  - {fileID: 11400000, guid: b28d4f506c7e4899ab1c2d3e4f506172, type: 2}
+  - {fileID: 11400000, guid: c39e50617d8f49aabc2d3e4f50617283, type: 2}
+  - {fileID: 11400000, guid: d4af61728e904abbcd3e4f5061728394, type: 2}
   - {fileID: 11400000, guid: 85f8b43a2e5384656a2d0d299153354f, type: 2}
   - {fileID: 11400000, guid: 755f5dcb72a644a5d87424ee474bc664, type: 2}

@@ -1011,6 +1011,16 @@ public class EnemyAIController : MonoBehaviour
         if (hitStunTimer > 0f) hitStunTimer -= Time.deltaTime;
         if (staggerTimer > 0f) staggerTimer -= Time.deltaTime;
 
+        // Final-boss action clips can outlive their gameplay timers by a few
+        // frames. Never let a newly selected movement state re-enable the
+        // agent until the boss Animator has completely returned to locomotion.
+        if (IsMovementState(currentState) && IsLocomotionBlockedByBossAnimation())
+        {
+            HoldAgentStill();
+            UpdateAnimatorMovement(0f);
+            return;
+        }
+
         switch (currentState)
         {
             case AIState.Spawn: TickSpawn(); break;
@@ -1225,7 +1235,7 @@ public class EnemyAIController : MonoBehaviour
                 if (IsAgentNavigable())
                 {
                     agent.speed = Mathf.Max(0.1f, MoveSpeed);
-                    agent.isStopped = false;
+                    agent.isStopped = IsLocomotionBlockedByBossAnimation();
                     agent.updatePosition = true;
                 }
 
@@ -1314,6 +1324,14 @@ public class EnemyAIController : MonoBehaviour
                 bossBehaviour?.OnOwnerDeath();
                 EnterDead();
                 break;
+        }
+
+        // EnterState can be called near the end of Update. Apply the lock here
+        // as well so the NavMeshAgent cannot advance for one frame before the
+        // guard at the top of the next Update runs.
+        if (IsMovementState(next) && IsLocomotionBlockedByBossAnimation())
+        {
+            HoldAgentStill();
         }
     }
 
@@ -3041,6 +3059,21 @@ public class EnemyAIController : MonoBehaviour
     }
 
     // ---------- Movement utilities ----------
+    static bool IsMovementState(AIState state)
+    {
+        return state == AIState.Patrol ||
+               state == AIState.Chase ||
+               state == AIState.Retreat ||
+               state == AIState.Evade ||
+               state == AIState.ReturnToOrigin;
+    }
+
+    bool IsLocomotionBlockedByBossAnimation()
+    {
+        return bossBehaviour != null &&
+               bossBehaviour.ShouldBlockLocomotion(animator);
+    }
+
     void GoToNextPatrolPoint()
     {
         if (patrolPoints == null || patrolPoints.Length == 0)

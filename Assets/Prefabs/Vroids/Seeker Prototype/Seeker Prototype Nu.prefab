@@ -7770,13 +7770,31 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAudioController
   swordSlashClip: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
-  attackClips: []
+  attackClips:
+  - {fileID: 8300000, guid: c5955b1ca51d47245ae5e5e10395d910, type: 3}
+  - {fileID: 8300000, guid: a7736c1763bd76c4eb0d52aaad581deb, type: 3}
+  - {fileID: 8300000, guid: ef18a5a7071e4a54ba749b93057e0864, type: 3}
+  - {fileID: 8300000, guid: 180f35aef2ea2654086bcbb52d58ec0b, type: 3}
+  - {fileID: 8300000, guid: 80502e18f68bb734b9dded7bb8d2e750, type: 3}
+  - {fileID: 8300000, guid: e32e3bde5559afb4cad3ef963cc96446, type: 3}
+  - {fileID: 8300000, guid: d8bf57a57cb4a7e4a97d06ab4b136fca, type: 3}
+  - {fileID: 8300000, guid: 2b8c207613cd58b4889b0cc6bf739f2c, type: 3}
+  impactClips:
+  - {fileID: 8300000, guid: 62e48d51911a9294aab8284e2a117204, type: 3}
+  - {fileID: 8300000, guid: ce9a41258643d7a458646b4721cfae36, type: 3}
+  - {fileID: 8300000, guid: ecb642c8078cb814fb9efb6b2b223cf6, type: 3}
+  - {fileID: 8300000, guid: 2829a5212f9da134e88443a1f91d0e48, type: 3}
+  - {fileID: 8300000, guid: 80dbcb231e1605542bba4f6ba7269548, type: 3}
+  - {fileID: 8300000, guid: bf685e2b67465c64c8f5efdc5b241fd1, type: 3}
+  - {fileID: 8300000, guid: fc2e32796ec46dc49a895cd03564a3e3, type: 3}
   scoreClip: {fileID: 0}
   skillClips: []
   hurtClip: {fileID: 8300000, guid: 4a17f7b268fec47dd9d5eb18b24d5420, type: 3}
   jumpClip: {fileID: 8300000, guid: c40da46a7c1f14ac495b8ce7ca72eea2, type: 3}
   attackPitch: 1
   attackPitchRandomRange: 0.1
+  impactVolume: 0.85
+  impactPitch: 0.92
   hurtVolume: 1
   jumpVolume: 1
 --- !u!1 &7318886399150952759

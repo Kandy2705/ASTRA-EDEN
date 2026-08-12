@@ -768,12 +768,12 @@ MonoBehaviour:
   summonActionDuration: 1.7
   summonFallbackEventNormalized: 0.55
   summonVfxPrefab: {fileID: 0}
-  summonSfx: {fileID: 0}
+  summonSfx: {fileID: 8300000, guid: 85e806ed8d23b7849ba2529a911fb786, type: 3}
   audioSource: {fileID: 4114431406514720797}
-  meleeSwingSfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
-  meleeImpactSfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
-  skillESfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
-  skillRSfx: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
+  meleeSwingSfx: {fileID: 8300000, guid: 2a5bf70b094053e44af3b5184d8af8e2, type: 3}
+  meleeImpactSfx: {fileID: 8300000, guid: c067c247a5a92db49b855dd284a21369, type: 3}
+  skillESfx: {fileID: 8300000, guid: 06c01e93845ff044aa3af701271d630e, type: 3}
+  skillRSfx: {fileID: 8300000, guid: 2e3cfd8a4cd1afe40b6ddda869151d13, type: 3}
   bossDamagedSfx: {fileID: 8300000, guid: a2acab9271e6e4409bc8736fab3e8ecb, type: 3}
   meleeSwingVolume: 0.72
   meleeImpactVolume: 0.9

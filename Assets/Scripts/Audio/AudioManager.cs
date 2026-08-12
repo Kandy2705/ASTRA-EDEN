@@ -7,6 +7,8 @@ public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
 
+    const int SfxVoiceCount = 10;
+
     const string PrefMaster = "ASTRA_AUDIO_MASTER";
     const string PrefMusic = "ASTRA_AUDIO_MUSIC";
     const string PrefAmbient = "ASTRA_AUDIO_AMBIENT";
@@ -32,7 +34,7 @@ public class AudioManager : MonoBehaviour
     AudioSource ambientSourceA;
     AudioSource ambientSourceB;
     AudioSource beachSource;
-    AudioSource sfxSource;
+    AudioSource[] sfxSources;
 
     AudioSource activeMusicSource;
     AudioSource activeAmbientSource;
@@ -49,6 +51,7 @@ public class AudioManager : MonoBehaviour
     bool musicOverrideActive;
     AudioClip musicOverrideClip;
     float musicOverrideVolumeScale = 1f;
+    int nextSfxSourceIndex;
 
     float masterVolume = 1f;
     float musicBusVolume = 1f;
@@ -127,7 +130,11 @@ public class AudioManager : MonoBehaviour
         ambientSourceA = CreateLoopSource("Ambient_A");
         ambientSourceB = CreateLoopSource("Ambient_B");
         beachSource = CreateLoopSource("Beach");
-        sfxSource = CreateOneShotSource("SFX");
+        sfxSources = new AudioSource[SfxVoiceCount];
+        for (int i = 0; i < sfxSources.Length; i++)
+        {
+            sfxSources[i] = CreateOneShotSource($"SFX_{i + 1:00}");
+        }
 
         activeMusicSource = musicSourceA;
         activeAmbientSource = ambientSourceA;
@@ -423,6 +430,20 @@ public class AudioManager : MonoBehaviour
             StopCoroutine(musicFadeRoutine);
         }
 
+        // Opening cutscenes share one continuous score. Keep the currently
+        // playing source (and therefore its playback position) when the next
+        // scene asks for the same clip instead of restarting it at 0 seconds.
+        if (clip != null &&
+            activeMusicSource != null &&
+            activeMusicSource.clip == clip &&
+            activeMusicSource.isPlaying)
+        {
+            activeMusicSource.loop = loop;
+            musicFadeRoutine = StartCoroutine(
+                FadeVolumeRoutine(activeMusicSource, targetVolume, duration));
+            return;
+        }
+
         musicFadeRoutine = StartCoroutine(CrossfadeRoutine(
             activeMusicSource,
             activeMusicSource == musicSourceA ? musicSourceB : musicSourceA,
@@ -570,12 +591,42 @@ public class AudioManager : MonoBehaviour
 
     public void PlaySfx(AudioClip clip, float volumeScale = 1f)
     {
-        if (clip == null || sfxSource == null)
+        PlaySfx(clip, volumeScale, pitch: 1f);
+    }
+
+    public void PlaySfx(AudioClip clip, float volumeScale, float pitch)
+    {
+        if (clip == null || sfxSources == null || sfxSources.Length == 0)
         {
             return;
         }
 
-        sfxSource.PlayOneShot(clip, masterVolume * sfxBusVolume * Mathf.Clamp01(volumeScale));
+        AudioSource source = GetAvailableSfxSource();
+        source.Stop();
+        source.clip = clip;
+        source.pitch = Mathf.Clamp(pitch, 0.5f, 2f);
+        source.volume = masterVolume * sfxBusVolume * Mathf.Clamp01(volumeScale);
+        source.Play();
+    }
+
+    AudioSource GetAvailableSfxSource()
+    {
+        for (int offset = 0; offset < sfxSources.Length; offset++)
+        {
+            int index = (nextSfxSourceIndex + offset) % sfxSources.Length;
+            AudioSource candidate = sfxSources[index];
+            if (candidate != null && !candidate.isPlaying)
+            {
+                nextSfxSourceIndex = (index + 1) % sfxSources.Length;
+                return candidate;
+            }
+        }
+
+        // More than ten simultaneous effects is exceptional. Reuse the
+        // oldest round-robin voice so regular combat never allocates objects.
+        AudioSource fallback = sfxSources[nextSfxSourceIndex];
+        nextSfxSourceIndex = (nextSfxSourceIndex + 1) % sfxSources.Length;
+        return fallback;
     }
 
     public void PlayUiClick()

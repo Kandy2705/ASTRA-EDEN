@@ -24,34 +24,41 @@ public class RecallPortalManager : MonoBehaviour
 
     private void Awake()
     {
-        if (playerController == null)
-        {
-            playerController = FindObjectOfType<CharacterController>();
-        }
+        ResolvePlayerReferences();
     }
 
     /// <summary>
     /// Gọi cổng Recall khi bấm nút UI
     /// </summary>
-    public void OnRecallButtonPressed()
+    public bool OnRecallButtonPressed()
     {
+        ResolvePlayerReferences();
         if (currentPortal != null)
         {
             Destroy(currentPortal);
         }
 
-        SpawnRecallPortal();
+        return SpawnRecallPortal();
     }
 
-    private void SpawnRecallPortal()
+    private bool SpawnRecallPortal()
     {
         if (portalPrefab == null)
         {
-            Debug.LogError("Portal Prefab not assigned!");
-            return;
+            Debug.LogError("[RecallPortalManager] Portal Prefab chưa được gắn.", this);
+            return false;
         }
 
-        Transform spawnTransform = portalSpawnPoint != null ? portalSpawnPoint : transform;
+        Transform spawnTransform = portalSpawnPoint != null
+            ? portalSpawnPoint
+            : playerController != null
+                ? playerController.transform
+                : null;
+        if (spawnTransform == null)
+        {
+            Debug.LogWarning("[RecallPortalManager] Không tìm thấy Player/PortalSpawnPoint.", this);
+            return false;
+        }
 
         Vector3 spawnPos = spawnTransform.position + spawnTransform.forward * spawnDistance;
 
@@ -79,6 +86,34 @@ public class RecallPortalManager : MonoBehaviour
         if (portalScript != null)
         {
             portalScript.Initialize(spawnTransform.forward);
+        }
+
+        Debug.Log($"[RecallPortalManager] Đã spawn cổng tại {spawnPos}.", currentPortal);
+        return true;
+    }
+
+    private void ResolvePlayerReferences()
+    {
+        if (playerController == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                playerController = player.GetComponent<CharacterController>();
+            }
+        }
+
+        if (portalSpawnPoint == null && playerController != null)
+        {
+            Transform[] children = playerController.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+            {
+                if (children[i].name == "PortalSpawnPoint")
+                {
+                    portalSpawnPoint = children[i];
+                    break;
+                }
+            }
         }
     }
 

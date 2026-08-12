@@ -308,6 +308,7 @@ public static class FinalBossCutsceneBuilder
         fadeGroup = fadeObject.GetComponent<CanvasGroup>();
         fadeGroup.alpha = 0f;
         fadeGroup.blocksRaycasts = false;
+        fadeGroup.interactable = false;
 
         GameObject subtitleObject = CreateUiObject(canvasObject.transform, "SubtitlePanel", typeof(Image), typeof(CanvasGroup));
         RectTransform subtitleRect = subtitleObject.GetComponent<RectTransform>();
@@ -315,8 +316,11 @@ public static class FinalBossCutsceneBuilder
         subtitleRect.anchorMax = new Vector2(0.84f, 0.18f);
         subtitleRect.offsetMin = subtitleRect.offsetMax = Vector2.zero;
         subtitleObject.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.52f);
+        subtitleObject.GetComponent<Image>().raycastTarget = false;
         subtitleGroup = subtitleObject.GetComponent<CanvasGroup>();
         subtitleGroup.alpha = 0f;
+        subtitleGroup.blocksRaycasts = false;
+        subtitleGroup.interactable = false;
 
         GameObject labelObject = CreateUiObject(subtitleObject.transform, "SubtitleText", typeof(TextMeshProUGUI));
         RectTransform labelRect = labelObject.GetComponent<RectTransform>();

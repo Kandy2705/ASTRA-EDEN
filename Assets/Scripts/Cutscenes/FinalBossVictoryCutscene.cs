@@ -13,6 +13,9 @@ using UnityEngine.Playables;
 [DisallowMultipleComponent]
 public sealed class FinalBossVictoryCutscene : MonoBehaviour
 {
+    const string MainMenuSceneName = "MainMenu";
+    const string LegacyEndingSceneName = "TL_Ending_Freedom";
+
     [Serializable]
     public struct CameraCue
     {
@@ -52,7 +55,7 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
     [Header("Ending Transition")]
     [SerializeField] private bool loadEndingOnComplete = true;
     [SerializeField] private bool useLoadingScreen = true;
-    [SerializeField] private string nextSceneName = "TL_Ending_Freedom";
+    [SerializeField] private string nextSceneName = MainMenuSceneName;
 
     Transform player;
     PlayerController playerController;
@@ -66,12 +69,23 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
 
     void Awake()
     {
+        MigrateLegacyEndingScene();
         ResolveReferences();
+        ReleaseInactivePresentationRaycasts();
+    }
+
+    void OnValidate()
+    {
+        MigrateLegacyEndingScene();
     }
 
     void OnEnable()
     {
         ResolveReferences();
+        if (!playing)
+        {
+            ReleaseInactivePresentationRaycasts();
+        }
         if (bossHealth != null)
         {
             bossHealth.Died -= HandleBossDied;
@@ -312,10 +326,32 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
         Debug.Log("[FinalBossVictory] Preview hoàn tất — gameplay đã được khôi phục, không lưu trạng thái thắng.", this);
     }
 
+    void ReleaseInactivePresentationRaycasts()
+    {
+        if (subtitleGroup != null)
+        {
+            subtitleGroup.alpha = 0f;
+            subtitleGroup.blocksRaycasts = false;
+            subtitleGroup.interactable = false;
+        }
+
+        if (fadeGroup != null)
+        {
+            fadeGroup.alpha = 0f;
+            fadeGroup.blocksRaycasts = false;
+            fadeGroup.interactable = false;
+        }
+    }
+
     void RequestEndingTransition()
     {
         if (transitionRequested || !loadEndingOnComplete) return;
         transitionRequested = true;
+
+        // Scene instance đang mở trong Unity có thể vẫn giữ serialized value cũ
+        // dù YAML trên đĩa đã đổi. Luôn migrate ngay trước khi load để không kẹt
+        // ở màn fade đen trong buổi demo.
+        MigrateLegacyEndingScene();
 
         if (!SceneTransitionService.IsSceneInBuildSettings(nextSceneName))
         {
@@ -324,6 +360,15 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
         }
 
         SceneTransitionService.Load(nextSceneName, useLoadingScreen, suppressLoadingAudio: true);
+    }
+
+    void MigrateLegacyEndingScene()
+    {
+        if (string.IsNullOrWhiteSpace(nextSceneName) ||
+            string.Equals(nextSceneName, LegacyEndingSceneName, StringComparison.Ordinal))
+        {
+            nextSceneName = MainMenuSceneName;
+        }
     }
 
     void ResolveReferences()
@@ -372,7 +417,7 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
         fadeGroup = fadeCanvas;
         gameplayHudRoot = gameplayHud;
         towerLights = nearbyTowerLights ?? Array.Empty<Light>();
-        nextSceneName = "TL_Ending_Freedom";
+        nextSceneName = MainMenuSceneName;
     }
 #endif
 }

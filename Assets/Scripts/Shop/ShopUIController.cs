@@ -1,21 +1,39 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ShopUIController : MonoBehaviour
 {
     [SerializeField] private GameObject root;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text statusText;
+    [SerializeField] private Button closeButton;
     [SerializeField] private ShopEntryButton[] entryButtons;
 
     ShopController activeShop;
     PlayerInventoryService inventory;
+    PopupTween popupTween;
+    bool featuredLayoutBuilt;
 
     void Awake()
     {
+        BuildFeaturedLayout();
         if (root != null)
         {
-            root.SetActive(false);
+            popupTween = root.GetComponent<PopupTween>();
+            if (popupTween == null && featuredLayoutBuilt)
+            {
+                popupTween = root.AddComponent<PopupTween>();
+            }
+
+            if (popupTween != null)
+            {
+                popupTween.SetHiddenImmediate();
+            }
+            else
+            {
+                root.SetActive(false);
+            }
         }
     }
 
@@ -26,7 +44,8 @@ public class ShopUIController : MonoBehaviour
 
         if (root != null)
         {
-            root.SetActive(true);
+            if (popupTween != null) popupTween.Show();
+            else root.SetActive(true);
         }
 
         if (titleText != null)
@@ -47,7 +66,8 @@ public class ShopUIController : MonoBehaviour
 
         if (root != null)
         {
-            root.SetActive(false);
+            if (popupTween != null) popupTween.Hide();
+            else root.SetActive(false);
         }
 
         Time.timeScale = 1f;
@@ -180,5 +200,183 @@ public class ShopUIController : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+
+    void BuildFeaturedLayout()
+    {
+        if (featuredLayoutBuilt || root == null)
+        {
+            return;
+        }
+
+        Transform featuredTransform = root.name == "Featured_BeaconShop" || root.name == "Featured"
+            ? root.transform
+            : FindDirectChild(root.transform, "Featured_BeaconShop");
+        if (featuredTransform == null && root.transform != null)
+        {
+            featuredTransform = FindDirectChild(root.transform, "Featured");
+        }
+
+        if (featuredTransform == null)
+        {
+            Debug.LogWarning(
+                "[ShopUI] ShopPanel chưa có prefab instance Featured_BeaconShop trong Hierarchy.",
+                this);
+            return;
+        }
+
+        featuredLayoutBuilt = true;
+        RectTransform canvasRect = root.transform as RectTransform;
+        if (canvasRect != null)
+        {
+            canvasRect.localScale = Vector3.one;
+        }
+
+        Canvas canvas = root.GetComponent<Canvas>();
+        if (canvas == null) canvas = root.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 200;
+
+        CanvasScaler scaler = root.GetComponent<CanvasScaler>();
+        if (scaler == null) scaler = root.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(3840f, 2160f);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f;
+
+        if (root.GetComponent<GraphicRaycaster>() == null)
+        {
+            root.AddComponent<GraphicRaycaster>();
+        }
+
+        Image oldBackground = root.GetComponent<Image>();
+        if (oldBackground != null)
+        {
+            oldBackground.color = Color.clear;
+        }
+
+        // Chỉ cần ẩn visual Shop cũ khi Featured còn được đặt trong một Canvas bọc.
+        if (featuredTransform != root.transform)
+        {
+            for (int i = 0; i < root.transform.childCount; i++)
+            {
+                Transform child = root.transform.GetChild(i);
+                child.gameObject.SetActive(child == featuredTransform);
+            }
+        }
+
+        GameObject featured = featuredTransform.gameObject;
+        RectTransform featuredRect = featured.transform as RectTransform;
+        if (featuredRect != null)
+        {
+            featuredRect.anchorMin = Vector2.zero;
+            featuredRect.anchorMax = Vector2.one;
+            featuredRect.offsetMin = Vector2.zero;
+            featuredRect.offsetMax = Vector2.zero;
+            featuredRect.localScale = Vector3.one;
+        }
+
+        Transform promoList = FindChild(featured.transform, "List");
+        if (promoList != null)
+        {
+            promoList.gameObject.SetActive(true);
+        }
+
+        Transform scrollRect = FindChild(featured.transform, "ScrollRect");
+        if (scrollRect != null)
+        {
+            // Beacon Camp dùng hai thẻ khuyến mãi có sẵn trong Featured.prefab.
+            scrollRect.gameObject.SetActive(false);
+        }
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveListener(OnClickClose);
+            closeButton.onClick.AddListener(OnClickClose);
+        }
+        BuildFeaturedOfferCards(promoList);
+    }
+
+    void BuildFeaturedOfferCards(Transform promoList)
+    {
+        if (promoList == null)
+        {
+            Debug.LogWarning("[ShopUI] Featured.prefab không có List.", this);
+            return;
+        }
+
+        const int visibleOfferCount = 2;
+        int offerCount = Mathf.Min(visibleOfferCount, promoList.childCount);
+        entryButtons = new ShopEntryButton[offerCount];
+
+        for (int i = 0; i < promoList.childCount; i++)
+        {
+            Transform offer = promoList.GetChild(i);
+            bool shouldShow = i < visibleOfferCount;
+            offer.gameObject.SetActive(shouldShow);
+            if (!shouldShow)
+            {
+                continue;
+            }
+
+            TMP_Text itemName = FindText(offer, "Title");
+            TMP_Text quantity = FindText(offer, "Title (2)");
+            TMP_Text price = FindText(offer, "Text (TMP)");
+            Image icon = FindImage(offer, "Icon");
+            Transform buyTransform = FindChild(offer, "Button-Orange");
+            Button buyButton = buyTransform != null ? buyTransform.GetComponent<Button>() : null;
+
+            if (itemName == null || quantity == null || price == null || buyButton == null)
+            {
+                Debug.LogWarning(
+                    $"[ShopUI] Thẻ shop '{offer.name}' thiếu Title/Title (2)/Button-Orange.",
+                    offer);
+            }
+
+            if (icon != null)
+            {
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+            }
+
+            ShopEntryButton entryButton = offer.GetComponent<ShopEntryButton>();
+            if (entryButton == null) entryButton = offer.gameObject.AddComponent<ShopEntryButton>();
+            entryButton.InitializeFeatured(itemName, quantity, price, buyButton, icon);
+            entryButtons[i] = entryButton;
+        }
+    }
+
+    static Transform FindChild(Transform rootTransform, string childName)
+    {
+        Transform[] children = rootTransform.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < children.Length; i++)
+        {
+            if (children[i].name == childName) return children[i];
+        }
+
+        return null;
+    }
+
+    static Transform FindDirectChild(Transform parent, string childName)
+    {
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            Transform child = parent.GetChild(i);
+            if (child.name == childName) return child;
+        }
+
+        return null;
+    }
+
+    static Image FindImage(Transform rootTransform, string childName)
+    {
+        Transform child = FindChild(rootTransform, childName);
+        return child != null ? child.GetComponent<Image>() : null;
+    }
+
+    static TMP_Text FindText(Transform rootTransform, string childName)
+    {
+        Transform child = FindChild(rootTransform, childName);
+        return child != null ? child.GetComponent<TMP_Text>() : null;
     }
 }

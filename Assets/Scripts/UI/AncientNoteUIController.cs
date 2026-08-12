@@ -19,7 +19,7 @@ public sealed class AncientNoteUIController : MonoBehaviour
         "Hidden near its roots lies a map that will guide you to the place where the great tyrant must fall.\n\n" +
         "Only then may peace return to this island.";
 
-    private const string DefaultTitle = "✦  ANCIENT NOTE  ✦";
+    private const string DefaultTitle = "ANCIENT NOTE";
     private const string DefaultSubtitle = "A whisper left behind by the fallen guardian";
 
     private static AncientNoteUIController instance;
@@ -411,7 +411,7 @@ public sealed class AncientNoteUIController : MonoBehaviour
         header.anchorMax = new Vector2(0.96f, 0.965f);
         header.offsetMin = header.offsetMax = Vector2.zero;
 
-        TMP_Text title = CreateText(header, "✦  ANCIENT NOTE  ✦", 38f, new Color(0.24f, 0.08f, 0.28f, 1f), TextAlignmentOptions.Center);
+        TMP_Text title = CreateText(header, "ANCIENT NOTE", 38f, new Color(0.24f, 0.08f, 0.28f, 1f), TextAlignmentOptions.Center);
         title.fontStyle = FontStyles.Bold;
         titleText = title;
         TMP_Text subtitle = CreateText(header, "A whisper left behind by the fallen guardian", 17f, new Color(0.36f, 0.18f, 0.25f, 0.92f), TextAlignmentOptions.Center);

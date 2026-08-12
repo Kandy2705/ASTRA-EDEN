@@ -10,6 +10,7 @@ public static class AudioSystemSetup
     const string AudioFolder = "Assets/_Project/ScriptableObjects/Audio";
     const string CatalogPath = AudioFolder + "/SO_SceneAudioCatalog.asset";
     const string ResourcesCatalogPath = "Assets/Resources/ASTRA/SO_SceneAudioCatalog.asset";
+    const string IntroMusicPath = "Assets/Sounds/25 Rpg Game Tracks/Ambient 1.wav";
 
     [MenuItem("ASTRA EDEN/Audio/1. Create Scene Audio Assets")]
     public static void CreateSceneAudioAssets()
@@ -20,6 +21,16 @@ public static class AudioSystemSetup
         SceneAudioProfile loading = CreateOrLoadProfile("SO_SceneAudio_Loading", "Loading");
         SceneAudioProfile beacon = CreateOrLoadProfile("SO_SceneAudio_Beacon_Camp", "Beacon_Camp");
         SceneAudioProfile world = CreateOrLoadProfile("SO_SceneAudio_World_Eden7", "World_Eden7");
+        SceneAudioProfile cutscene1 = CreateOrLoadProfile("SO_SceneAudio_CutScene_1", "CutScene 1");
+        SceneAudioProfile cutscene2 = CreateOrLoadProfile("SO_SceneAudio_CutScene_2", "CutScene 2");
+        SceneAudioProfile cutscene3 = CreateOrLoadProfile("SO_SceneAudio_CutScene_3", "CutScene 3");
+        SceneAudioProfile cutscene4 = CreateOrLoadProfile("SO_SceneAudio_CutScene_4", "CutScene 4");
+
+        AudioClip introMusic = AssetDatabase.LoadAssetAtPath<AudioClip>(IntroMusicPath);
+        ConfigureIntroProfile(cutscene1, introMusic);
+        ConfigureIntroProfile(cutscene2, introMusic);
+        ConfigureIntroProfile(cutscene3, introMusic);
+        ConfigureIntroProfile(cutscene4, introMusic);
 
         SceneAudioCatalog catalog = AssetDatabase.LoadAssetAtPath<SceneAudioCatalog>(CatalogPath);
         if (catalog == null)
@@ -33,6 +44,10 @@ public static class AudioSystemSetup
         SerializedProperty list = so.FindProperty("sceneProfiles");
         list.ClearArray();
         AddProfile(list, mainMenu);
+        AddProfile(list, cutscene1);
+        AddProfile(list, cutscene2);
+        AddProfile(list, cutscene3);
+        AddProfile(list, cutscene4);
         AddProfile(list, beacon);
         AddProfile(list, world);
         so.ApplyModifiedPropertiesWithoutUndo();
@@ -228,6 +243,24 @@ public static class AudioSystemSetup
         int index = list.arraySize;
         list.InsertArrayElementAtIndex(index);
         list.GetArrayElementAtIndex(index).objectReferenceValue = profile;
+    }
+
+    static void ConfigureIntroProfile(SceneAudioProfile profile, AudioClip introMusic)
+    {
+        if (profile == null)
+        {
+            return;
+        }
+
+        if (profile.music == null)
+        {
+            profile.music = introMusic;
+        }
+
+        profile.loopMusic = true;
+        profile.musicVolume = 0.55f;
+        profile.enterCrossfadeDuration = 1.5f;
+        EditorUtility.SetDirty(profile);
     }
 
     static void EnsureFolder(string path)

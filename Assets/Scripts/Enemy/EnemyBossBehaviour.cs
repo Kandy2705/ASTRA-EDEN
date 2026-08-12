@@ -110,6 +110,13 @@ public abstract class EnemyBossBehaviour : MonoBehaviour
 
     public virtual bool ExclusiveActionCanBeInterrupted => true;
 
+    /// <summary>
+    /// Lets a boss keep the NavMeshAgent frozen while an action/reaction
+    /// animation is still owning the character, even if the gameplay FSM has
+    /// already selected a locomotion state.
+    /// </summary>
+    public virtual bool ShouldBlockLocomotion(Animator animator) => false;
+
     public virtual float GetMovementSpeedMultiplier() => 1f;
 
     public virtual float GetAttackDamageMultiplier() => 1f;

@@ -14,7 +14,7 @@ public sealed class AncientMapProgression : MonoBehaviour
     public const string FirstObjective = "Find the Floating Tree";
     public const string DefaultObjective = "Follow the Ancient Map";
 
-    private const string FirstTitle = "✦  ANCIENT NOTE  ✦";
+    private const string FirstTitle = "ANCIENT NOTE";
     private const string FirstSubtitle = "A whisper left behind by the fallen guardian";
     private const string FirstMessage =
         "To the one who survived,\n\n" +

@@ -19,6 +19,7 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
     static readonly int SummonHash = Animator.StringToHash("Summon");
     static readonly int PowerUpHash = Animator.StringToHash("PowerUp");
     static readonly int Phase2Hash = Animator.StringToHash("Phase2");
+    static readonly int LocomotionStateHash = Animator.StringToHash("Locomotion");
 
     [Header("Boss Identity")]
     [SerializeField] private string bossDisplayName = "COMMANDER";
@@ -469,6 +470,30 @@ public sealed class FinalBossBehaviour : EnemyBossBehaviour
 
     public override bool ExclusiveActionCanBeInterrupted =>
         activeAction != ExclusiveAction.PowerUp;
+
+    public override bool ShouldBlockLocomotion(Animator animator)
+    {
+        if (animator == null ||
+            !animator.isActiveAndEnabled ||
+            animator.runtimeAnimatorController == null ||
+            animator.layerCount == 0)
+        {
+            return false;
+        }
+
+        // The gameplay timers and the Animator do not necessarily finish on
+        // the same frame. Keep the Commander rooted until the base layer has
+        // fully returned to Locomotion; otherwise Chase can enable the agent
+        // while Attack/Skill/Hit/PowerUp is still visibly playing.
+        AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+        if (current.shortNameHash != LocomotionStateHash)
+        {
+            return true;
+        }
+
+        return animator.IsInTransition(0) &&
+               animator.GetNextAnimatorStateInfo(0).shortNameHash != LocomotionStateHash;
+    }
 
     public override float GetMovementSpeedMultiplier() =>
         phase2CombatEnabled ? phase2MovementMultiplier : 1f;
