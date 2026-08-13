@@ -16,10 +16,11 @@ MonoBehaviour:
   displayName: Seeker Prototype
   heroType: 0
   rarity: 3
-  description: Default starter Seeker. Baseline Sword Fighter for exploration and combat.
-  portrait: {fileID: 0}
-  icon: {fileID: 0}
-  modelPrefab: {fileID: 2137564694823591854, guid: 80226eded1f014c7aad5a072c21baff0, type: 3}
+  description: Default starter Seeker. Baseline Sword Fighter for exploration and
+    combat.
+  portrait: {fileID: 21300000, guid: 79fab759b93d0490496c4a5f8bf6488b, type: 3}
+  icon: {fileID: 21300000, guid: 79fab759b93d0490496c4a5f8bf6488b, type: 3}
+  modelPrefab: {fileID: 2693680717882357125, guid: 5d62347c568ab4e19892b067fa14a246, type: 3}
   baseHealth: 1000
   baseDamage: 12
   baseDefense: 8
