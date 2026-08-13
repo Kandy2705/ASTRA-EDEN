@@ -16,6 +16,7 @@ public class PlayerCombatController : MonoBehaviour
 
     [Header("Damage")]
     [SerializeField] private CharacterHealth characterHealth;
+    [SerializeField] private PlayerLoadoutRuntime loadoutRuntime;
     [SerializeField] private Transform attackPoint;
     [FormerlySerializedAs("enemyLayer")]
     [SerializeField] private LayerMask damageMask;
@@ -111,6 +112,11 @@ public class PlayerCombatController : MonoBehaviour
         if (characterHealth == null)
         {
             characterHealth = GetComponent<CharacterHealth>();
+        }
+
+        if (loadoutRuntime == null)
+        {
+            loadoutRuntime = GetComponent<PlayerLoadoutRuntime>();
         }
 
         if (skillCooldown == null)
@@ -401,7 +407,7 @@ public class PlayerCombatController : MonoBehaviour
     private void ApplyAreaDamageTick()
     {
         float damage = areaDamagePerTick > 0f
-            ? areaDamagePerTick
+            ? ApplyWeaponDamageModifier(areaDamagePerTick, areaDamageSkillIndex)
             : GetDamageForSkill(areaDamageSkillIndex);
 
         if (damage <= 0f)
@@ -520,7 +526,7 @@ public class PlayerCombatController : MonoBehaviour
             float perSkill = perSkillDamage[skillIndex];
             if (perSkill > 0f)
             {
-                return perSkill;
+                return ApplyWeaponDamageModifier(perSkill, skillIndex);
             }
         }
 
@@ -536,7 +542,18 @@ public class PlayerCombatController : MonoBehaviour
             }
         }
 
-        return damage;
+        return ApplyWeaponDamageModifier(damage, skillIndex);
+    }
+
+    private float ApplyWeaponDamageModifier(float intrinsicDamage, int skillIndex)
+    {
+        if (loadoutRuntime == null) loadoutRuntime = GetComponent<PlayerLoadoutRuntime>();
+        float percent = loadoutRuntime == null
+            ? 0f
+            : skillIndex <= 0
+                ? loadoutRuntime.BasicAttackDamageBonusPercent
+                : loadoutRuntime.SkillDamageBonusPercent;
+        return intrinsicDamage * (1f + Mathf.Max(0f, percent));
     }
 
     private void ApplyKnockback(CharacterHealth targetHealth)

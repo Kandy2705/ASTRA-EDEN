@@ -30,6 +30,21 @@ public class SkillCooldownUI : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged += HandleActivePlayerChanged;
+    }
+
+    private void OnDisable()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged -= HandleActivePlayerChanged;
+    }
+
+    private void HandleActivePlayerChanged(PlayerLoadoutRuntime activePlayer)
+    {
+        cooldownManager = activePlayer != null ? activePlayer.GetComponent<PlayerSkillCooldown>() : null;
+    }
+
     private void Update()
     {
         if (cooldownManager == null) return;

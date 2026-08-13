@@ -14,6 +14,23 @@ public class InteractPromptUI : MonoBehaviour
 
     PlayerInteractController playerInteract;
 
+    private void OnEnable()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged += HandleActivePlayerChanged;
+    }
+
+    private void OnDisable()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged -= HandleActivePlayerChanged;
+    }
+
+    private void HandleActivePlayerChanged(PlayerLoadoutRuntime activePlayer)
+    {
+        playerInteract = activePlayer != null
+            ? activePlayer.GetComponentInChildren<PlayerInteractController>(true)
+            : null;
+    }
+
     public void Initialize(GameObject panel, TMP_Text text)
     {
         promptPanel = panel;

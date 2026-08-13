@@ -28,6 +28,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private CharacterHealth playerHealth;
     [SerializeField] private PlayerKnockbackReceiver knockbackReceiver;
 
+    [Header("Sprint Mana")]
+    [SerializeField, Min(0f)] private float sprintEnergyDrainPerSecond = 10f;
+    [SerializeField, Min(0f)] private float sprintRestartEnergyThreshold = 1f;
+    [SerializeField, Min(0f)] private float energyRegenDelayAfterUse = 0.65f;
+
     [SerializeField] private float currentSpeedFactor = 0f;
 
     private Vector3 verticalVelocity;
@@ -38,6 +43,8 @@ public class PlayerController : MonoBehaviour
     private bool isDashing;
     private bool isGrounded;
     private float movementLockedUntil;
+    private float energyRegenBlockedUntil;
+    private bool isSprinting;
 
     public bool IsDashing => isDashing;
     public bool IsMovementLockedByHit => Time.time < movementLockedUntil;
@@ -136,10 +143,7 @@ public class PlayerController : MonoBehaviour
             animatorBridge.UpdateLocomotion(0f, Vector2.zero, isGrounded);
             ApplyGravityAndJump(true);
 
-            if (playerHealth != null)
-            {
-                playerHealth.TickEnergyRegen(Time.deltaTime);
-            }
+            TickEnergyRegenIfAllowed();
 
             return;
         }
@@ -150,7 +154,7 @@ public class PlayerController : MonoBehaviour
         bool attackMoveActive = combatController != null && combatController.IsAttackMoveActive;
         bool canMove = !isDashing && !isAttacking;
         bool isMoving = canMove && moveDir.sqrMagnitude > 0.001f;
-        bool isRunning = isMoving && inputReader.RunHeld;
+        bool isRunning = ResolveSprintState(isMoving);
 
         float targetSpeed = 0f;
         if (isDashing)
@@ -190,10 +194,7 @@ public class PlayerController : MonoBehaviour
 
         ApplyGravityAndJump(isAttacking);
 
-        if (playerHealth != null && !isDashing)
-        {
-            playerHealth.TickEnergyRegen(Time.deltaTime);
-        }
+        TickEnergyRegenIfAllowed();
     }
 
     public void LockMovementForHit()
@@ -235,6 +236,8 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        BlockEnergyRegen();
+
         StartDash(moveDir, movementInput);
     }
 
@@ -274,6 +277,43 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
 
         animatorBridge.RestorePlaybackSpeed();
+    }
+
+    private bool ResolveSprintState(bool isMoving)
+    {
+        if (!isMoving || inputReader == null || !inputReader.RunHeld || playerHealth == null)
+        {
+            isSprinting = false;
+            return false;
+        }
+
+        if (!isSprinting && !playerHealth.HasEnoughEnergy(sprintRestartEnergyThreshold))
+        {
+            return false;
+        }
+
+        if (sprintEnergyDrainPerSecond <= 0f)
+        {
+            isSprinting = true;
+            return true;
+        }
+
+        isSprinting = playerHealth.DrainEnergy(sprintEnergyDrainPerSecond * Time.deltaTime);
+        BlockEnergyRegen();
+        return isSprinting;
+    }
+
+    private void BlockEnergyRegen()
+    {
+        energyRegenBlockedUntil = Mathf.Max(energyRegenBlockedUntil, Time.time + energyRegenDelayAfterUse);
+    }
+
+    private void TickEnergyRegenIfAllowed()
+    {
+        if (playerHealth != null && !isDashing && !isSprinting && Time.time >= energyRegenBlockedUntil)
+        {
+            playerHealth.TickEnergyRegen(Time.deltaTime);
+        }
     }
 
     private void MoveCharacter(Vector3 moveDir, bool isMoving)

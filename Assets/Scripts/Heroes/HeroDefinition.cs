@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public enum HeroStatType
 {
@@ -33,6 +34,11 @@ public sealed class HeroDefinition : ScriptableObject
     [SerializeField] private Sprite icon;
     [SerializeField] private GameObject modelPrefab;
 
+    [Header("Weapon Loadout")]
+    [SerializeField] private string defaultWeaponId;
+    [SerializeField] private bool overrideTypeWeaponCompatibility;
+    [SerializeField] private List<WeaponType> allowedWeaponTypes = new List<WeaponType>();
+
     [Header("Base Stats")]
     [SerializeField, Min(1f)] private float baseHealth = 1000f;
     [SerializeField, Min(0f)] private float baseDamage = 20f;
@@ -62,6 +68,15 @@ public sealed class HeroDefinition : ScriptableObject
     public Sprite Portrait => portrait;
     public Sprite Icon => icon != null ? icon : portrait;
     public GameObject ModelPrefab => modelPrefab;
+    public GameObject GameplayPrefab => modelPrefab;
+    public string DefaultWeaponId => defaultWeaponId;
+    public bool OverrideTypeWeaponCompatibility => overrideTypeWeaponCompatibility;
+    public IReadOnlyList<WeaponType> AllowedWeaponTypes => allowedWeaponTypes;
+
+    public bool AllowsWeaponTypeOverride(WeaponType weaponType)
+    {
+        return allowedWeaponTypes != null && allowedWeaponTypes.Contains(weaponType);
+    }
 
     public float GetBaseStat(HeroStatType statType)
     {

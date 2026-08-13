@@ -114,6 +114,21 @@ public class MinimapController : MonoBehaviour
         AcquirePlayer();
     }
 
+    private void OnEnable()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged += HandleActivePlayerChanged;
+    }
+
+    private void OnDisable()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged -= HandleActivePlayerChanged;
+    }
+
+    private void HandleActivePlayerChanged(PlayerLoadoutRuntime activePlayer)
+    {
+        player = activePlayer != null ? activePlayer.transform : null;
+    }
+
     private void BuildRenderTexture()
     {
         renderTexture = new RenderTexture(renderTextureSize, renderTextureSize, 16, RenderTextureFormat.Default)

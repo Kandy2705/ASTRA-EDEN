@@ -14,6 +14,12 @@ public class AutoSavePlayerPosition : MonoBehaviour
 
     private float timer;
     private bool isQuitting = false;
+    private bool suppressNextDisableSave;
+
+    public void SuppressNextDisableSave()
+    {
+        suppressNextDisableSave = true;
+    }
 
     private IEnumerator Start()
     {
@@ -68,6 +74,11 @@ public class AutoSavePlayerPosition : MonoBehaviour
 
     private void OnDisable()
     {
+        if (suppressNextDisableSave)
+        {
+            suppressNextDisableSave = false;
+            return;
+        }
         if (!saveOnDisable) return;
         if (isQuitting) return;
 

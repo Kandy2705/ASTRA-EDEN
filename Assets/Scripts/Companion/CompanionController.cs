@@ -57,11 +57,22 @@ public class CompanionController : MonoBehaviour
 
     void Start()
     {
+        PlayerLoadoutRuntime.ActivePlayerChanged += HandleActivePlayerChanged;
         // Clone kéo tay vào scene / chưa qua Summon: tự gắn Player.
         if (!isActive || owner == null)
         {
             TryAutoBindPlayer();
         }
+    }
+
+    void OnDestroy()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged -= HandleActivePlayerChanged;
+    }
+
+    void HandleActivePlayerChanged(PlayerLoadoutRuntime activePlayer)
+    {
+        if (activePlayer != null) Initialize(activePlayer.transform);
     }
 
     void TryAutoBindPlayer()

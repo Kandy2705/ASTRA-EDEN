@@ -25,6 +25,8 @@ public class InventoryToggleController : MonoBehaviour
 
     [Tooltip("Root của Hero.prefab trong cùng Panels container. Dùng đúng instance hiện có.")]
     [SerializeField] private GameObject heroRoot;
+    [Tooltip("Root của SpawnLoadout.prefab trong Panels.")]
+    [SerializeField] private GameObject spawnLoadoutRoot;
 
     private GameObject panelContainer;
 
@@ -38,14 +40,19 @@ public class InventoryToggleController : MonoBehaviour
     private bool isOpen;
     private bool isHeroOpen;
     private bool isHeroClosing;
+    private bool isSpawnLoadoutOpen;
+    private bool isSpawnLoadoutClosing;
     private GameDataManager subscribedGameData;
     private PopupTween heroPopupTween;
+    private PopupTween spawnLoadoutPopupTween;
+    private SpawnLoadoutView spawnLoadoutView;
     private Button overviewTabButton;
     private Button inventoryTabButton;
     private readonly List<GameObject> activatedAncestors = new List<GameObject>();
 
     public bool IsOpen => isOpen;
     public bool IsHeroOpen => isHeroOpen;
+    public bool IsSpawnLoadoutOpen => isSpawnLoadoutOpen;
 
     private void Awake()
     {
@@ -66,6 +73,7 @@ public class InventoryToggleController : MonoBehaviour
         if (subscribedGameData != null)
         {
             subscribedGameData.HeroScreenOpenRequested -= OpenHero;
+            subscribedGameData.SpawnLoadoutScreenOpenRequested -= OpenSpawnLoadout;
             subscribedGameData = null;
         }
     }
@@ -99,9 +107,30 @@ public class InventoryToggleController : MonoBehaviour
 
         ResolveOverviewRoot();
         ResolveHeroRoot();
+        ResolveSpawnLoadoutRoot();
         if (inventoryRoot != null && inventoryRoot.transform.parent != null)
         {
             panelContainer = inventoryRoot.transform.parent.gameObject;
+        }
+    }
+
+    private void ResolveSpawnLoadoutRoot()
+    {
+        if (spawnLoadoutRoot == null)
+        {
+            Transform container = inventoryRoot != null ? inventoryRoot.transform.parent : null;
+            Transform found = container != null ? container.Find("SpawnLoadout") : null;
+            spawnLoadoutRoot = found != null ? found.gameObject : FindPanelRoot("SpawnLoadout");
+        }
+
+        if (spawnLoadoutRoot == null) return;
+        spawnLoadoutPopupTween ??= spawnLoadoutRoot.GetComponent<PopupTween>();
+        if (spawnLoadoutPopupTween == null) spawnLoadoutPopupTween = spawnLoadoutRoot.AddComponent<PopupTween>();
+        spawnLoadoutView ??= spawnLoadoutRoot.GetComponent<SpawnLoadoutView>();
+        if (spawnLoadoutView != null)
+        {
+            spawnLoadoutView.CloseRequested -= CloseSpawnLoadout;
+            spawnLoadoutView.CloseRequested += CloseSpawnLoadout;
         }
     }
 
@@ -192,12 +221,14 @@ public class InventoryToggleController : MonoBehaviour
         if (subscribedGameData != null)
         {
             subscribedGameData.HeroScreenOpenRequested -= OpenHero;
+            subscribedGameData.SpawnLoadoutScreenOpenRequested -= OpenSpawnLoadout;
         }
 
         subscribedGameData = current;
         if (subscribedGameData != null)
         {
             subscribedGameData.HeroScreenOpenRequested += OpenHero;
+            subscribedGameData.SpawnLoadoutScreenOpenRequested += OpenSpawnLoadout;
         }
     }
 
@@ -297,14 +328,18 @@ public class InventoryToggleController : MonoBehaviour
             return;
         }
 
-        if (isHeroClosing)
+        if (isHeroClosing || isSpawnLoadoutClosing)
         {
             return;
         }
 
         if (togglePressed)
         {
-            if (isHeroOpen)
+            if (isSpawnLoadoutOpen)
+            {
+                spawnLoadoutView?.CancelCandidate();
+            }
+            else if (isHeroOpen)
             {
                 CloseHero();
             }
@@ -314,7 +349,11 @@ public class InventoryToggleController : MonoBehaviour
             }
         }
 
-        if (isHeroOpen && escapePressed)
+        if (isSpawnLoadoutOpen && escapePressed)
+        {
+            spawnLoadoutView?.CancelCandidate();
+        }
+        else if (isHeroOpen && escapePressed)
         {
             CloseHero();
         }
@@ -370,6 +409,7 @@ public class InventoryToggleController : MonoBehaviour
         {
             SetHeroHiddenImmediate();
         }
+        SetSpawnLoadoutHiddenImmediate();
 
         if (!wasOpen)
         {
@@ -401,6 +441,11 @@ public class InventoryToggleController : MonoBehaviour
     public void SetInventoryOpen(bool open)
     {
         isOpen = open;
+
+        if (open)
+        {
+            SetSpawnLoadoutHiddenImmediate();
+        }
 
         if (open && heroRoot != null)
         {
@@ -479,6 +524,8 @@ public class InventoryToggleController : MonoBehaviour
             overviewRoot.SetActive(false);
         }
 
+        SetSpawnLoadoutHiddenImmediate();
+
         EnsureAncestorsActive(heroRoot);
         EnsureMenuCanvasVisible(heroRoot);
         isHeroClosing = false;
@@ -496,6 +543,67 @@ public class InventoryToggleController : MonoBehaviour
             Time.timeScale = 0f;
         }
 
+        if (showCursorWhenOpen)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+    }
+
+    public void OpenSpawnLoadout()
+    {
+        if (isSpawnLoadoutOpen || isSpawnLoadoutClosing) return;
+
+        ResolveInventoryReferences();
+        SubscribeHeroScreenRequests();
+        if (spawnLoadoutRoot == null)
+        {
+            Debug.LogWarning("[SpawnLoadout] Không tìm thấy SpawnLoadout.prefab instance trong Panels.", this);
+            return;
+        }
+
+        if (inventoryRoot != null) inventoryRoot.SetActive(false);
+        if (overviewRoot != null) overviewRoot.SetActive(false);
+        SetHeroHiddenImmediate();
+        EnsureAncestorsActive(spawnLoadoutRoot);
+        EnsureMenuCanvasVisible(spawnLoadoutRoot);
+        isSpawnLoadoutClosing = false;
+        // Always force one inactive -> active transition. SpawnLoadoutView refreshes
+        // from OnEnable, so this guarantees exactly one candidate/preview rebuild.
+        spawnLoadoutPopupTween.SetHiddenImmediate();
+        spawnLoadoutPopupTween.Show();
+        isOpen = false;
+        isSpawnLoadoutOpen = true;
+        SetGameplayHudVisible(false);
+        if (pauseGameWhenOpen) Time.timeScale = 0f;
+        if (showCursorWhenOpen)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+    }
+
+    public void CloseSpawnLoadout()
+    {
+        if (!isSpawnLoadoutOpen || isSpawnLoadoutClosing) return;
+        isSpawnLoadoutOpen = false;
+        isSpawnLoadoutClosing = true;
+        if (spawnLoadoutPopupTween != null)
+        {
+            spawnLoadoutPopupTween.Hide(FinishCloseSpawnLoadout);
+            return;
+        }
+        if (spawnLoadoutRoot != null) spawnLoadoutRoot.SetActive(false);
+        FinishCloseSpawnLoadout();
+    }
+
+    private void FinishCloseSpawnLoadout()
+    {
+        isSpawnLoadoutClosing = false;
+        RestoreActivatedAncestors();
+        if (panelContainer != null) panelContainer.SetActive(false);
+        SetGameplayHudVisible(true);
+        if (pauseGameWhenOpen) Time.timeScale = 1f;
         if (showCursorWhenOpen)
         {
             Cursor.visible = true;
@@ -561,6 +669,14 @@ public class InventoryToggleController : MonoBehaviour
 
         isHeroOpen = false;
         isHeroClosing = false;
+    }
+
+    private void SetSpawnLoadoutHiddenImmediate()
+    {
+        if (spawnLoadoutPopupTween != null) spawnLoadoutPopupTween.SetHiddenImmediate();
+        else if (spawnLoadoutRoot != null) spawnLoadoutRoot.SetActive(false);
+        isSpawnLoadoutOpen = false;
+        isSpawnLoadoutClosing = false;
     }
 
     private void EnsureAncestorsActive(GameObject target)
@@ -637,7 +753,14 @@ public class InventoryToggleController : MonoBehaviour
         if (subscribedGameData != null)
         {
             subscribedGameData.HeroScreenOpenRequested -= OpenHero;
+            subscribedGameData.SpawnLoadoutScreenOpenRequested -= OpenSpawnLoadout;
             subscribedGameData = null;
+        }
+
+
+        if (spawnLoadoutView != null)
+        {
+            spawnLoadoutView.CloseRequested -= CloseSpawnLoadout;
         }
 
         if (overviewTabButton != null)

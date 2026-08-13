@@ -25,6 +25,7 @@ public sealed class OverviewPlayerStatsController : MonoBehaviour
 
     private void OnEnable()
     {
+        PlayerLoadoutRuntime.ActivePlayerChanged += HandleActivePlayerChanged;
         CacheStatTexts();
         TryBindPlayer(false);
         Subscribe();
@@ -33,7 +34,16 @@ public sealed class OverviewPlayerStatsController : MonoBehaviour
 
     private void OnDisable()
     {
+        PlayerLoadoutRuntime.ActivePlayerChanged -= HandleActivePlayerChanged;
         Unsubscribe();
+    }
+
+    private void HandleActivePlayerChanged(PlayerLoadoutRuntime activePlayer)
+    {
+        Unsubscribe();
+        characterHealth = activePlayer != null ? activePlayer.GetComponent<CharacterHealth>() : null;
+        Subscribe();
+        Refresh();
     }
 
     private void Update()

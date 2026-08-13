@@ -6999,6 +6999,7 @@ GameObject:
   - component: {fileID: 9114661255595054279}
   - component: {fileID: 1520567275215598051}
   - component: {fileID: 8794561023847102563}
+  - component: {fileID: 4179552588397583239}
   m_Layer: 6
   m_Name: Seeker Prototype Nu
   m_TagString: Player
@@ -7374,6 +7375,7 @@ MonoBehaviour:
   - 1
   - 3.5
   characterHealth: {fileID: 0}
+  loadoutRuntime: {fileID: 0}
   attackPoint: {fileID: 0}
   damageMask:
     serializedVersion: 2
@@ -7396,6 +7398,7 @@ MonoBehaviour:
   - 0
   - 0
   - 0
+  audioController: {fileID: 0}
   areaDamageSkillIndex: 3
   areaDamageRadius: 5
   areaDamageTickInterval: 0.02
@@ -7418,6 +7421,7 @@ MonoBehaviour:
   inputReader: {fileID: 1466215845484641860}
   animatorBridge: {fileID: 7724119998996307472}
   combatController: {fileID: 817504941376431520}
+  audioController: {fileID: 0}
   controller: {fileID: 1620980194362631026}
   cameraTransform: {fileID: 0}
   acceleration: 5
@@ -7427,6 +7431,7 @@ MonoBehaviour:
   gravity: -20
   groundedStickForce: -2
   jumpHeight: 1.2
+  hitMovementLockDuration: 1
   dashDistance: 5
   dashDuration: 0.18
   dashCooldown: 3
@@ -7434,6 +7439,9 @@ MonoBehaviour:
   dashEnergyCost: 25
   playerHealth: {fileID: 0}
   knockbackReceiver: {fileID: 0}
+  sprintEnergyDrainPerSecond: 10
+  sprintRestartEnergyThreshold: 1
+  energyRegenDelayAfterUse: 0.65
   currentSpeedFactor: 0
 --- !u!114 &7520359160473161335
 MonoBehaviour:
@@ -7632,6 +7640,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimationEventRelay
   owner: {fileID: 817504941376431520}
+  audioController: {fileID: 0}
 --- !u!114 &4740292446844745432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7768,7 +7777,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd6bb6900412f4309b0374b2b5bee653, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAudioController
   swordSlashClip: {fileID: 8300000, guid: 2d12728388da5449d8ee437ee17b5c50, type: 3}
   attackClips:
@@ -7798,6 +7807,24 @@ MonoBehaviour:
   impactPitch: 0.92
   hurtVolume: 1
   jumpVolume: 1
+--- !u!114 &4179552588397583239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7301337304870583923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd2ed495b2fcf44c1b9ac0ad05f8f7bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLoadoutRuntime
+  catalog: {fileID: 11400000, guid: 875bcd6716e44423f898f9d7ff608031, type: 2}
+  heroDefinition: {fileID: 11400000, guid: 9b75d75473d44118986548f018b29bbd, type: 2}
+  rightHandSocket: {fileID: 4346322900998577680}
+  leftHandSocket: {fileID: 2570757315924672001}
+  backSocket: {fileID: 7295855208173865608}
+  builtInWeaponVisual: {fileID: 1517122071452750048}
 --- !u!1 &7318886399150952759
 GameObject:
   m_ObjectHideFlags: 0
@@ -11090,6 +11117,11 @@ PrefabInstance:
 --- !u!4 &1513712839675059936 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4420664804571618, guid: 8fc40ebf5a41b30428929f5ba3697759, type: 3}
+  m_PrefabInstance: {fileID: 1517287962849535746}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1517122071452750048 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1014989259798498, guid: 8fc40ebf5a41b30428929f5ba3697759, type: 3}
   m_PrefabInstance: {fileID: 1517287962849535746}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6425181777613675709

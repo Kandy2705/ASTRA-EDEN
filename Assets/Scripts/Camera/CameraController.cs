@@ -98,6 +98,24 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged += HandleActivePlayerChanged;
+    }
+
+    private void OnDisable()
+    {
+        PlayerLoadoutRuntime.ActivePlayerChanged -= HandleActivePlayerChanged;
+    }
+
+    private void HandleActivePlayerChanged(PlayerLoadoutRuntime activePlayer)
+    {
+        if (activePlayer == null) return;
+        SetTarget(activePlayer.transform);
+        ClearTrackedTargets();
+        SnapToTargetImmediate();
+    }
+
     private void LateUpdate()
     {
         if (target == null)

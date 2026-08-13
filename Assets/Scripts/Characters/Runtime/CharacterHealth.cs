@@ -227,6 +227,18 @@ public class CharacterHealth : MonoBehaviour
         return true;
     }
 
+    public bool DrainEnergy(float amount)
+    {
+        if (amount <= 0f || runtimeStats == null || runtimeStats.currentEnergy <= 0f)
+        {
+            return false;
+        }
+
+        runtimeStats.currentEnergy = Mathf.Max(0f, runtimeStats.currentEnergy - amount);
+        Changed?.Invoke(this);
+        return runtimeStats.currentEnergy > 0f;
+    }
+
     public void TickEnergyRegen(float deltaTime)
     {
         if (runtimeStats == null || deltaTime <= 0f || runtimeStats.energyRegen <= 0f)
@@ -327,6 +339,34 @@ public class CharacterHealth : MonoBehaviour
             ? Mathf.Min(runtimeStats.energyMax, runtimeStats.currentEnergy + gainedMana)
             : Mathf.Clamp(runtimeStats.currentEnergy, 0f, runtimeStats.energyMax);
 
+        Changed?.Invoke(this);
+    }
+
+    public void ConfigurePlayerHero(HeroDefinition definition, bool preserveVitalRatios)
+    {
+        if (definition == null || !IsPlayerHealth()) return;
+
+        float healthRatio = runtimeStats == null || runtimeStats.maxHP <= 0f
+            ? 1f : Mathf.Clamp01(runtimeStats.currentHP / runtimeStats.maxHP);
+        float manaRatio = runtimeStats == null || runtimeStats.energyMax <= 0f
+            ? 1f : Mathf.Clamp01(runtimeStats.currentEnergy / runtimeStats.energyMax);
+
+        playerHeroDefinition = definition;
+        ApplyHeroProgressionStats(restoreGainedCapacity: false);
+        if (preserveVitalRatios && runtimeStats != null)
+        {
+            runtimeStats.currentHP = runtimeStats.maxHP * healthRatio;
+            runtimeStats.currentEnergy = runtimeStats.energyMax * manaRatio;
+            Changed?.Invoke(this);
+        }
+    }
+
+    public void ApplyVitalRatios(float healthRatio, float manaRatio, float staminaRatio)
+    {
+        if (runtimeStats == null) return;
+        runtimeStats.currentHP = runtimeStats.maxHP * Mathf.Clamp01(healthRatio);
+        runtimeStats.currentEnergy = runtimeStats.energyMax * Mathf.Clamp01(manaRatio);
+        runtimeStats.currentStamina = runtimeStats.staminaMax * Mathf.Clamp01(staminaRatio);
         Changed?.Invoke(this);
     }
 

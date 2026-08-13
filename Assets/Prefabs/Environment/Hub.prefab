@@ -12662,6 +12662,8 @@ MonoBehaviour:
   targetSceneName: World_Eden7
   playerTag: Player
   delayBeforeLoad: 0
+  delayBeforeStopMovement: 0.5
+  restoreSavedPositionOnLoad: 0
   fadeDuration: 1
   showDebugLog: 1
   fadeImage: {fileID: 0}
@@ -42539,6 +42541,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fdcd924abbb424489b4b377d28180777, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1785122009715194611}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fdcd924abbb424489b4b377d28180777, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 773243510000000001}
     - targetCorrespondingSourceObject: {fileID: -2489867115873905177, guid: fdcd924abbb424489b4b377d28180777, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5918039552322921727}
@@ -42563,9 +42568,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -6889807344895606260, guid: fdcd924abbb424489b4b377d28180777, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1788340253683164668}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fdcd924abbb424489b4b377d28180777, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 773243510000000001}
   m_SourcePrefab: {fileID: 100100000, guid: fdcd924abbb424489b4b377d28180777, type: 3}
 --- !u!1 &507577301930459269 stripped
 GameObject:
@@ -42710,16 +42712,16 @@ Animator:
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 5849586010951646390}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6767941217701380583}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0bc1ce33b2eb4a1789d8502e1c046cab, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeroUpgradeStationInteractable
   interactionRange: 3
-  prompt: Open Hero Upgrades [F]
+  prompt: 'Open Hero Upgrades [F]'
 --- !u!1 &6973261769476167937 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -5626148368017414729, guid: fdcd924abbb424489b4b377d28180777, type: 3}
@@ -47988,6 +47990,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3caaf037020fc4a518e448aa21778ef6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 922991575878520134}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3caaf037020fc4a518e448aa21778ef6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6956275804747553205}
   m_SourcePrefab: {fileID: 100100000, guid: 3caaf037020fc4a518e448aa21778ef6, type: 3}
 --- !u!1 &8334342315956838863 stripped
 GameObject:
@@ -48016,6 +48021,21 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 2708549858135538206, guid: 3caaf037020fc4a518e448aa21778ef6, type: 3}
+--- !u!114 &6956275804747553205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8334342315956838863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d067681bf39f4d5e97e66678c14840c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnStationInteractable
+  interactionRange: 3
+  prompt: 'Open Spawn Loadout [F]'
+  allowedScene: Beacon_Camp
 --- !u!4 &8710621941463874421 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3caaf037020fc4a518e448aa21778ef6, type: 3}

@@ -43,6 +43,7 @@ public class CharacterStatsHUD : MonoBehaviour
 
     private void OnEnable()
     {
+        PlayerLoadoutRuntime.ActivePlayerChanged += HandleActivePlayerChanged;
         TryBindPlayerHealth(force: false);
         Subscribe();
         Refresh();
@@ -50,7 +51,13 @@ public class CharacterStatsHUD : MonoBehaviour
 
     private void OnDisable()
     {
+        PlayerLoadoutRuntime.ActivePlayerChanged -= HandleActivePlayerChanged;
         Unsubscribe();
+    }
+
+    private void HandleActivePlayerChanged(PlayerLoadoutRuntime activePlayer)
+    {
+        SetCharacterHealth(activePlayer != null ? activePlayer.GetComponent<CharacterHealth>() : null);
     }
 
     private void Update()

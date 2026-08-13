@@ -9,7 +9,9 @@ public enum WeaponType
     Longsword,
     Spear,
     Staff,
-    Greatsword
+    Greatsword,
+    Axe,
+    Wand
 }
 
 public enum DamageElement

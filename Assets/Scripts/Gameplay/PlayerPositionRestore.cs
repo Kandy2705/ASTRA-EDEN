@@ -15,6 +15,13 @@ public class PlayerPositionRestore : MonoBehaviour
     {
         yield return null;
 
+        PlayerLoadoutRuntime loadout = GetComponent<PlayerLoadoutRuntime>();
+        if (loadout != null && loadout.SkipNextSceneRestore)
+        {
+            loadout.ConsumeSceneRestoreSkip();
+            yield break;
+        }
+
         if (GameDataManager.Instance == null)
         {
             yield break;

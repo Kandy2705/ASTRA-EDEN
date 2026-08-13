@@ -23,6 +23,7 @@ public class GameDataManager : MonoBehaviour
     private const string PlayerExperienceKey = "ASTRA_PLAYER_EXPERIENCE";
     private const string HeroProgressJsonKey = "ASTRA_HERO_PROGRESS_JSON";
     public const string DefaultHeroId = "seeker_default_01";
+    public const string DefaultWeaponId = "weapon_seeker_sword_01";
     private const string LegacyDemoHeroId = "hero_ravenous_butcher";
     private const string CurrentObjectiveKey = "ASTRA_CURRENT_OBJECTIVE";
     private const string AncientNoteCollectedKey = "ASTRA_ANCIENT_NOTE_FLOATING_TREE_COLLECTED";
@@ -56,6 +57,12 @@ public class GameDataManager : MonoBehaviour
     [SerializeField, Min(0)] private int availableHeroUpgradePoints;
     [SerializeField] private List<string> ownedHeroIds = new List<string>();
     [SerializeField] private List<HeroProgressData> heroProgress = new List<HeroProgressData>();
+
+    [Header("Loadout Hero / Weapon")]
+    [SerializeField] private List<string> ownedWeaponIds = new List<string>();
+    [SerializeField] private List<WeaponProgressData> weaponProgress = new List<WeaponProgressData>();
+    [SerializeField] private string currentHeroId = DefaultHeroId;
+    [SerializeField] private string currentWeaponId = DefaultWeaponId;
 
     [Header("Tiến trình cốt truyện")]
     [SerializeField] private string currentObjective = "";
@@ -104,10 +111,14 @@ public class GameDataManager : MonoBehaviour
     [System.Serializable]
     private class HeroProgressSaveData
     {
-        public int version = 1;
+        public int version = 2;
         public int availableUpgradePoints;
         public List<string> ownedHeroIds = new List<string>();
         public List<HeroProgressData> heroes = new List<HeroProgressData>();
+        public List<string> ownedWeaponIds = new List<string>();
+        public List<WeaponProgressData> weapons = new List<WeaponProgressData>();
+        public string currentHeroId;
+        public string currentWeaponId;
     }
 
     private HashSet<string> clearedZones = new HashSet<string>();
@@ -120,6 +131,9 @@ public class GameDataManager : MonoBehaviour
     public event Action HeroProgressChanged;
     public event Action HeroOwnershipChanged;
     public event Action HeroScreenOpenRequested;
+    public event Action WeaponOwnershipChanged;
+    public event Action LoadoutChanged;
+    public event Action SpawnLoadoutScreenOpenRequested;
 
     public int Currency
     {
@@ -164,6 +178,9 @@ public class GameDataManager : MonoBehaviour
     public int AvailableHeroUpgradePoints => Mathf.Max(0, availableHeroUpgradePoints);
 
     public IReadOnlyList<string> OwnedHeroIds => ownedHeroIds;
+    public IReadOnlyList<string> OwnedWeaponIds => ownedWeaponIds;
+    public string CurrentHeroId => string.IsNullOrWhiteSpace(currentHeroId) ? DefaultHeroId : currentHeroId;
+    public string CurrentWeaponId => string.IsNullOrWhiteSpace(currentWeaponId) ? DefaultWeaponId : currentWeaponId;
 
     public string CurrentObjective => currentObjective;
 
@@ -272,6 +289,11 @@ public class GameDataManager : MonoBehaviour
         HeroScreenOpenRequested?.Invoke();
     }
 
+    public void RequestSpawnLoadoutScreenOpen()
+    {
+        SpawnLoadoutScreenOpenRequested?.Invoke();
+    }
+
     public bool OwnHero(string heroId)
     {
         if (string.IsNullOrWhiteSpace(heroId) || IsHeroOwned(heroId))
@@ -295,6 +317,65 @@ public class GameDataManager : MonoBehaviour
     public IReadOnlyList<string> GetOwnedHeroIds()
     {
         return ownedHeroIds;
+    }
+
+    public bool OwnWeapon(string weaponId)
+    {
+        if (string.IsNullOrWhiteSpace(weaponId) || IsWeaponOwned(weaponId))
+        {
+            return false;
+        }
+
+        ownedWeaponIds.Add(weaponId);
+        GetOrCreateWeaponProgress(weaponId);
+        SaveHeroProgression(flushImmediately: true);
+        WeaponOwnershipChanged?.Invoke();
+        return true;
+    }
+
+    public bool IsWeaponOwned(string weaponId)
+    {
+        return !string.IsNullOrWhiteSpace(weaponId) && ownedWeaponIds.Contains(weaponId);
+    }
+
+    public IReadOnlyList<string> GetOwnedWeaponIds()
+    {
+        return ownedWeaponIds;
+    }
+
+    public WeaponProgressData GetWeaponProgress(string weaponId)
+    {
+        return string.IsNullOrWhiteSpace(weaponId) ? null : GetOrCreateWeaponProgress(weaponId);
+    }
+
+    public int GetWeaponUpgradeLevel(string weaponId)
+    {
+        WeaponProgressData progress = GetWeaponProgress(weaponId);
+        return progress != null ? progress.upgradeLevel : 0;
+    }
+
+    public bool SetCurrentLoadout(string heroId, string weaponId)
+    {
+        if (!IsHeroOwned(heroId) || string.IsNullOrWhiteSpace(weaponId))
+        {
+            return false;
+        }
+
+        currentHeroId = heroId;
+        currentWeaponId = weaponId;
+        SaveHeroProgression(flushImmediately: true);
+        LoadoutChanged?.Invoke();
+        return true;
+    }
+
+    public bool TrySetWeaponUpgradeLevel(string weaponId, int upgradeLevel)
+    {
+        if (!IsWeaponOwned(weaponId)) return false;
+        WeaponProgressData progress = GetOrCreateWeaponProgress(weaponId);
+        progress.upgradeLevel = Mathf.Max(0, upgradeLevel);
+        SaveHeroProgression(flushImmediately: true);
+        LoadoutChanged?.Invoke();
+        return true;
     }
 
     public HeroProgressData GetHeroProgress(string heroId)
@@ -362,13 +443,33 @@ public class GameDataManager : MonoBehaviour
         return created;
     }
 
+    private WeaponProgressData GetOrCreateWeaponProgress(string weaponId)
+    {
+        for (int i = 0; i < weaponProgress.Count; i++)
+        {
+            WeaponProgressData entry = weaponProgress[i];
+            if (entry != null && string.Equals(entry.weaponId, weaponId, StringComparison.Ordinal))
+            {
+                return entry;
+            }
+        }
+
+        WeaponProgressData created = new WeaponProgressData(weaponId);
+        weaponProgress.Add(created);
+        return created;
+    }
+
     private void SaveHeroProgression(bool flushImmediately)
     {
         HeroProgressSaveData save = new HeroProgressSaveData
         {
             availableUpgradePoints = Mathf.Max(0, availableHeroUpgradePoints),
             ownedHeroIds = new List<string>(ownedHeroIds),
-            heroes = new List<HeroProgressData>(heroProgress)
+            heroes = new List<HeroProgressData>(heroProgress),
+            ownedWeaponIds = new List<string>(ownedWeaponIds),
+            weapons = new List<WeaponProgressData>(weaponProgress),
+            currentHeroId = CurrentHeroId,
+            currentWeaponId = CurrentWeaponId
         };
 
         PlayerPrefs.SetString(HeroProgressJsonKey, JsonUtility.ToJson(save));
@@ -385,6 +486,10 @@ public class GameDataManager : MonoBehaviour
         availableHeroUpgradePoints = 0;
         ownedHeroIds.Clear();
         heroProgress.Clear();
+        ownedWeaponIds.Clear();
+        weaponProgress.Clear();
+        currentHeroId = DefaultHeroId;
+        currentWeaponId = DefaultWeaponId;
 
         string json = PlayerPrefs.GetString(HeroProgressJsonKey, string.Empty);
         if (!string.IsNullOrEmpty(json))
@@ -422,6 +527,35 @@ public class GameDataManager : MonoBehaviour
                         }
                     }
                 }
+
+                if (save.ownedWeaponIds != null)
+                {
+                    for (int i = 0; i < save.ownedWeaponIds.Count; i++)
+                    {
+                        string id = save.ownedWeaponIds[i];
+                        if (!string.IsNullOrWhiteSpace(id) && !ownedWeaponIds.Contains(id))
+                        {
+                            ownedWeaponIds.Add(id);
+                        }
+                    }
+                }
+
+                if (save.weapons != null)
+                {
+                    for (int i = 0; i < save.weapons.Count; i++)
+                    {
+                        WeaponProgressData progress = save.weapons[i];
+                        if (progress == null || string.IsNullOrWhiteSpace(progress.weaponId)) continue;
+                        progress.Sanitize();
+                        if (weaponProgress.Find(x => x != null && x.weaponId == progress.weaponId) == null)
+                        {
+                            weaponProgress.Add(progress);
+                        }
+                    }
+                }
+
+                currentHeroId = string.IsNullOrWhiteSpace(save.currentHeroId) ? DefaultHeroId : save.currentHeroId;
+                currentWeaponId = string.IsNullOrWhiteSpace(save.currentWeaponId) ? DefaultWeaponId : save.currentWeaponId;
             }
         }
         else
@@ -437,9 +571,26 @@ public class GameDataManager : MonoBehaviour
             ownedHeroIds.Add(DefaultHeroId);
         }
 
+
+        if (!ownedHeroIds.Contains(currentHeroId))
+        {
+            currentHeroId = DefaultHeroId;
+        }
+
+        if (ownedWeaponIds.Count == 0)
+        {
+            ownedWeaponIds.Add(DefaultWeaponId);
+        }
+
         for (int i = 0; i < ownedHeroIds.Count; i++)
         {
             GetOrCreateHeroProgress(ownedHeroIds[i]);
+        }
+
+
+        for (int i = 0; i < ownedWeaponIds.Count; i++)
+        {
+            GetOrCreateWeaponProgress(ownedWeaponIds[i]);
         }
     }
 
@@ -1163,6 +1314,12 @@ public class GameDataManager : MonoBehaviour
         ownedHeroIds.Add(DefaultHeroId);
         heroProgress.Clear();
         GetOrCreateHeroProgress(DefaultHeroId);
+        ownedWeaponIds.Clear();
+        ownedWeaponIds.Add(DefaultWeaponId);
+        weaponProgress.Clear();
+        GetOrCreateWeaponProgress(DefaultWeaponId);
+        currentHeroId = DefaultHeroId;
+        currentWeaponId = DefaultWeaponId;
         PlayerPrefs.DeleteKey(CurrentObjectiveKey);
         PlayerPrefs.DeleteKey(AncientNoteCollectedKey);
         PlayerPrefs.DeleteKey(AncientNote2CollectedKey);
