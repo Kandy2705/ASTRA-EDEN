@@ -6,6 +6,7 @@ public class CharacterHealth : MonoBehaviour
     [Header("Data")]
     [SerializeField] private CharacterData characterData;
     [SerializeField] private bool initializeFromCharacterData = true;
+    [SerializeField] private HeroDefinition playerHeroDefinition;
 
     [Header("Fallback Stats")]
     [SerializeField] private CharacterBaseStats fallbackBaseStats = new CharacterBaseStats();
@@ -14,12 +15,13 @@ public class CharacterHealth : MonoBehaviour
     [SerializeField] private CharacterRuntimeStats runtimeStats;
     [SerializeField] private bool destroyOnDeath;
 
-    private int appliedProgressionLevel = 1;
+    private GameDataManager boundHeroData;
 
     public event Action<CharacterHealth> Changed;
     public event Action<CharacterHealth> Died;
 
     public CharacterData CharacterData => characterData;
+    public HeroDefinition PlayerHeroDefinition => playerHeroDefinition;
     public CharacterRuntimeStats RuntimeStats => runtimeStats;
     public bool IsDead => runtimeStats.currentHP <= 0f;
     public float NormalizedHealth => runtimeStats.maxHP <= 0f ? 0f : runtimeStats.currentHP / runtimeStats.maxHP;
@@ -28,8 +30,8 @@ public class CharacterHealth : MonoBehaviour
     {
         Initialize();
 
-        // Áp level trước khi restore HP đã save để HP của level cao không bị
-        // clamp nhầm về maxHP level 1 khi đổi scene/Continue.
+        // Final Hero stats đã được lấy từ HeroDefinition + save trước khi restore
+        // HP/Mana, nên dữ liệu Continue được clamp theo đúng giới hạn đã nâng cấp.
         if (IsPlayerHealth() && GetComponent<PlayerProgression>() == null)
         {
             gameObject.AddComponent<PlayerProgression>();
@@ -49,6 +51,26 @@ public class CharacterHealth : MonoBehaviour
         if (runtimeStats == null)
         {
             runtimeStats = CharacterRuntimeStats.FromBaseStats(GetBaseStats());
+        }
+    }
+
+    private void Start()
+    {
+        BindHeroProgression();
+        ApplyHeroProgressionStats(restoreGainedCapacity: false);
+    }
+
+    private void OnEnable()
+    {
+        BindHeroProgression();
+    }
+
+    private void OnDisable()
+    {
+        if (boundHeroData != null)
+        {
+            boundHeroData.HeroProgressChanged -= HandleHeroProgressChanged;
+            boundHeroData = null;
         }
     }
 
@@ -176,48 +198,6 @@ public class CharacterHealth : MonoBehaviour
         Changed?.Invoke(this);
     }
 
-    /// <summary>Áp phần tăng stats từ level; mỗi level sau level 1 chỉ được cộng một lần.</summary>
-    public void ApplyProgressionLevel(int targetLevel, bool restoreGainedCapacity)
-    {
-        if (runtimeStats == null)
-        {
-            return;
-        }
-
-        targetLevel = Mathf.Max(1, targetLevel);
-        int gainedLevels = targetLevel - appliedProgressionLevel;
-        if (gainedLevels <= 0)
-        {
-            return;
-        }
-
-        float hpGrowth = gainedLevels * 12f;
-        float staminaGrowth = gainedLevels * 2f;
-        float energyGrowth = gainedLevels * 2f;
-
-        runtimeStats.maxHP += hpGrowth;
-        runtimeStats.attack += gainedLevels * 2f;
-        runtimeStats.defense += gainedLevels * 1.25f;
-        runtimeStats.staminaMax += staminaGrowth;
-        runtimeStats.energyMax += energyGrowth;
-
-        if (restoreGainedCapacity)
-        {
-            runtimeStats.currentHP = Mathf.Min(
-                runtimeStats.maxHP,
-                runtimeStats.currentHP + hpGrowth);
-            runtimeStats.currentStamina = Mathf.Min(
-                runtimeStats.staminaMax,
-                runtimeStats.currentStamina + staminaGrowth);
-            runtimeStats.currentEnergy = Mathf.Min(
-                runtimeStats.energyMax,
-                runtimeStats.currentEnergy + energyGrowth);
-        }
-
-        appliedProgressionLevel = targetLevel;
-        Changed?.Invoke(this);
-    }
-
     public void SetCurrentHealthForDebug(float health)
     {
         if (runtimeStats == null)
@@ -268,17 +248,115 @@ public class CharacterHealth : MonoBehaviour
 
     private CharacterBaseStats GetBaseStats()
     {
+        CharacterBaseStats source = fallbackBaseStats;
         if (initializeFromCharacterData && characterData != null && characterData.baseStats != null)
         {
-            return characterData.baseStats;
+            source = characterData.baseStats;
         }
 
-        if (fallbackBaseStats == null)
+        if (source == null)
         {
-            fallbackBaseStats = new CharacterBaseStats();
+            source = new CharacterBaseStats();
+            fallbackBaseStats = source;
         }
 
-        return fallbackBaseStats;
+        if (!IsPlayerHealth() || playerHeroDefinition == null)
+        {
+            return source;
+        }
+
+        CharacterBaseStats result = CopyBaseStats(source);
+        GameDataManager data = GameDataManager.Instance;
+        result.maxHP = GetHeroFinalStat(data, HeroStatType.Health);
+        result.attack = GetHeroFinalStat(data, HeroStatType.Damage);
+        result.defense = GetHeroFinalStat(data, HeroStatType.Defense);
+        result.moveSpeed = GetHeroFinalStat(data, HeroStatType.MoveSpeed);
+        result.energyMax = GetHeroFinalStat(data, HeroStatType.Mana);
+        return result;
+    }
+
+    private void BindHeroProgression()
+    {
+        if (!IsPlayerHealth() || playerHeroDefinition == null || boundHeroData == GameDataManager.Instance)
+        {
+            return;
+        }
+
+        if (boundHeroData != null)
+        {
+            boundHeroData.HeroProgressChanged -= HandleHeroProgressChanged;
+        }
+
+        boundHeroData = GameDataManager.Instance;
+        if (boundHeroData != null)
+        {
+            boundHeroData.HeroProgressChanged += HandleHeroProgressChanged;
+        }
+    }
+
+    private void HandleHeroProgressChanged()
+    {
+        ApplyHeroProgressionStats(restoreGainedCapacity: true);
+    }
+
+    public void ApplyHeroProgressionStats(bool restoreGainedCapacity)
+    {
+        if (!IsPlayerHealth() || playerHeroDefinition == null || runtimeStats == null)
+        {
+            return;
+        }
+
+        BindHeroProgression();
+
+        float previousMaxHealth = runtimeStats.maxHP;
+        float previousMaxMana = runtimeStats.energyMax;
+        GameDataManager data = GameDataManager.Instance;
+
+        runtimeStats.maxHP = GetHeroFinalStat(data, HeroStatType.Health);
+        runtimeStats.attack = GetHeroFinalStat(data, HeroStatType.Damage);
+        runtimeStats.defense = GetHeroFinalStat(data, HeroStatType.Defense);
+        runtimeStats.moveSpeed = GetHeroFinalStat(data, HeroStatType.MoveSpeed);
+        runtimeStats.energyMax = GetHeroFinalStat(data, HeroStatType.Mana);
+
+        float gainedHealth = Mathf.Max(0f, runtimeStats.maxHP - previousMaxHealth);
+        float gainedMana = Mathf.Max(0f, runtimeStats.energyMax - previousMaxMana);
+        runtimeStats.currentHP = restoreGainedCapacity
+            ? Mathf.Min(runtimeStats.maxHP, runtimeStats.currentHP + gainedHealth)
+            : Mathf.Clamp(runtimeStats.currentHP, 0f, runtimeStats.maxHP);
+        runtimeStats.currentEnergy = restoreGainedCapacity
+            ? Mathf.Min(runtimeStats.energyMax, runtimeStats.currentEnergy + gainedMana)
+            : Mathf.Clamp(runtimeStats.currentEnergy, 0f, runtimeStats.energyMax);
+
+        Changed?.Invoke(this);
+    }
+
+    private float GetHeroFinalStat(GameDataManager data, HeroStatType statType)
+    {
+        return data != null
+            ? data.GetHeroFinalStat(playerHeroDefinition, statType)
+            : playerHeroDefinition.GetBaseStat(statType);
+    }
+
+    private static CharacterBaseStats CopyBaseStats(CharacterBaseStats source)
+    {
+        source = source ?? new CharacterBaseStats();
+        return new CharacterBaseStats
+        {
+            maxHP = source.maxHP,
+            attack = source.attack,
+            defense = source.defense,
+            critRate = source.critRate,
+            critDamage = source.critDamage,
+            moveSpeed = source.moveSpeed,
+            attackSpeed = source.attackSpeed,
+            staminaMax = source.staminaMax,
+            staminaRegen = source.staminaRegen,
+            energyMax = source.energyMax,
+            energyRegen = source.energyRegen,
+            cooldownReduction = source.cooldownReduction,
+            companionSynergy = source.companionSynergy,
+            statusResistance = source.statusResistance
+        };
     }
 
     private void PlayPlayerDamageEffect(float actualDamage)

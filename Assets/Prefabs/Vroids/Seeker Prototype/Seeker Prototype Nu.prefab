@@ -7449,6 +7449,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
   characterData: {fileID: 11400000, guid: f6ad7b99ce77442ebf76b052c5d2f43d, type: 2}
   initializeFromCharacterData: 1
+  playerHeroDefinition: {fileID: 11400000, guid: 9b75d75473d44118986548f018b29bbd, type: 2}
   fallbackBaseStats:
     maxHP: 1000
     attack: 20

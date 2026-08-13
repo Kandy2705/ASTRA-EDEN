@@ -325,12 +325,20 @@ public class PlayerController : MonoBehaviour
 
     private float GetCurrentMoveSpeed()
     {
+        float finalRunSpeed = playerHealth != null && playerHealth.RuntimeStats != null
+            ? Mathf.Max(0f, playerHealth.RuntimeStats.moveSpeed)
+            : runSpeed;
+        float walkRatio = runSpeed > 0.001f
+            ? Mathf.Clamp01(walkSpeed / runSpeed)
+            : 0.5f;
+        float finalWalkSpeed = finalRunSpeed * walkRatio;
+
         if (currentSpeedFactor <= 1f)
         {
-            return Mathf.Lerp(0f, walkSpeed, currentSpeedFactor);
+            return Mathf.Lerp(0f, finalWalkSpeed, currentSpeedFactor);
         }
 
-        return Mathf.Lerp(walkSpeed, runSpeed, currentSpeedFactor - 1f);
+        return Mathf.Lerp(finalWalkSpeed, finalRunSpeed, currentSpeedFactor - 1f);
     }
 
     private Vector3 GetMoveDirection(Vector2 movementInput)

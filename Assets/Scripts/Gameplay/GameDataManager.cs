@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
 
+[DefaultExecutionOrder(-1000)]
 public class GameDataManager : MonoBehaviour
 {
     public static GameDataManager Instance { get; private set; }
@@ -20,6 +21,9 @@ public class GameDataManager : MonoBehaviour
     private const string GameTimeSecondsKey = "ASTRA_GAME_TIME_SECONDS";
     private const string PlayerLevelKey = "ASTRA_PLAYER_LEVEL";
     private const string PlayerExperienceKey = "ASTRA_PLAYER_EXPERIENCE";
+    private const string HeroProgressJsonKey = "ASTRA_HERO_PROGRESS_JSON";
+    public const string DefaultHeroId = "seeker_default_01";
+    private const string LegacyDemoHeroId = "hero_ravenous_butcher";
     private const string CurrentObjectiveKey = "ASTRA_CURRENT_OBJECTIVE";
     private const string AncientNoteCollectedKey = "ASTRA_ANCIENT_NOTE_FLOATING_TREE_COLLECTED";
     private const string AncientNote2CollectedKey = "ASTRA_ANCIENT_NOTE_FLOATING_TREE_02_COLLECTED";
@@ -47,6 +51,11 @@ public class GameDataManager : MonoBehaviour
     [Header("Tiến trình Level")]
     [SerializeField, Min(1)] private int playerLevel = 1;
     [SerializeField, Min(0)] private int playerExperience;
+
+    [Header("Tiến trình Hero")]
+    [SerializeField, Min(0)] private int availableHeroUpgradePoints;
+    [SerializeField] private List<string> ownedHeroIds = new List<string>();
+    [SerializeField] private List<HeroProgressData> heroProgress = new List<HeroProgressData>();
 
     [Header("Tiến trình cốt truyện")]
     [SerializeField] private string currentObjective = "";
@@ -92,6 +101,15 @@ public class GameDataManager : MonoBehaviour
         public List<string> clearedZoneIds = new List<string>();
     }
 
+    [System.Serializable]
+    private class HeroProgressSaveData
+    {
+        public int version = 1;
+        public int availableUpgradePoints;
+        public List<string> ownedHeroIds = new List<string>();
+        public List<HeroProgressData> heroes = new List<HeroProgressData>();
+    }
+
     private HashSet<string> clearedZones = new HashSet<string>();
 
     private bool playerPrefsDirty;
@@ -99,6 +117,9 @@ public class GameDataManager : MonoBehaviour
     private const float PlayerPrefsFlushInterval = 10f;
 
     public event Action<int> OnCurrencyChanged;
+    public event Action HeroProgressChanged;
+    public event Action HeroOwnershipChanged;
+    public event Action HeroScreenOpenRequested;
 
     public int Currency
     {
@@ -140,6 +161,10 @@ public class GameDataManager : MonoBehaviour
 
     public int PlayerExperience => Mathf.Max(0, playerExperience);
 
+    public int AvailableHeroUpgradePoints => Mathf.Max(0, availableHeroUpgradePoints);
+
+    public IReadOnlyList<string> OwnedHeroIds => ownedHeroIds;
+
     public string CurrentObjective => currentObjective;
 
     public bool IsAncientNoteCollected => ancientNoteCollected;
@@ -180,6 +205,7 @@ public class GameDataManager : MonoBehaviour
         LoadRuntimePositionLists();
         LoadPersistentData();
         LoadZoneProgress();
+        PlayerProgression.GlobalLevelsGained += HandlePlayerLevelsGained;
     }
 
     private void Update()
@@ -213,8 +239,250 @@ public class GameDataManager : MonoBehaviour
     {
         if (Instance == this)
         {
+            PlayerProgression.GlobalLevelsGained -= HandlePlayerLevelsGained;
             FlushPlayerPrefs();
         }
+    }
+
+    private void HandlePlayerLevelsGained(int levelsGained)
+    {
+        GrantHeroUpgradePoints(levelsGained, requestScreenOpen: true);
+    }
+
+    public void GrantHeroUpgradePoints(int amount, bool requestScreenOpen = false)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        long updatedPoints = (long)availableHeroUpgradePoints + amount;
+        availableHeroUpgradePoints = (int)Math.Min(updatedPoints, int.MaxValue);
+        SaveHeroProgression(flushImmediately: true);
+        HeroProgressChanged?.Invoke();
+
+        if (requestScreenOpen)
+        {
+            HeroScreenOpenRequested?.Invoke();
+        }
+    }
+
+    public void RequestHeroScreenOpen()
+    {
+        HeroScreenOpenRequested?.Invoke();
+    }
+
+    public bool OwnHero(string heroId)
+    {
+        if (string.IsNullOrWhiteSpace(heroId) || IsHeroOwned(heroId))
+        {
+            return false;
+        }
+
+        ownedHeroIds.Add(heroId);
+        GetOrCreateHeroProgress(heroId);
+        SaveHeroProgression(flushImmediately: true);
+        HeroOwnershipChanged?.Invoke();
+        HeroProgressChanged?.Invoke();
+        return true;
+    }
+
+    public bool IsHeroOwned(string heroId)
+    {
+        return !string.IsNullOrWhiteSpace(heroId) && ownedHeroIds.Contains(heroId);
+    }
+
+    public IReadOnlyList<string> GetOwnedHeroIds()
+    {
+        return ownedHeroIds;
+    }
+
+    public HeroProgressData GetHeroProgress(string heroId)
+    {
+        if (string.IsNullOrWhiteSpace(heroId))
+        {
+            return null;
+        }
+
+        return GetOrCreateHeroProgress(heroId);
+    }
+
+    public int GetHeroUpgradeLevel(string heroId, HeroStatType statType)
+    {
+        HeroProgressData progress = GetHeroProgress(heroId);
+        return progress != null ? progress.GetUpgradeLevel(statType) : 0;
+    }
+
+    public float GetHeroFinalStat(HeroDefinition definition, HeroStatType statType)
+    {
+        if (definition == null)
+        {
+            return 0f;
+        }
+
+        return definition.CalculateFinalStat(
+            statType,
+            GetHeroUpgradeLevel(definition.HeroId, statType));
+    }
+
+    public bool TryUpgradeHeroStat(string heroId, HeroStatType statType, out int newUpgradeLevel)
+    {
+        newUpgradeLevel = 0;
+        if (!IsHeroOwned(heroId) || availableHeroUpgradePoints <= 0)
+        {
+            return false;
+        }
+
+        HeroProgressData progress = GetOrCreateHeroProgress(heroId);
+        if (progress == null)
+        {
+            return false;
+        }
+
+        newUpgradeLevel = progress.IncrementUpgradeLevel(statType);
+        availableHeroUpgradePoints--;
+        SaveHeroProgression(flushImmediately: true);
+        HeroProgressChanged?.Invoke();
+        return true;
+    }
+
+    private HeroProgressData GetOrCreateHeroProgress(string heroId)
+    {
+        for (int i = 0; i < heroProgress.Count; i++)
+        {
+            HeroProgressData entry = heroProgress[i];
+            if (entry != null && string.Equals(entry.heroId, heroId, StringComparison.Ordinal))
+            {
+                return entry;
+            }
+        }
+
+        HeroProgressData created = new HeroProgressData(heroId);
+        heroProgress.Add(created);
+        return created;
+    }
+
+    private void SaveHeroProgression(bool flushImmediately)
+    {
+        HeroProgressSaveData save = new HeroProgressSaveData
+        {
+            availableUpgradePoints = Mathf.Max(0, availableHeroUpgradePoints),
+            ownedHeroIds = new List<string>(ownedHeroIds),
+            heroes = new List<HeroProgressData>(heroProgress)
+        };
+
+        PlayerPrefs.SetString(HeroProgressJsonKey, JsonUtility.ToJson(save));
+        PlayerPrefs.SetInt(HasSaveKey, 1);
+        MarkPlayerPrefsDirty();
+        if (flushImmediately)
+        {
+            FlushPlayerPrefs();
+        }
+    }
+
+    private void LoadHeroProgression()
+    {
+        availableHeroUpgradePoints = 0;
+        ownedHeroIds.Clear();
+        heroProgress.Clear();
+
+        string json = PlayerPrefs.GetString(HeroProgressJsonKey, string.Empty);
+        if (!string.IsNullOrEmpty(json))
+        {
+            HeroProgressSaveData save = JsonUtility.FromJson<HeroProgressSaveData>(json);
+            if (save != null)
+            {
+                availableHeroUpgradePoints = Mathf.Max(0, save.availableUpgradePoints);
+                if (save.ownedHeroIds != null)
+                {
+                    for (int i = 0; i < save.ownedHeroIds.Count; i++)
+                    {
+                        string id = save.ownedHeroIds[i];
+                        if (!string.IsNullOrWhiteSpace(id) && !ownedHeroIds.Contains(id))
+                        {
+                            ownedHeroIds.Add(id);
+                        }
+                    }
+                }
+
+                if (save.heroes != null)
+                {
+                    for (int i = 0; i < save.heroes.Count; i++)
+                    {
+                        HeroProgressData progress = save.heroes[i];
+                        if (progress == null || string.IsNullOrWhiteSpace(progress.heroId))
+                        {
+                            continue;
+                        }
+
+                        progress.Sanitize();
+                        if (heroProgress.Find(x => x != null && x.heroId == progress.heroId) == null)
+                        {
+                            heroProgress.Add(progress);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Save cũ: các level đã đạt trước khi hệ Hero tồn tại vẫn nhận đúng số point.
+            availableHeroUpgradePoints = Mathf.Max(0, playerLevel - 1);
+        }
+
+        MigrateLegacyHeroId(LegacyDemoHeroId, DefaultHeroId);
+
+        if (ownedHeroIds.Count == 0)
+        {
+            ownedHeroIds.Add(DefaultHeroId);
+        }
+
+        for (int i = 0; i < ownedHeroIds.Count; i++)
+        {
+            GetOrCreateHeroProgress(ownedHeroIds[i]);
+        }
+    }
+
+    private void MigrateLegacyHeroId(string legacyId, string currentId)
+    {
+        if (string.IsNullOrWhiteSpace(legacyId) || string.IsNullOrWhiteSpace(currentId) ||
+            string.Equals(legacyId, currentId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        int legacyOwnedIndex = ownedHeroIds.IndexOf(legacyId);
+        if (legacyOwnedIndex >= 0)
+        {
+            if (ownedHeroIds.Contains(currentId))
+            {
+                ownedHeroIds.RemoveAt(legacyOwnedIndex);
+            }
+            else
+            {
+                ownedHeroIds[legacyOwnedIndex] = currentId;
+            }
+        }
+
+        HeroProgressData legacy = heroProgress.Find(x => x != null && x.heroId == legacyId);
+        if (legacy == null)
+        {
+            return;
+        }
+
+        HeroProgressData current = heroProgress.Find(x => x != null && x.heroId == currentId);
+        if (current == null)
+        {
+            legacy.heroId = currentId;
+            return;
+        }
+
+        current.healthUpgradeLevel = Math.Max(current.healthUpgradeLevel, legacy.healthUpgradeLevel);
+        current.damageUpgradeLevel = Math.Max(current.damageUpgradeLevel, legacy.damageUpgradeLevel);
+        current.defenseUpgradeLevel = Math.Max(current.defenseUpgradeLevel, legacy.defenseUpgradeLevel);
+        current.moveSpeedUpgradeLevel = Math.Max(current.moveSpeedUpgradeLevel, legacy.moveSpeedUpgradeLevel);
+        current.manaUpgradeLevel = Math.Max(current.manaUpgradeLevel, legacy.manaUpgradeLevel);
+        heroProgress.Remove(legacy);
     }
 
     private void MarkPlayerPrefsDirty()
@@ -887,8 +1155,14 @@ public class GameDataManager : MonoBehaviour
         gameTimeSeconds = -1f;
         PlayerPrefs.DeleteKey(PlayerLevelKey);
         PlayerPrefs.DeleteKey(PlayerExperienceKey);
+        PlayerPrefs.DeleteKey(HeroProgressJsonKey);
         playerLevel = 1;
         playerExperience = 0;
+        availableHeroUpgradePoints = 0;
+        ownedHeroIds.Clear();
+        ownedHeroIds.Add(DefaultHeroId);
+        heroProgress.Clear();
+        GetOrCreateHeroProgress(DefaultHeroId);
         PlayerPrefs.DeleteKey(CurrentObjectiveKey);
         PlayerPrefs.DeleteKey(AncientNoteCollectedKey);
         PlayerPrefs.DeleteKey(AncientNote2CollectedKey);
@@ -929,6 +1203,7 @@ public class GameDataManager : MonoBehaviour
         }
         PlayerPrefs.SetInt(PlayerLevelKey, playerLevel);
         PlayerPrefs.SetInt(PlayerExperienceKey, playerExperience);
+        SaveHeroProgression(flushImmediately: false);
         PlayerPrefs.SetString(CurrentObjectiveKey, currentObjective ?? string.Empty);
         PlayerPrefs.SetInt(AncientNoteCollectedKey, ancientNoteCollected ? 1 : 0);
         PlayerPrefs.SetInt(AncientNote2CollectedKey, ancientNote2Collected ? 1 : 0);
@@ -953,6 +1228,7 @@ public class GameDataManager : MonoBehaviour
         gameTimeSeconds = PlayerPrefs.GetFloat(GameTimeSecondsKey, -1f);
         playerLevel = Mathf.Max(1, PlayerPrefs.GetInt(PlayerLevelKey, 1));
         playerExperience = Mathf.Max(0, PlayerPrefs.GetInt(PlayerExperienceKey, 0));
+        LoadHeroProgression();
         currentObjective = PlayerPrefs.GetString(CurrentObjectiveKey, string.Empty);
         ancientNoteCollected = PlayerPrefs.GetInt(AncientNoteCollectedKey, 0) == 1;
         ancientNote2Collected = PlayerPrefs.GetInt(AncientNote2CollectedKey, 0) == 1;

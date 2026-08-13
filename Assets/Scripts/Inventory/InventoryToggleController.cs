@@ -14,11 +14,19 @@ public class InventoryToggleController : MonoBehaviour
     [Tooltip("Canvas HUD gameplay trong scene World_Eden7.")]
     [SerializeField] private GameObject gameplayHudCanvas;
 
+    [Tooltip("Root nội dung gameplay HUD bên trong HUD_Canvas.")]
+    [SerializeField] private GameObject gameplayHudRoot;
+
     [Tooltip("Root của panel Inventory trong Menu_Canvas.")]
     [SerializeField] private GameObject inventoryRoot;
 
     [Tooltip("Root của panel Overview trong cùng Panels container với Inventory.")]
     [SerializeField] private GameObject overviewRoot;
+
+    [Tooltip("Root của Hero.prefab trong cùng Panels container. Dùng đúng instance hiện có.")]
+    [SerializeField] private GameObject heroRoot;
+
+    private GameObject panelContainer;
 
     [Header("Inventory Refresh")]
     [SerializeField] private InventoryScreenController inventoryScreenController;
@@ -28,11 +36,16 @@ public class InventoryToggleController : MonoBehaviour
     [SerializeField] private bool showCursorWhenOpen = true;
 
     private bool isOpen;
+    private bool isHeroOpen;
+    private bool isHeroClosing;
+    private GameDataManager subscribedGameData;
+    private PopupTween heroPopupTween;
     private Button overviewTabButton;
     private Button inventoryTabButton;
     private readonly List<GameObject> activatedAncestors = new List<GameObject>();
 
     public bool IsOpen => isOpen;
+    public bool IsHeroOpen => isHeroOpen;
 
     private void Awake()
     {
@@ -40,8 +53,21 @@ public class InventoryToggleController : MonoBehaviour
         WireOverviewTab();
         WireInventoryTab();
 
-
         SetInventoryOpen(false);
+    }
+
+    private void OnEnable()
+    {
+        SubscribeHeroScreenRequests();
+    }
+
+    private void OnDisable()
+    {
+        if (subscribedGameData != null)
+        {
+            subscribedGameData.HeroScreenOpenRequested -= OpenHero;
+            subscribedGameData = null;
+        }
     }
 
     private void Start()
@@ -53,6 +79,8 @@ public class InventoryToggleController : MonoBehaviour
 
     private void ResolveInventoryReferences()
     {
+        ResolveGameplayHud();
+
         if (inventoryScreenController == null)
         {
             inventoryScreenController = FindFirstObjectByType<InventoryScreenController>(FindObjectsInactive.Include);
@@ -70,6 +98,39 @@ public class InventoryToggleController : MonoBehaviour
         }
 
         ResolveOverviewRoot();
+        ResolveHeroRoot();
+        if (inventoryRoot != null && inventoryRoot.transform.parent != null)
+        {
+            panelContainer = inventoryRoot.transform.parent.gameObject;
+        }
+    }
+
+    private void ResolveGameplayHud()
+    {
+        if (gameplayHudCanvas == null)
+        {
+            Canvas[] canvases = FindObjectsByType<Canvas>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int i = 0; i < canvases.Length; i++)
+            {
+                Canvas canvas = canvases[i];
+                if (canvas != null && canvas.name == "HUD_Canvas")
+                {
+                    gameplayHudCanvas = canvas.gameObject;
+                    break;
+                }
+            }
+        }
+
+        if (gameplayHudRoot == null && gameplayHudCanvas != null)
+        {
+            Transform hudRoot = gameplayHudCanvas.transform.Find("HUD_Root");
+            if (hudRoot != null)
+            {
+                gameplayHudRoot = hudRoot.gameObject;
+            }
+        }
     }
 
     private void ResolveOverviewRoot()
@@ -91,6 +152,53 @@ public class InventoryToggleController : MonoBehaviour
         }
 
         overviewRoot = FindPanelRoot("Overview");
+    }
+
+    private void ResolveHeroRoot()
+    {
+        if (heroRoot == null)
+        {
+            Transform container = inventoryRoot != null ? inventoryRoot.transform.parent : null;
+            if (container != null && container.name == "Panels")
+            {
+                Transform hero = container.Find("Hero");
+                if (hero != null)
+                {
+                    heroRoot = hero.gameObject;
+                }
+            }
+
+            heroRoot ??= FindPanelRoot("Hero");
+        }
+
+        if (heroRoot != null && heroPopupTween == null)
+        {
+            heroPopupTween = heroRoot.GetComponent<PopupTween>();
+            if (heroPopupTween == null)
+            {
+                heroPopupTween = heroRoot.AddComponent<PopupTween>();
+            }
+        }
+    }
+
+    private void SubscribeHeroScreenRequests()
+    {
+        GameDataManager current = GameDataManager.Instance;
+        if (subscribedGameData == current)
+        {
+            return;
+        }
+
+        if (subscribedGameData != null)
+        {
+            subscribedGameData.HeroScreenOpenRequested -= OpenHero;
+        }
+
+        subscribedGameData = current;
+        if (subscribedGameData != null)
+        {
+            subscribedGameData.HeroScreenOpenRequested += OpenHero;
+        }
     }
 
     private static bool ShouldUseInventoryPanelRoot(GameObject currentRoot, GameObject panelRoot)
@@ -189,12 +297,28 @@ public class InventoryToggleController : MonoBehaviour
             return;
         }
 
-        if (togglePressed)
+        if (isHeroClosing)
         {
-            ToggleInventory();
+            return;
         }
 
-        if (isOpen && escapePressed)
+        if (togglePressed)
+        {
+            if (isHeroOpen)
+            {
+                CloseHero();
+            }
+            else
+            {
+                ToggleInventory();
+            }
+        }
+
+        if (isHeroOpen && escapePressed)
+        {
+            CloseHero();
+        }
+        else if (isOpen && escapePressed)
         {
             CloseInventory();
         }
@@ -242,6 +366,11 @@ public class InventoryToggleController : MonoBehaviour
             inventoryRoot.SetActive(false);
         }
 
+        if (heroRoot != null)
+        {
+            SetHeroHiddenImmediate();
+        }
+
         if (!wasOpen)
         {
             EnsureAncestorsActive(overviewRoot);
@@ -250,10 +379,7 @@ public class InventoryToggleController : MonoBehaviour
         overviewRoot.SetActive(true);
         isOpen = true;
 
-        if (gameplayHudCanvas != null)
-        {
-            gameplayHudCanvas.SetActive(false);
-        }
+        SetGameplayHudVisible(false);
 
         if (pauseGameWhenOpen)
         {
@@ -275,6 +401,11 @@ public class InventoryToggleController : MonoBehaviour
     public void SetInventoryOpen(bool open)
     {
         isOpen = open;
+
+        if (open && heroRoot != null)
+        {
+            SetHeroHiddenImmediate();
+        }
 
         if (open && overviewRoot != null)
         {
@@ -301,16 +432,18 @@ public class InventoryToggleController : MonoBehaviour
             overviewRoot.SetActive(false);
         }
 
+        if (!open && panelContainer != null)
+        {
+            panelContainer.SetActive(false);
+        }
+
         if (isOpen && inventoryScreenController != null)
         {
             inventoryScreenController.RefreshNow();
         }
 
 
-        if (gameplayHudCanvas != null)
-        {
-            gameplayHudCanvas.SetActive(!isOpen);
-        }
+        SetGameplayHudVisible(!isOpen);
 
         if (pauseGameWhenOpen)
         {
@@ -323,6 +456,111 @@ public class InventoryToggleController : MonoBehaviour
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
         }
+    }
+
+    public void OpenHero()
+    {
+        ResolveInventoryReferences();
+        SubscribeHeroScreenRequests();
+
+        if (heroRoot == null)
+        {
+            Debug.LogWarning("[Hero] Không tìm thấy Hero.prefab instance trong Panels.", this);
+            return;
+        }
+
+        if (inventoryRoot != null)
+        {
+            inventoryRoot.SetActive(false);
+        }
+
+        if (overviewRoot != null)
+        {
+            overviewRoot.SetActive(false);
+        }
+
+        EnsureAncestorsActive(heroRoot);
+        EnsureMenuCanvasVisible(heroRoot);
+        isHeroClosing = false;
+        if (!heroRoot.activeSelf)
+        {
+            heroPopupTween.SetHiddenImmediate();
+        }
+        heroPopupTween.Show();
+        isOpen = false;
+        isHeroOpen = true;
+
+        SetGameplayHudVisible(false);
+        if (pauseGameWhenOpen)
+        {
+            Time.timeScale = 0f;
+        }
+
+        if (showCursorWhenOpen)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+    }
+
+    public void CloseHero()
+    {
+        if (!isHeroOpen || isHeroClosing)
+        {
+            return;
+        }
+
+        isHeroOpen = false;
+        isHeroClosing = true;
+        if (heroPopupTween != null)
+        {
+            heroPopupTween.Hide(FinishCloseHero);
+            return;
+        }
+
+        if (heroRoot != null)
+        {
+            heroRoot.SetActive(false);
+        }
+
+        FinishCloseHero();
+    }
+
+    private void FinishCloseHero()
+    {
+        isHeroClosing = false;
+        RestoreActivatedAncestors();
+        if (panelContainer != null)
+        {
+            panelContainer.SetActive(false);
+        }
+
+        SetGameplayHudVisible(true);
+        if (pauseGameWhenOpen)
+        {
+            Time.timeScale = 1f;
+        }
+
+        if (showCursorWhenOpen)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+    }
+
+    private void SetHeroHiddenImmediate()
+    {
+        if (heroPopupTween != null)
+        {
+            heroPopupTween.SetHiddenImmediate();
+        }
+        else if (heroRoot != null)
+        {
+            heroRoot.SetActive(false);
+        }
+
+        isHeroOpen = false;
+        isHeroClosing = false;
     }
 
     private void EnsureAncestorsActive(GameObject target)
@@ -355,8 +593,53 @@ public class InventoryToggleController : MonoBehaviour
         activatedAncestors.Clear();
     }
 
+    private void SetGameplayHudVisible(bool visible)
+    {
+        ResolveGameplayHud();
+        if (gameplayHudCanvas == null)
+        {
+            return;
+        }
+
+        if (visible)
+        {
+            Transform parent = gameplayHudCanvas.transform.parent;
+            while (parent != null)
+            {
+                parent.gameObject.SetActive(true);
+                parent = parent.parent;
+            }
+        }
+
+        gameplayHudCanvas.SetActive(visible);
+        if (gameplayHudRoot != null)
+        {
+            gameplayHudRoot.SetActive(visible);
+        }
+
+        Canvas canvas = gameplayHudCanvas.GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.enabled = visible;
+        }
+
+        CanvasGroup canvasGroup = gameplayHudCanvas.GetComponent<CanvasGroup>();
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = visible ? 1f : 0f;
+            canvasGroup.interactable = visible;
+            canvasGroup.blocksRaycasts = visible;
+        }
+    }
+
     private void OnDestroy()
     {
+        if (subscribedGameData != null)
+        {
+            subscribedGameData.HeroScreenOpenRequested -= OpenHero;
+            subscribedGameData = null;
+        }
+
         if (overviewTabButton != null)
         {
             overviewTabButton.onClick.RemoveListener(OpenOverview);

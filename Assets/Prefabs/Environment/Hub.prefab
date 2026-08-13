@@ -42563,6 +42563,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -6889807344895606260, guid: fdcd924abbb424489b4b377d28180777, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1788340253683164668}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fdcd924abbb424489b4b377d28180777, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 773243510000000001}
   m_SourcePrefab: {fileID: 100100000, guid: fdcd924abbb424489b4b377d28180777, type: 3}
 --- !u!1 &507577301930459269 stripped
 GameObject:
@@ -42703,6 +42706,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &773243510000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 5849586010951646390}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6767941217701380583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bc1ce33b2eb4a1789d8502e1c046cab, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HeroUpgradeStationInteractable
+  interactionRange: 3
+  prompt: Open Hero Upgrades [F]
 --- !u!1 &6973261769476167937 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -5626148368017414729, guid: fdcd924abbb424489b4b377d28180777, type: 3}

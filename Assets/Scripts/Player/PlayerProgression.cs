@@ -2,15 +2,17 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// Level/EXP thật của Player. Nhận EXP từ EnemyData.expReward, tăng stats và lưu save.
+/// Level/EXP toàn cục của Player. Nhận EXP từ EnemyData.expReward, phát sự kiện
+/// số level đạt được để cấp Hero Upgrade Point, rồi lưu bằng GameDataManager.
 /// </summary>
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(10)]
 public sealed class PlayerProgression : MonoBehaviour
 {
+    public static event Action<int> GlobalLevelsGained;
+
     [SerializeField, Min(1)] private int level = 1;
     [SerializeField, Min(0)] private int currentExperience;
-    [SerializeField, Min(1)] private int maxLevel = 50;
     [SerializeField, Min(1)] private int baseExperienceRequired = 100;
     [SerializeField, Min(0)] private int experienceGrowthPerLevel = 50;
 
@@ -19,14 +21,14 @@ public sealed class PlayerProgression : MonoBehaviour
 
     public event Action<PlayerProgression> Changed;
     public event Action<int> LevelUp;
+    public event Action<int> LevelsGained;
 
     public int Level => level;
-    public int MaxLevel => maxLevel;
+    public int MaxLevel => int.MaxValue;
     public int CurrentExperience => currentExperience;
     public int ExperienceToNextLevel => GetExperienceRequired(level);
-    public float NormalizedExperience => level >= maxLevel
-        ? 1f
-        : Mathf.Clamp01(currentExperience / (float)Mathf.Max(1, ExperienceToNextLevel));
+    public float NormalizedExperience =>
+        Mathf.Clamp01(currentExperience / (float)Mathf.Max(1, ExperienceToNextLevel));
 
     public static PlayerProgression FindForPlayer()
     {
@@ -41,7 +43,6 @@ public sealed class PlayerProgression : MonoBehaviour
     {
         characterHealth = GetComponent<CharacterHealth>();
         TryLoadFromSave();
-        ApplyLevelToStats(restoreGainedCapacity: false);
     }
 
     void Start()
@@ -49,7 +50,6 @@ public sealed class PlayerProgression : MonoBehaviour
         if (!loadedFromSave)
         {
             TryLoadFromSave();
-            ApplyLevelToStats(restoreGainedCapacity: false);
         }
 
         Changed?.Invoke(this);
@@ -65,47 +65,46 @@ public sealed class PlayerProgression : MonoBehaviour
         TryLoadFromSave();
         if (loadedFromSave)
         {
-            ApplyLevelToStats(restoreGainedCapacity: false);
             Changed?.Invoke(this);
         }
     }
 
     public void AddExperience(int amount)
     {
-        if (amount <= 0 || level >= maxLevel)
+        if (amount <= 0)
         {
             return;
         }
 
-        currentExperience += amount;
+        long experiencePool = (long)currentExperience + amount;
         int levelsGained = 0;
 
-        while (level < maxLevel)
+        while (level < int.MaxValue)
         {
             int required = GetExperienceRequired(level);
-            if (currentExperience < required)
+            if (experiencePool < required)
             {
                 break;
             }
 
-            currentExperience -= required;
+            experiencePool -= required;
             level++;
             levelsGained++;
         }
 
-        if (level >= maxLevel)
-        {
-            currentExperience = 0;
-        }
+        currentExperience = (int)Math.Min(experiencePool, int.MaxValue);
+        // Cập nhật level/XP vào GameDataManager trước khi phát level event.
+        // Hero point handler sẽ flush cùng một snapshot nhất quán ngay sau đó.
+        SaveProgression();
 
         if (levelsGained > 0)
         {
-            ApplyLevelToStats(restoreGainedCapacity: true);
             LevelUp?.Invoke(level);
+            LevelsGained?.Invoke(levelsGained);
+            GlobalLevelsGained?.Invoke(levelsGained);
             Debug.Log($"[Level] LEVEL UP → Lv.{level} (+{levelsGained} level).", this);
         }
 
-        SaveProgression();
         Changed?.Invoke(this);
         Debug.Log(
             $"[Level] +{amount} EXP | Lv.{level} " +
@@ -115,10 +114,9 @@ public sealed class PlayerProgression : MonoBehaviour
 
     public int GetExperienceRequired(int forLevel)
     {
-        return Mathf.Max(
-            1,
-            baseExperienceRequired + (Mathf.Max(1, forLevel) - 1) *
-            experienceGrowthPerLevel);
+        long required = (long)baseExperienceRequired +
+                        (Math.Max(1, forLevel) - 1L) * experienceGrowthPerLevel;
+        return (int)Math.Max(1L, Math.Min(required, int.MaxValue));
     }
 
     void TryLoadFromSave()
@@ -129,21 +127,12 @@ public sealed class PlayerProgression : MonoBehaviour
             return;
         }
 
-        level = Mathf.Clamp(data.PlayerLevel, 1, maxLevel);
-        currentExperience = level >= maxLevel
-            ? 0
-            : Mathf.Clamp(data.PlayerExperience, 0, GetExperienceRequired(level) - 1);
+        level = Mathf.Max(data.PlayerLevel, 1);
+        currentExperience = Mathf.Clamp(
+            data.PlayerExperience,
+            0,
+            GetExperienceRequired(level) - 1);
         loadedFromSave = true;
-    }
-
-    void ApplyLevelToStats(bool restoreGainedCapacity)
-    {
-        if (characterHealth == null)
-        {
-            characterHealth = GetComponent<CharacterHealth>();
-        }
-
-        characterHealth?.ApplyProgressionLevel(level, restoreGainedCapacity);
     }
 
     void SaveProgression()
