@@ -18,7 +18,6 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     [SerializeField]
     private string[] combatOnlyPanelNames =
     {
-        "BossHUDPanel",
         "ZoneResultPanel"
     };
 

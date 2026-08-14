@@ -28,13 +28,17 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
         EnsureRenderTexture();
     }
 
+    private void OnRectTransformDimensionsChange()
+    {
+        // The preview panels are not square. Keeping a square RenderTexture and
+        // stretching it through RawImage distorts the character vertically.
+        // Rebuild only when the actual UI aspect ratio changes.
+        if (isActiveAndEnabled) EnsureRenderTexture();
+    }
+
     private void OnDestroy()
     {
-        if (renderTexture != null)
-        {
-            renderTexture.Release();
-            Destroy(renderTexture);
-        }
+        ReleaseRenderTexture();
     }
 
     private void LateUpdate()
@@ -146,16 +150,57 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
 
     private void EnsureRenderTexture()
     {
-        if (renderTexture == null)
+        int width = textureSize;
+        int height = textureSize;
+
+        if (output != null)
         {
-            renderTexture = new RenderTexture(textureSize, textureSize, 24, RenderTextureFormat.ARGB32)
+            Rect rect = output.rectTransform.rect;
+            if (rect.width > 1f && rect.height > 1f)
             {
-                name = "SpawnLoadoutPreviewRT"
+                float aspect = rect.width / rect.height;
+                if (aspect >= 1f)
+                    height = Mathf.Max(64, Mathf.RoundToInt(textureSize / aspect));
+                else
+                    width = Mathf.Max(64, Mathf.RoundToInt(textureSize * aspect));
+            }
+        }
+
+        if (renderTexture == null || renderTexture.width != width || renderTexture.height != height)
+        {
+            ReleaseRenderTexture();
+            renderTexture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32)
+            {
+                name = $"SpawnLoadoutPreviewRT_{width}x{height}",
+                antiAliasing = 4
             };
             renderTexture.Create();
+
+            if (previewCamera != null) previewCamera.targetTexture = renderTexture;
+            if (output != null) output.texture = renderTexture;
+
+            // Camera horizontal FOV changes with the RenderTexture aspect, so an
+            // already visible model must be framed again after a resolution change.
+            if (previewHero != null) FramePreview(previewHero);
+            return;
         }
+
         if (previewCamera != null) previewCamera.targetTexture = renderTexture;
         if (output != null) output.texture = renderTexture;
+    }
+
+    private void ReleaseRenderTexture()
+    {
+        if (renderTexture == null) return;
+
+        if (previewCamera != null && previewCamera.targetTexture == renderTexture)
+            previewCamera.targetTexture = null;
+        if (output != null && output.texture == renderTexture)
+            output.texture = null;
+
+        renderTexture.Release();
+        Destroy(renderTexture);
+        renderTexture = null;
     }
 
     private void ClearPreview()
