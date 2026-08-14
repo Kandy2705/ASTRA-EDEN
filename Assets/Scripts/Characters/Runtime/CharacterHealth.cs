@@ -6,7 +6,7 @@ public class CharacterHealth : MonoBehaviour
     [Header("Data")]
     [SerializeField] private CharacterData characterData;
     [SerializeField] private bool initializeFromCharacterData = true;
-    [SerializeField] private HeroDefinition playerHeroDefinition;
+    [SerializeField] private CharacterData playerHeroDefinition;
 
     [Header("Fallback Stats")]
     [SerializeField] private CharacterBaseStats fallbackBaseStats = new CharacterBaseStats();
@@ -21,7 +21,7 @@ public class CharacterHealth : MonoBehaviour
     public event Action<CharacterHealth> Died;
 
     public CharacterData CharacterData => characterData;
-    public HeroDefinition PlayerHeroDefinition => playerHeroDefinition;
+    public CharacterData PlayerHeroDefinition => playerHeroDefinition;
     public CharacterRuntimeStats RuntimeStats => runtimeStats;
     public bool IsDead => runtimeStats.currentHP <= 0f;
     public float NormalizedHealth => runtimeStats.maxHP <= 0f ? 0f : runtimeStats.currentHP / runtimeStats.maxHP;
@@ -30,7 +30,7 @@ public class CharacterHealth : MonoBehaviour
     {
         Initialize();
 
-        // Final Hero stats đã được lấy từ HeroDefinition + save trước khi restore
+        // Final Hero stats đã được lấy từ CharacterData + save trước khi restore
         // HP/Mana, nên dữ liệu Continue được clamp theo đúng giới hạn đã nâng cấp.
         if (IsPlayerHealth() && GetComponent<PlayerProgression>() == null)
         {
@@ -342,7 +342,7 @@ public class CharacterHealth : MonoBehaviour
         Changed?.Invoke(this);
     }
 
-    public void ConfigurePlayerHero(HeroDefinition definition, bool preserveVitalRatios)
+    public void ConfigurePlayerHero(CharacterData definition, bool preserveVitalRatios)
     {
         if (definition == null || !IsPlayerHealth()) return;
 

@@ -13,7 +13,16 @@ MonoBehaviour:
   m_Name: SO_SpawnLoadoutCatalog
   m_EditorClassIdentifier: Assembly-CSharp::SpawnLoadoutCatalog
   heroes:
-  - {fileID: 11400000, guid: 9b75d75473d44118986548f018b29bbd, type: 2}
+  - {fileID: 11400000, guid: be131cf60e0864263b4d643fc3f2bffb, type: 2}
+  - {fileID: 11400000, guid: a10b2e54ae8a94f48bc40ad93cbbb360, type: 2}
+  - {fileID: 11400000, guid: 69e3c1fc594c544e9a4ef01bc4cabe59, type: 2}
+  - {fileID: 11400000, guid: c76a63f083ca64167b1534ddbc56850d, type: 2}
+  - {fileID: 11400000, guid: 98a0cc0d1bf114394806d87c86bbd0fb, type: 2}
+  - {fileID: 11400000, guid: f6ad7b99ce77442ebf76b052c5d2f43d, type: 2}
+  - {fileID: 11400000, guid: de4367cc9dadc4699a4eb04188637c48, type: 2}
+  - {fileID: 11400000, guid: a667304dd600d45a5af87637f5ce6571, type: 2}
+  - {fileID: 11400000, guid: 63cd5b1bed95d4c67b97d39c23353e94, type: 2}
+  - {fileID: 11400000, guid: 3b21d257cdb55456db475103af55ab9b, type: 2}
   weapons:
   - {fileID: 11400000, guid: ddfd73a0e639a471fb3ce4ee79a24991, type: 2}
   compatibility: {fileID: 11400000, guid: d8c8829321dac482289d1e05cabbaf50, type: 2}

@@ -1,23 +1,41 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class ShopUIController : MonoBehaviour
 {
+    public static ShopUIController Active { get; private set; }
+
     [SerializeField] private GameObject root;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private Button closeButton;
     [SerializeField] private ShopEntryButton[] entryButtons;
+    [Header("Character / Weapon Store")]
+    [FormerlySerializedAs("characterScreenPrefab")]
+    [SerializeField] private GameObject characterScreen;
+    [FormerlySerializedAs("weaponScreenPrefab")]
+    [SerializeField] private GameObject weaponScreen;
+    [SerializeField] private InventoryToggleController menuController;
 
     ShopController activeShop;
     PlayerInventoryService inventory;
     PopupTween popupTween;
     bool featuredLayoutBuilt;
+    bool isOpen;
+    int closedFrame = -1;
+
+    public bool IsOpen => isOpen;
+    public bool BlocksMenuToggle => isOpen || closedFrame == Time.frameCount;
 
     void Awake()
     {
+        Active = this;
         BuildFeaturedLayout();
+        if (characterScreen != null) characterScreen.SetActive(false);
+        if (weaponScreen != null) weaponScreen.SetActive(false);
         if (root != null)
         {
             popupTween = root.GetComponent<PopupTween>();
@@ -37,16 +55,28 @@ public class ShopUIController : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        if (Active == this) Active = null;
+    }
+
+    void Update()
+    {
+        if (isOpen && Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame)
+        {
+            Close();
+        }
+    }
+
     public void Open(ShopData data, ShopController shop)
     {
         activeShop = shop;
         inventory = FindPlayerInventory();
 
-        if (root != null)
-        {
-            if (popupTween != null) popupTween.Show();
-            else root.SetActive(true);
-        }
+        EnsureStoreScreens();
+        menuController?.PrepareExternalMenuPanel(root);
+        isOpen = true;
+        ShowTab(StoreTab.Featured);
 
         if (titleText != null)
         {
@@ -63,15 +93,58 @@ public class ShopUIController : MonoBehaviour
     public void Close()
     {
         activeShop = null;
+        isOpen = false;
+        closedFrame = Time.frameCount;
+
+        if (characterScreen != null) characterScreen.SetActive(false);
+        if (weaponScreen != null) weaponScreen.SetActive(false);
 
         if (root != null)
         {
-            if (popupTween != null) popupTween.Hide();
-            else root.SetActive(false);
+            if (popupTween != null)
+            {
+                popupTween.Hide(FinishClose);
+                return;
+            }
+            root.SetActive(false);
         }
 
+        FinishClose();
+    }
+
+    void FinishClose()
+    {
+        menuController?.FinishExternalMenuPanel();
         Time.timeScale = 1f;
         RestoreGameplayCursor();
+    }
+
+    public void ShowTab(StoreTab tab)
+    {
+        if (!isOpen) return;
+        EnsureStoreScreens();
+        bool featured = tab == StoreTab.Featured;
+        if (featured)
+        {
+            if (root != null)
+            {
+                if (popupTween != null) popupTween.Show();
+                else root.SetActive(true);
+            }
+        }
+        else if (root != null)
+        {
+            root.SetActive(false);
+        }
+
+        if (characterScreen != null) characterScreen.SetActive(tab == StoreTab.Character);
+        if (weaponScreen != null) weaponScreen.SetActive(tab == StoreTab.Weapon);
+    }
+
+    void EnsureStoreScreens()
+    {
+        if (characterScreen == null || weaponScreen == null)
+            Debug.LogWarning("[ShopUI] Menu_Canvas/Panels chưa được wire Character hoặc Weapon screen.", this);
     }
 
     public void OnClickClose()
@@ -209,18 +282,14 @@ public class ShopUIController : MonoBehaviour
             return;
         }
 
-        Transform featuredTransform = root.name == "Featured_BeaconShop" || root.name == "Featured"
+        Transform featuredTransform = root.name == "Featured"
             ? root.transform
-            : FindDirectChild(root.transform, "Featured_BeaconShop");
-        if (featuredTransform == null && root.transform != null)
-        {
-            featuredTransform = FindDirectChild(root.transform, "Featured");
-        }
+            : FindDirectChild(root.transform, "Featured");
 
         if (featuredTransform == null)
         {
             Debug.LogWarning(
-                "[ShopUI] ShopPanel chưa có prefab instance Featured_BeaconShop trong Hierarchy.",
+                "[ShopUI] Thiếu Menu_Canvas/Panels/Featured trong Hierarchy.",
                 this);
             return;
         }
@@ -233,19 +302,18 @@ public class ShopUIController : MonoBehaviour
         }
 
         Canvas canvas = root.GetComponent<Canvas>();
-        if (canvas == null) canvas = root.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 200;
-
-        CanvasScaler scaler = root.GetComponent<CanvasScaler>();
-        if (scaler == null) scaler = root.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(3840f, 2160f);
-        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-        scaler.matchWidthOrHeight = 0.5f;
-
-        if (root.GetComponent<GraphicRaycaster>() == null)
+        bool hasParentCanvas = root.transform.parent != null && root.transform.parent.GetComponentInParent<Canvas>() != null;
+        if (canvas == null && !hasParentCanvas)
         {
+            canvas = root.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 200;
+
+            CanvasScaler scaler = root.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(3840f, 2160f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
             root.AddComponent<GraphicRaycaster>();
         }
 

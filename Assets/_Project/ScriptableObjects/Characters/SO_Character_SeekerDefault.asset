@@ -17,9 +17,11 @@ MonoBehaviour:
   characterClass: 0
   gender: 0
   rarity: 3
-  characterPrefab: {fileID: 2137564694823591854, guid: 80226eded1f014c7aad5a072c21baff0, type: 3}
-  portrait: {fileID: 0}
-  icon: {fileID: 0}
+  rank: 1
+  heroType: 0
+  characterPrefab: {fileID: 2693680717882357125, guid: 5d62347c568ab4e19892b067fa14a246, type: 3}
+  portrait: {fileID: 21300000, guid: 79fab759b93d0490496c4a5f8bf6488b, type: 3}
+  icon: {fileID: 21300000, guid: 79fab759b93d0490496c4a5f8bf6488b, type: 3}
   defaultSkin: {fileID: 0}
   baseStats:
     maxHP: 1000
@@ -27,7 +29,7 @@ MonoBehaviour:
     defense: 8
     critRate: 0.05
     critDamage: 0.5
-    moveSpeed: 5
+    moveSpeed: 6
     attackSpeed: 1
     staminaMax: 100
     staminaRegen: 15
@@ -37,6 +39,9 @@ MonoBehaviour:
     companionSynergy: 1
     statusResistance: 0
   defaultWeaponType: 0
+  defaultWeaponId: weapon_seeker_sword_01
+  overrideTypeWeaponCompatibility: 0
+  allowedWeaponTypes: []
   normalAttack: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
   heavyAttack: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
   skill1: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
@@ -44,5 +49,17 @@ MonoBehaviour:
   ultimate: {fileID: 11400000, guid: 9e0c56d9d177b45b8a4e76d1a2cac3c3, type: 2}
   animatorController: {fileID: 0}
   unlockType: 0
+  storeGoldPrice: 0
+  isAvailableInStore: 1
+  healthUpgradeAmount: 100
+  damageUpgradeAmount: 10
+  defenseUpgradeAmount: 5
+  moveSpeedUpgradeAmount: 0.2
+  manaUpgradeAmount: 20
+  healthDisplayMaximum: 5000
+  damageDisplayMaximum: 500
+  defenseDisplayMaximum: 500
+  moveSpeedDisplayMaximum: 15
+  manaDisplayMaximum: 1000
   description: Default starter Seeker. Baseline Sword Fighter data for exploration
     and combat prototypes.

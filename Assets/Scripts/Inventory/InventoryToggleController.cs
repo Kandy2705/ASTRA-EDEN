@@ -54,6 +54,26 @@ public class InventoryToggleController : MonoBehaviour
     public bool IsHeroOpen => isHeroOpen;
     public bool IsSpawnLoadoutOpen => isSpawnLoadoutOpen;
 
+    public void PrepareExternalMenuPanel(GameObject target)
+    {
+        if (target == null) return;
+        ResolveInventoryReferences();
+        if (inventoryRoot != null) inventoryRoot.SetActive(false);
+        if (overviewRoot != null) overviewRoot.SetActive(false);
+        SetHeroHiddenImmediate();
+        SetSpawnLoadoutHiddenImmediate();
+        EnsureAncestorsActive(target);
+        EnsureMenuCanvasVisible(target);
+        SetGameplayHudVisible(false);
+    }
+
+    public void FinishExternalMenuPanel()
+    {
+        RestoreActivatedAncestors();
+        if (panelContainer != null) panelContainer.SetActive(false);
+        SetGameplayHudVisible(true);
+    }
+
     private void Awake()
     {
         ResolveInventoryReferences();
@@ -323,6 +343,9 @@ public class InventoryToggleController : MonoBehaviour
 
     private void Update()
     {
+        if (ShopUIController.Active != null && ShopUIController.Active.BlocksMenuToggle)
+            return;
+
         if (!TryGetTogglePressed(out bool togglePressed, out bool escapePressed))
         {
             return;

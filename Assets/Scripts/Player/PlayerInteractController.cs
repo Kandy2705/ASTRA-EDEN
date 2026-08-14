@@ -60,7 +60,7 @@ public class PlayerInteractController : MonoBehaviour
                 continue;
             }
 
-            float dist = Vector3.Distance(selfPosition, hit.ClosestPoint(selfPosition));
+            float dist = Vector3.Distance(selfPosition, GetClosestPointSafe(hit, selfPosition));
             if (dist <= interactable.InteractionRange && dist < bestDist)
             {
                 bestDist = dist;
@@ -69,6 +69,20 @@ public class PlayerInteractController : MonoBehaviour
         }
 
         return best;
+    }
+
+    private static Vector3 GetClosestPointSafe(Collider collider, Vector3 position)
+    {
+        if (collider is BoxCollider || collider is SphereCollider || collider is CapsuleCollider)
+            return collider.ClosestPoint(position);
+
+        if (collider is MeshCollider meshCollider && meshCollider.convex)
+            return collider.ClosestPoint(position);
+
+        // Non-convex MeshCollider, TerrainCollider and custom collider types do not
+        // support Physics.ClosestPoint. Bounds is sufficient for interaction ranking
+        // and avoids a warning every scan frame.
+        return collider.bounds.ClosestPoint(position);
     }
 
     public string GetCurrentPrompt()

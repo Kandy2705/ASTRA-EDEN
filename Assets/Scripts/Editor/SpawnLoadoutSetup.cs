@@ -7,15 +7,16 @@ using UnityEngine.UI;
 
 public static class SpawnLoadoutSetup
 {
-    const string HeroPath = "Assets/_Project/ScriptableObjects/Heroes/SO_Hero_SeekerDefault.asset";
+    const string HeroPath = "Assets/_Project/ScriptableObjects/Characters/SO_Character_SeekerDefault.asset";
+    const string CharacterFolder = "Assets/_Project/ScriptableObjects/Characters";
     const string WeaponPath = "Assets/_Project/ScriptableObjects/Weapons/SO_Weapon_SeekerSword.asset";
     const string CompatibilityPath = "Assets/_Project/ScriptableObjects/Loadout/SO_HeroWeaponCompatibility.asset";
     const string CatalogPath = "Assets/_Project/ScriptableObjects/Loadout/SO_SpawnLoadoutCatalog.asset";
     const string ScreenPath = "Assets/_Project/Prefab/Screens/SpawnLoadout.prefab";
     const string UiRootPath = "Assets/_Project/Prefab/UI/GameplayUI_Root.prefab";
     const string HubPath = "Assets/Prefabs/Environment/Hub.prefab";
-    const string PlayerPath = "Assets/_Project/Prefab/Player.prefab";
-    const string SeekerPath = "Assets/Prefabs/Vroids/Seeker Prototype/Seeker Prototype Nu.prefab";
+    const string PlayerPath = "Assets/_Project/Prefab/Characters/Player.prefab";
+    const string SeekerPath = "Assets/_Project/Prefab/Characters/Seeker Prototype/Seeker Prototype Nu.prefab";
 
     [MenuItem("ASTRA EDEN/Setup/Build Spawn Loadout System")]
     public static void BuildAll()
@@ -23,13 +24,13 @@ public static class SpawnLoadoutSetup
         EnsureFolder("Assets/_Project/ScriptableObjects", "Weapons");
         EnsureFolder("Assets/_Project/ScriptableObjects", "Loadout");
 
-        HeroDefinition hero = AssetDatabase.LoadAssetAtPath<HeroDefinition>(HeroPath);
+        CharacterData hero = AssetDatabase.LoadAssetAtPath<CharacterData>(HeroPath);
         WeaponData weapon = GetOrCreateAsset<WeaponData>(WeaponPath);
         ConfigureWeapon(weapon);
         HeroWeaponCompatibilityConfig compatibility = GetOrCreateAsset<HeroWeaponCompatibilityConfig>(CompatibilityPath);
         ConfigureCompatibility(compatibility);
         SpawnLoadoutCatalog catalog = GetOrCreateAsset<SpawnLoadoutCatalog>(CatalogPath);
-        ConfigureCatalog(catalog, hero, weapon, compatibility);
+        ConfigureCatalog(catalog, LoadAllCharacters(), weapon, compatibility);
         ConfigureHero(hero);
 
         TMP_FontAsset font = FindStyleFont();
@@ -70,7 +71,7 @@ public static class SpawnLoadoutSetup
         EditorUtility.SetDirty(weapon);
     }
 
-    static void ConfigureHero(HeroDefinition hero)
+    static void ConfigureHero(CharacterData hero)
     {
         if (hero == null) return;
         SerializedObject so = new SerializedObject(hero);
@@ -102,12 +103,25 @@ public static class SpawnLoadoutSetup
         for (int i = 0; i < weaponTypes.Length; i++) allowed.GetArrayElementAtIndex(i).enumValueIndex = (int)weaponTypes[i];
     }
 
-    static void ConfigureCatalog(SpawnLoadoutCatalog catalog, HeroDefinition hero, WeaponData weapon, HeroWeaponCompatibilityConfig compatibility)
+    static CharacterData[] LoadAllCharacters()
+    {
+        string[] guids = AssetDatabase.FindAssets("t:CharacterData", new[] { CharacterFolder });
+        CharacterData[] characters = new CharacterData[guids.Length];
+        for (int i = 0; i < guids.Length; i++)
+            characters[i] = AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(guids[i]));
+        System.Array.Sort(characters, (left, right) =>
+            string.Compare(left != null ? left.HeroId : string.Empty, right != null ? right.HeroId : string.Empty,
+                System.StringComparison.Ordinal));
+        return characters;
+    }
+
+    static void ConfigureCatalog(SpawnLoadoutCatalog catalog, CharacterData[] characters, WeaponData weapon, HeroWeaponCompatibilityConfig compatibility)
     {
         SerializedObject so = new SerializedObject(catalog);
         SerializedProperty heroes = so.FindProperty("heroes");
-        heroes.arraySize = hero == null ? 0 : 1;
-        if (hero != null) heroes.GetArrayElementAtIndex(0).objectReferenceValue = hero;
+        heroes.arraySize = characters != null ? characters.Length : 0;
+        for (int i = 0; i < heroes.arraySize; i++)
+            heroes.GetArrayElementAtIndex(i).objectReferenceValue = characters[i];
         SerializedProperty weapons = so.FindProperty("weapons");
         weapons.arraySize = 1;
         weapons.GetArrayElementAtIndex(0).objectReferenceValue = weapon;
@@ -222,7 +236,7 @@ public static class SpawnLoadoutSetup
         return saved;
     }
 
-    static void WirePlayerPrefab(string path, SpawnLoadoutCatalog catalog, HeroDefinition hero)
+    static void WirePlayerPrefab(string path, SpawnLoadoutCatalog catalog, CharacterData hero)
     {
         GameObject root = PrefabUtility.LoadPrefabContents(path);
         PlayerLoadoutRuntime runtime = root.GetComponent<PlayerLoadoutRuntime>() ?? root.AddComponent<PlayerLoadoutRuntime>();

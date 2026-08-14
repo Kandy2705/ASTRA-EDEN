@@ -394,7 +394,7 @@ public class GameDataManager : MonoBehaviour
         return progress != null ? progress.GetUpgradeLevel(statType) : 0;
     }
 
-    public float GetHeroFinalStat(HeroDefinition definition, HeroStatType statType)
+    public float GetHeroFinalStat(CharacterData definition, HeroStatType statType)
     {
         if (definition == null)
         {

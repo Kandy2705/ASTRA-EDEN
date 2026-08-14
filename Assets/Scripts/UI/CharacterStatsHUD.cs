@@ -15,6 +15,7 @@ public class CharacterStatsHUD : MonoBehaviour
     [SerializeField, Min(0.1f)] private float rebindInterval = 0.5f;
 
     [Header("Bars")]
+    [SerializeField] private Image avatarImage;
     [SerializeField] private Image hpFill;
     [SerializeField] private Image staminaFill;
     [SerializeField] private Image energyFill;
@@ -185,8 +186,19 @@ public class CharacterStatsHUD : MonoBehaviour
             SetText(experienceText, "0 / 100");
         }
 
-        string displayName = characterHealth.CharacterData != null
-            ? characterHealth.CharacterData.displayName
+        CharacterData activeHero = characterHealth.PlayerHeroDefinition != null
+            ? characterHealth.PlayerHeroDefinition
+            : characterHealth.CharacterData;
+        if (avatarImage != null && activeHero != null)
+        {
+            Sprite avatar = activeHero.Portrait != null ? activeHero.Portrait : activeHero.Icon;
+            avatarImage.sprite = avatar;
+            avatarImage.enabled = avatar != null;
+            avatarImage.preserveAspect = true;
+        }
+
+        string displayName = activeHero != null
+            ? activeHero.DisplayName
             : characterHealth.name;
         SetText(nameText, displayName);
         SetText(hpText, $"{Mathf.CeilToInt(stats.currentHP)} / {Mathf.CeilToInt(stats.maxHP)}");

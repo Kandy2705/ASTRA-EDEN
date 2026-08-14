@@ -34,6 +34,13 @@ public class PlayerAnimatorBridge : MonoBehaviour
         }
     }
 
+    public void SetAnimator(Animator targetAnimator)
+    {
+        animator = targetAnimator;
+        isDead = false;
+        normalAnimatorSpeed = animator != null ? animator.speed : 1f;
+    }
+
     public void UpdateLocomotion(float speedFactor, Vector2 movementInput, bool isGrounded)
     {
         if (animator == null || isDead)

@@ -41,7 +41,7 @@ public sealed class SpawnLoadoutView : MonoBehaviour
 
     private readonly List<Button> dynamicButtons = new List<Button>();
     private GameDataManager data;
-    private HeroDefinition selectedHero;
+    private CharacterData selectedHero;
     private WeaponData selectedWeapon;
     private HeroType selectedHeroType;
     private WeaponType? selectedWeaponType;
@@ -86,7 +86,7 @@ public sealed class SpawnLoadoutView : MonoBehaviour
         selectedHero = catalog.ResolveHero(data.CurrentHeroId);
         if (selectedHero == null)
         {
-            IReadOnlyList<HeroDefinition> heroes = catalog.Heroes;
+            IReadOnlyList<CharacterData> heroes = catalog.Heroes;
             for (int i = 0; i < heroes.Count; i++)
             {
                 if (heroes[i] != null && data.IsHeroOwned(heroes[i].HeroId))
@@ -153,12 +153,12 @@ public sealed class SpawnLoadoutView : MonoBehaviour
     private void BuildHeroGrid()
     {
         if (catalog == null || data == null) return;
-        IReadOnlyList<HeroDefinition> heroes = catalog.Heroes;
+        IReadOnlyList<CharacterData> heroes = catalog.Heroes;
         for (int i = 0; i < heroes.Count; i++)
         {
-            HeroDefinition hero = heroes[i];
+            CharacterData hero = heroes[i];
             if (hero == null || hero.HeroType != selectedHeroType || !data.IsHeroOwned(hero.HeroId)) continue;
-            HeroDefinition captured = hero;
+            CharacterData captured = hero;
             CreatePrefabButton(heroGrid, ownedHeroCardPrefab, hero.DisplayName, hero == selectedHero, () => SelectHero(captured));
         }
     }
@@ -201,7 +201,7 @@ public sealed class SpawnLoadoutView : MonoBehaviour
         }
     }
 
-    private void SelectHero(HeroDefinition hero)
+    private void SelectHero(CharacterData hero)
     {
         selectedHero = hero;
         if (!catalog.IsAvailableForHero(selectedHero, selectedWeapon, data))

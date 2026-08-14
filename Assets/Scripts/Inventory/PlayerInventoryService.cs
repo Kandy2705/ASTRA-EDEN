@@ -385,6 +385,28 @@ public class PlayerInventoryService : MonoBehaviour
         return RemoveItem(gold, amount);
     }
 
+    /// <summary>Editor/demo helper. Gold vẫn đi qua inventory item duy nhất và save như giao dịch thường.</summary>
+    public bool SetGoldForDebug(int targetAmount, ItemData assignedGold = null)
+    {
+        ItemData gold = ResolveGoldItem(assignedGold);
+        if (gold == null)
+        {
+            return false;
+        }
+
+        int target = Mathf.Max(0, targetAmount);
+        int current = GetQuantity(gold);
+        if (target == current)
+        {
+            SyncCurrencyMirrorToGameData();
+            return true;
+        }
+
+        return target > current
+            ? AddItem(gold, target - current)
+            : RemoveItem(gold, current - target);
+    }
+
     public bool HasItem(ItemData itemData, int amount)
     {
         return GetQuantity(itemData) >= amount;

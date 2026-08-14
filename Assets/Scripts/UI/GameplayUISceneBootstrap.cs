@@ -25,6 +25,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
     private Button debugIconButton;
     private GameObject playerDebugPanel;
     private TMP_InputField damageInput;
+    private TMP_InputField goldInput;
     private TMP_Text debugStatusText;
     private Slider timeSpeedSlider;
     private TMP_Text timeSpeedValueText;
@@ -282,7 +283,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         RectTransform panelRect = CreateUiObject(
             "PlayerDebugPanel",
             canvasTransform,
-            new Vector2(460f, 990f),
+            new Vector2(580f, 1040f),
             Vector2.zero);
         playerDebugPanel = panelRect.gameObject;
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -313,6 +314,32 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             new Vector2(40f, 40f),
             new Color(0.34f, 0.12f, 0.1f, 1f));
         closeButton.onClick.AddListener(ClosePlayerDebugPanel);
+
+        CreateLabel(
+            panelRect,
+            "Gold",
+            new Vector2(-218f, 230f),
+            new Vector2(90f, 34f),
+            20f,
+            new Color(1f, 0.82f, 0.3f, 1f),
+            TextAlignmentOptions.MidlineLeft);
+
+        goldInput = CreateNumberInput(
+            panelRect,
+            "Input_Gold",
+            "150000",
+            TMP_InputField.ContentType.IntegerNumber,
+            new Vector2(-58f, 230f),
+            new Vector2(210f, 42f));
+
+        Button setGoldButton = CreateButton(
+            panelRect,
+            "Button_SetGold",
+            "SET GOLD",
+            new Vector2(170f, 230f),
+            new Vector2(150f, 42f),
+            new Color(0.55f, 0.36f, 0.08f, 1f));
+        setGoldButton.onClick.AddListener(SetPlayerGoldForDebug);
 
         CreateLabel(
             panelRect,
@@ -602,6 +629,11 @@ public class GameplayUISceneBootstrap : MonoBehaviour
             damageInput.text =
                 debugPlayerCombat.AttackDamage.ToString("0.##", CultureInfo.InvariantCulture);
         }
+        PlayerInventoryService inventory = PlayerInventoryService.FindForPlayer();
+        if (goldInput != null && inventory != null)
+        {
+            goldInput.text = inventory.GetGoldQuantity().ToString(CultureInfo.InvariantCulture);
+        }
 
         playerDebugPanel.transform.SetAsLastSibling();
         RefreshDebugStatus();
@@ -637,6 +669,34 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         debugPlayerCombat.SetAttackDamageForDebug(damage);
         damageInput.text = damage.ToString("0.##", CultureInfo.InvariantCulture);
         RefreshDebugStatus();
+    }
+
+    private void SetPlayerGoldForDebug()
+    {
+        PlayerInventoryService inventory = PlayerInventoryService.FindForPlayer();
+        if (inventory == null || goldInput == null)
+        {
+            SetDebugMessage("Không tìm thấy Inventory của Player.");
+            return;
+        }
+
+        string raw = goldInput.text.Trim().Replace(",", string.Empty).Replace(".", string.Empty);
+        if (!int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out int targetGold))
+        {
+            SetDebugMessage("Gold không hợp lệ.");
+            return;
+        }
+
+        targetGold = Mathf.Clamp(targetGold, 0, 999999999);
+        if (!inventory.SetGoldForDebug(targetGold))
+        {
+            SetDebugMessage("Không tìm thấy ItemData Gold.");
+            return;
+        }
+
+        goldInput.text = targetGold.ToString(CultureInfo.InvariantCulture);
+        WirePlayerStatusHud();
+        SetDebugMessage($"Đã set Gold = {targetGold:N0}.");
     }
 
     private void SetPlayerFullHealth()
@@ -909,10 +969,13 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         }
 
         CharacterRuntimeStats stats = debugPlayerHealth.RuntimeStats;
+        PlayerInventoryService inventory = PlayerInventoryService.FindForPlayer();
+        int gold = inventory != null ? inventory.GetGoldQuantity() : 0;
         SetDebugMessage(
             $"HP {Mathf.CeilToInt(stats.currentHP)} / " +
             $"{Mathf.CeilToInt(stats.maxHP)}    |    " +
-            $"Damage {debugPlayerCombat.AttackDamage:0.##}");
+            $"Damage {debugPlayerCombat.AttackDamage:0.##}    |    " +
+            $"Gold {gold:N0}");
     }
 
     private void SetDebugMessage(string message)
@@ -928,11 +991,18 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         Vector2 position,
         Vector2 size)
     {
-        RectTransform root = CreateUiObject(
-            "Input_Damage",
-            parent,
-            size,
-            position);
+        return CreateNumberInput(parent, "Input_Damage", "20", TMP_InputField.ContentType.DecimalNumber, position, size);
+    }
+
+    private static TMP_InputField CreateNumberInput(
+        RectTransform parent,
+        string objectName,
+        string placeholderValue,
+        TMP_InputField.ContentType contentType,
+        Vector2 position,
+        Vector2 size)
+    {
+        RectTransform root = CreateUiObject(objectName, parent, size, position);
         Image background = root.gameObject.AddComponent<Image>();
         background.color = new Color(0.07f, 0.11f, 0.14f, 1f);
 
@@ -960,7 +1030,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
 
         TMP_Text placeholder = CreateLabel(
             viewport,
-            "20",
+            placeholderValue,
             Vector2.zero,
             Vector2.zero,
             20f,
@@ -974,7 +1044,7 @@ public class GameplayUISceneBootstrap : MonoBehaviour
         input.textViewport = viewport;
         input.textComponent = inputText;
         input.placeholder = placeholder;
-        input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        input.contentType = contentType;
         input.lineType = TMP_InputField.LineType.SingleLine;
         input.pointSize = 20f;
         return input;

@@ -9,6 +9,8 @@ public sealed class HeroProgressData
     public int defenseUpgradeLevel;
     public int moveSpeedUpgradeLevel;
     public int manaUpgradeLevel;
+    public long experience;
+    public int kills;
 
     public HeroProgressData()
     {
@@ -52,5 +54,7 @@ public sealed class HeroProgressData
         defenseUpgradeLevel = Math.Max(0, defenseUpgradeLevel);
         moveSpeedUpgradeLevel = Math.Max(0, moveSpeedUpgradeLevel);
         manaUpgradeLevel = Math.Max(0, manaUpgradeLevel);
+        experience = Math.Max(0L, experience);
+        kills = Math.Max(0, kills);
     }
 }

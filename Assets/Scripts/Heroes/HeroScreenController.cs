@@ -9,7 +9,9 @@ using UnityEngine.UI;
 public sealed class HeroScreenController : MonoBehaviour
 {
     [Header("Data")]
-    [SerializeField] private List<HeroDefinition> heroDefinitions = new List<HeroDefinition>();
+    [SerializeField] private SpawnLoadoutCatalog heroCatalog;
+    [Tooltip("Legacy fallback used only when no shared Spawn Loadout catalog is assigned.")]
+    [SerializeField] private List<CharacterData> heroDefinitions = new List<CharacterData>();
 
     [Header("Existing Hero.prefab Roots")]
     [SerializeField] private Transform heroGrid;
@@ -24,7 +26,7 @@ public sealed class HeroScreenController : MonoBehaviour
         new Dictionary<HeroStatType, StatBinding>();
 
     private HeroType selectedCategory = HeroType.Infantry;
-    private HeroDefinition selectedHero;
+    private CharacterData selectedHero;
     private HeroStatType? selectedStat;
     private GameDataManager data;
     private HeroUpgradeToast toast;
@@ -390,10 +392,11 @@ public sealed class HeroScreenController : MonoBehaviour
     private void RefreshHeroGrid()
     {
         BindData();
-        List<HeroDefinition> visible = new List<HeroDefinition>();
-        for (int i = 0; i < heroDefinitions.Count; i++)
+        List<CharacterData> visible = new List<CharacterData>();
+        IReadOnlyList<CharacterData> definitions = GetHeroDefinitions();
+        for (int i = 0; i < definitions.Count; i++)
         {
-            HeroDefinition definition = heroDefinitions[i];
+            CharacterData definition = definitions[i];
             if (definition != null && definition.HeroType == selectedCategory &&
                 data != null && data.IsHeroOwned(definition.HeroId))
             {
@@ -438,7 +441,7 @@ public sealed class HeroScreenController : MonoBehaviour
         }
     }
 
-    private void BindCard(CardBinding card, HeroDefinition definition)
+    private void BindCard(CardBinding card, CharacterData definition)
     {
         card.heroId = definition.HeroId;
         if (card.nameLabel != null)
@@ -446,9 +449,11 @@ public sealed class HeroScreenController : MonoBehaviour
             card.nameLabel.text = definition.DisplayName;
         }
 
-        if (card.portrait != null && definition.Icon != null)
+        if (card.portrait != null)
         {
             card.portrait.sprite = definition.Icon;
+            card.portrait.enabled = definition.Icon != null;
+            card.portrait.preserveAspect = true;
         }
 
         card.button.onClick.RemoveAllListeners();
@@ -458,11 +463,25 @@ public sealed class HeroScreenController : MonoBehaviour
 
     private void SelectHero(string heroId)
     {
-        selectedHero = heroDefinitions.Find(x =>
-            x != null && string.Equals(x.HeroId, heroId, StringComparison.Ordinal));
+        selectedHero = null;
+        IReadOnlyList<CharacterData> definitions = GetHeroDefinitions();
+        for (int i = 0; i < definitions.Count; i++)
+        {
+            CharacterData definition = definitions[i];
+            if (definition != null && string.Equals(definition.HeroId, heroId, StringComparison.Ordinal))
+            {
+                selectedHero = definition;
+                break;
+            }
+        }
         selectedStat = null;
         RefreshCardSelection();
         RefreshSelectedHero();
+    }
+
+    private IReadOnlyList<CharacterData> GetHeroDefinitions()
+    {
+        return heroCatalog != null ? heroCatalog.Heroes : heroDefinitions;
     }
 
     private void SelectStat(HeroStatType statType)

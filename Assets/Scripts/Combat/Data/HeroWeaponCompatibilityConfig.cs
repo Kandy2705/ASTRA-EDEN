@@ -14,7 +14,7 @@ public sealed class HeroWeaponCompatibilityConfig : ScriptableObject
 
     [SerializeField] private List<HeroTypeRule> typeRules = new List<HeroTypeRule>();
 
-    public bool CanEquip(HeroDefinition hero, WeaponData weapon)
+    public bool CanEquip(CharacterData hero, WeaponData weapon)
     {
         if (hero == null || weapon == null || string.IsNullOrWhiteSpace(weapon.weaponId))
         {

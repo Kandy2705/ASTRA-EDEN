@@ -59,7 +59,7 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
         if (eventData.button == PointerEventData.InputButton.Left) isDragging = false;
     }
 
-    public void Show(HeroDefinition hero, WeaponData weapon)
+    public void Show(CharacterData hero, WeaponData weapon)
     {
         ClearPreview();
         if (hero == null || hero.GameplayPrefab == null || previewRoot == null) return;
@@ -78,6 +78,27 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
         // disabling them is too late: Awake runs as soon as the inactive preview
         // hierarchy is enabled. Remove the runtime-only components while the clone is
         // still inactive so this object is a visual-only preview before any Awake runs.
+        StripGameplayImmediately(previewHero);
+        SetLayerRecursive(previewHero, previewRoot.gameObject.layer);
+        FramePreview(previewHero);
+        previewHero.SetActive(true);
+        previewRoot.gameObject.SetActive(wasActive || gameObject.activeInHierarchy);
+    }
+
+    public void ShowWeapon(WeaponData weapon)
+    {
+        ClearPreview();
+        if (weapon == null || weapon.prefab == null || previewRoot == null) return;
+
+        bool wasActive = previewRoot.gameObject.activeSelf;
+        previewRoot.gameObject.SetActive(false);
+        previewHero = Instantiate(weapon.prefab, previewRoot, false);
+        previewHero.name = $"Preview_{weapon.weaponId}";
+        previewHero.tag = "Untagged";
+        previewHero.transform.localPosition = heroLocalPosition;
+        previewHero.transform.localRotation = Quaternion.Euler(heroLocalEuler);
+        previewHero.transform.localScale = weapon.localScale == Vector3.zero ? Vector3.one : weapon.localScale;
+        previewHero.SetActive(false);
         StripGameplayImmediately(previewHero);
         SetLayerRecursive(previewHero, previewRoot.gameObject.layer);
         FramePreview(previewHero);

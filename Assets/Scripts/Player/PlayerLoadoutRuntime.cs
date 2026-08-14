@@ -7,7 +7,7 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
 {
     [Header("Definitions")]
     [SerializeField] private SpawnLoadoutCatalog catalog;
-    [SerializeField] private HeroDefinition heroDefinition;
+    [SerializeField] private CharacterData heroDefinition;
 
     [Header("Standard Weapon Sockets")]
     [SerializeField] private Transform rightHandSocket;
@@ -17,14 +17,17 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
 
     private CharacterHealth characterHealth;
     private GameObject spawnedWeapon;
+    private GameObject runtimeVisual;
     private WeaponData equippedWeapon;
     private bool skipNextSceneRestore;
+    private Animator baseAnimator;
+    private Renderer[] baseRenderers;
 
     public static PlayerLoadoutRuntime Active { get; private set; }
     public static event Action<PlayerLoadoutRuntime> ActivePlayerChanged;
 
     public SpawnLoadoutCatalog Catalog => catalog;
-    public HeroDefinition HeroDefinition => heroDefinition;
+    public CharacterData CharacterData => heroDefinition;
     public WeaponData EquippedWeapon => equippedWeapon;
     public float BasicAttackDamageBonusPercent => equippedWeapon == null ? 0f :
         equippedWeapon.GetBasicAttackBonusPercent(GetWeaponUpgradeLevel());
@@ -35,6 +38,10 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
     private void Awake()
     {
         characterHealth = GetComponent<CharacterHealth>();
+        baseAnimator = GetComponentInChildren<Animator>(true);
+        baseRenderers = baseAnimator != null
+            ? baseAnimator.GetComponentsInChildren<Renderer>(true)
+            : GetComponentsInChildren<Renderer>(true);
     }
 
     private void OnEnable()
@@ -59,7 +66,7 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
         }
     }
 
-    public void Configure(SpawnLoadoutCatalog loadoutCatalog, HeroDefinition definition)
+    public void Configure(SpawnLoadoutCatalog loadoutCatalog, CharacterData definition)
     {
         if (loadoutCatalog != null) catalog = loadoutCatalog;
         if (definition != null) heroDefinition = definition;
@@ -70,11 +77,20 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
         GameDataManager data = GameDataManager.Instance;
         if (catalog == null || data == null) return;
 
-        HeroDefinition savedHero = catalog.ResolveHero(data.CurrentHeroId) ?? heroDefinition;
+        CharacterData savedHero = catalog.ResolveHero(data.CurrentHeroId) ?? heroDefinition;
         WeaponData savedWeapon = catalog.ResolveValidWeapon(savedHero, data.CurrentWeaponId, data);
-        if (savedHero != null && heroDefinition != null &&
-            !string.Equals(savedHero.HeroId, heroDefinition.HeroId, StringComparison.Ordinal) &&
-            savedWeapon != null && TryReplaceFromSave(savedHero, savedWeapon, data))
+        bool savedHeroDiffers = savedHero != null && heroDefinition != null &&
+            !string.Equals(savedHero.HeroId, heroDefinition.HeroId, StringComparison.Ordinal);
+        if (savedHeroDiffers && savedWeapon != null &&
+            HasGameplayRuntime(savedHero.GameplayPrefab) &&
+            TryReplaceFromSave(savedHero, savedWeapon, data))
+        {
+            return;
+        }
+
+        if (savedHeroDiffers && savedWeapon != null &&
+            !HasGameplayRuntime(savedHero.GameplayPrefab) &&
+            TryApplyVisualOnlyHero(savedHero, savedWeapon, preserveVitalRatios: false, persistLoadout: false))
         {
             return;
         }
@@ -97,7 +113,7 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
         }
     }
 
-    private bool TryReplaceFromSave(HeroDefinition savedHero, WeaponData savedWeapon, GameDataManager data)
+    private bool TryReplaceFromSave(CharacterData savedHero, WeaponData savedWeapon, GameDataManager data)
     {
         if (savedHero.GameplayPrefab == null) return false;
 
@@ -141,7 +157,7 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
         return true;
     }
 
-    public bool ConfirmLoadout(HeroDefinition selectedHero, WeaponData selectedWeapon)
+    public bool ConfirmLoadout(CharacterData selectedHero, WeaponData selectedWeapon)
     {
         GameDataManager data = GameDataManager.Instance;
         if (catalog == null || data == null || selectedHero == null || selectedWeapon == null ||
@@ -160,6 +176,15 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
             characterHealth.ConfigurePlayerHero(selectedHero, preserveVitalRatios: true);
             if (!EquipWeapon(selectedWeapon)) return false;
             return data.SetCurrentLoadout(selectedHero.HeroId, selectedWeapon.weaponId);
+        }
+
+        if (!HasGameplayRuntime(selectedHero.GameplayPrefab))
+        {
+            return TryApplyVisualOnlyHero(
+                selectedHero,
+                selectedWeapon,
+                preserveVitalRatios: true,
+                persistLoadout: true);
         }
 
         GameObject prefab = selectedHero.GameplayPrefab;
@@ -229,12 +254,13 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
             spawnedWeapon = null;
         }
 
+        bool canUseBuiltInVisual = runtimeVisual == null && weapon.useBuiltInVisual;
         if (builtInWeaponVisual != null)
         {
-            builtInWeaponVisual.SetActive(weapon.useBuiltInVisual);
+            builtInWeaponVisual.SetActive(canUseBuiltInVisual);
         }
 
-        if (!weapon.useBuiltInVisual)
+        if (!canUseBuiltInVisual)
         {
             Transform socket = ResolveSocket(weapon.socket);
             if (weapon.prefab == null || socket == null) return false;
@@ -248,6 +274,155 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
 
         equippedWeapon = weapon;
         return true;
+    }
+
+    private bool TryApplyVisualOnlyHero(
+        CharacterData selectedHero,
+        WeaponData selectedWeapon,
+        bool preserveVitalRatios,
+        bool persistLoadout)
+    {
+        GameObject visualPrefab = selectedHero != null ? selectedHero.GameplayPrefab : null;
+        if (visualPrefab == null || selectedWeapon == null)
+        {
+            return false;
+        }
+
+        Animator prefabAnimator = visualPrefab.GetComponentInChildren<Animator>(true);
+        if (prefabAnimator == null)
+        {
+            Debug.LogError("[SpawnLoadout] Visual prefab cần có Animator để dùng shared Player runtime.", visualPrefab);
+            return false;
+        }
+
+        // Visual-only Hero không có vũ khí built-in của Player gốc, vì vậy cần model vũ khí thật.
+        if (selectedWeapon.prefab == null)
+        {
+            Debug.LogError("[SpawnLoadout] Visual-only Hero cần WeaponData có prefab để gắn vào hand socket.", selectedWeapon);
+            return false;
+        }
+
+        GameObject newVisual = Instantiate(visualPrefab, transform, false);
+        newVisual.name = $"RuntimeVisual_{selectedHero.HeroId}";
+        newVisual.tag = "Untagged";
+        newVisual.transform.localPosition = Vector3.zero;
+        newVisual.transform.localRotation = Quaternion.identity;
+        newVisual.transform.localScale = Vector3.one;
+        SetLayerRecursive(newVisual, gameObject.layer);
+        DisableVisualPhysics(newVisual);
+
+        Animator visualAnimator = newVisual.GetComponentInChildren<Animator>(true);
+        RuntimeAnimatorController controller = selectedHero.animatorController != null
+            ? selectedHero.animatorController
+            : baseAnimator != null ? baseAnimator.runtimeAnimatorController : null;
+        visualAnimator.runtimeAnimatorController = controller;
+        visualAnimator.applyRootMotion = false;
+        visualAnimator.Rebind();
+        visualAnimator.Update(0f);
+
+        if (visualAnimator.GetComponent<PlayerAnimationEventRelay>() == null)
+        {
+            visualAnimator.gameObject.AddComponent<PlayerAnimationEventRelay>();
+        }
+
+        GameObject previousVisual = runtimeVisual;
+        runtimeVisual = newVisual;
+        SetBaseVisualVisible(false);
+        if (baseAnimator != null) baseAnimator.enabled = false;
+
+        PlayerAnimatorBridge bridge = GetComponent<PlayerAnimatorBridge>();
+        bridge?.SetAnimator(visualAnimator);
+        rightHandSocket = ResolveHumanoidBone(visualAnimator, HumanBodyBones.RightHand, "J_Bip_R_Hand") ?? newVisual.transform;
+        leftHandSocket = ResolveHumanoidBone(visualAnimator, HumanBodyBones.LeftHand, "J_Bip_L_Hand") ?? newVisual.transform;
+        backSocket = ResolveHumanoidBone(visualAnimator, HumanBodyBones.Chest, "J_Bip_C_Chest") ?? newVisual.transform;
+
+        heroDefinition = selectedHero;
+        characterHealth.ConfigurePlayerHero(selectedHero, preserveVitalRatios);
+        if (!EquipWeapon(selectedWeapon))
+        {
+            Destroy(newVisual);
+            runtimeVisual = previousVisual;
+            return false;
+        }
+
+        if (previousVisual != null) Destroy(previousVisual);
+        ActivePlayerChanged?.Invoke(this);
+
+        if (persistLoadout)
+        {
+            GameDataManager data = GameDataManager.Instance;
+            if (data == null || !data.SetCurrentLoadout(selectedHero.HeroId, selectedWeapon.weaponId))
+            {
+                return false;
+            }
+
+            CharacterRuntimeStats stats = characterHealth.RuntimeStats;
+            data.SavePlayerStats(stats.currentHP, stats.currentStamina, stats.currentEnergy);
+        }
+
+        return true;
+    }
+
+    private static bool HasGameplayRuntime(GameObject prefab)
+    {
+        return prefab != null && prefab.GetComponent<PlayerLoadoutRuntime>() != null;
+    }
+
+    private void SetBaseVisualVisible(bool visible)
+    {
+        if (baseRenderers == null) return;
+        for (int i = 0; i < baseRenderers.Length; i++)
+        {
+            if (baseRenderers[i] != null) baseRenderers[i].enabled = visible;
+        }
+    }
+
+    private static void DisableVisualPhysics(GameObject visual)
+    {
+        Collider[] colliders = visual.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null) colliders[i].enabled = false;
+        }
+
+        Rigidbody[] rigidbodies = visual.GetComponentsInChildren<Rigidbody>(true);
+        for (int i = 0; i < rigidbodies.Length; i++)
+        {
+            if (rigidbodies[i] == null) continue;
+            rigidbodies[i].isKinematic = true;
+            rigidbodies[i].detectCollisions = false;
+        }
+    }
+
+    private static Transform FindBone(Transform root, string boneName)
+    {
+        Transform[] all = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            if (all[i].name == boneName) return all[i];
+        }
+        return null;
+    }
+
+    private static Transform ResolveHumanoidBone(
+        Animator animator,
+        HumanBodyBones humanoidBone,
+        string fallbackName)
+    {
+        if (animator != null && animator.isHuman)
+        {
+            Transform bone = animator.GetBoneTransform(humanoidBone);
+            if (bone != null) return bone;
+        }
+
+        return animator == null ? null : FindBone(animator.transform, fallbackName);
+    }
+
+    private static void SetLayerRecursive(GameObject root, int layer)
+    {
+        root.layer = layer;
+        for (int i = 0; i < root.transform.childCount; i++)
+            SetLayerRecursive(root.transform.GetChild(i).gameObject, layer);
     }
 
     private Transform ResolveSocket(WeaponSocket socket)

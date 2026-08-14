@@ -17,9 +17,11 @@ MonoBehaviour:
   characterClass: 5
   gender: 2
   rarity: 5
-  characterPrefab: {fileID: 0}
-  portrait: {fileID: 0}
-  icon: {fileID: 0}
+  rank: 1
+  heroType: 0
+  characterPrefab: {fileID: 2349240851881493907, guid: 8e9ca9d8779994b9ab0a90f8b723eb30, type: 3}
+  portrait: {fileID: 21300000, guid: dd1e98dfe9f574beaa9233794d3e7401, type: 3}
+  icon: {fileID: 21300000, guid: dd1e98dfe9f574beaa9233794d3e7401, type: 3}
   defaultSkin: {fileID: 0}
   baseStats:
     maxHP: 950
@@ -37,6 +39,9 @@ MonoBehaviour:
     companionSynergy: 1.25
     statusResistance: 0
   defaultWeaponType: 8
+  defaultWeaponId: 
+  overrideTypeWeaponCompatibility: 0
+  allowedWeaponTypes: 
   normalAttack: {fileID: 0}
   heavyAttack: {fileID: 0}
   skill1: {fileID: 11400000, guid: c1a13ca911e3c486b84ac71f88dfeb0c, type: 2}
@@ -44,4 +49,16 @@ MonoBehaviour:
   ultimate: {fileID: 11400000, guid: be016d57c8c664260abdfb7761bcac4b, type: 2}
   animatorController: {fileID: 0}
   unlockType: 0
+  storeGoldPrice: 260000
+  isAvailableInStore: 1
+  healthUpgradeAmount: 100
+  damageUpgradeAmount: 10
+  defenseUpgradeAmount: 5
+  moveSpeedUpgradeAmount: 0.2
+  manaUpgradeAmount: 20
+  healthDisplayMaximum: 5000
+  damageDisplayMaximum: 500
+  defenseDisplayMaximum: 500
+  moveSpeedDisplayMaximum: 15
+  manaDisplayMaximum: 1000
   description: 

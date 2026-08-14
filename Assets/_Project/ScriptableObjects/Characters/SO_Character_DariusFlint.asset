@@ -44,4 +44,6 @@ MonoBehaviour:
   ultimate: {fileID: 11400000, guid: c2d55d43b3fd34c979b61204ac9ba0ac, type: 2}
   animatorController: {fileID: 0}
   unlockType: 0
+  storeGoldPrice: 190000
+  isAvailableInStore: 1
   description: 

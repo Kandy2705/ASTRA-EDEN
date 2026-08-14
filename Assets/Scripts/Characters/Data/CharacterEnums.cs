@@ -32,3 +32,21 @@ public enum CharacterUnlockType
     Event,
     ShopToken
 }
+
+public enum HeroStatType
+{
+    Health,
+    Damage,
+    Defense,
+    MoveSpeed,
+    Mana
+}
+
+public enum HeroType
+{
+    Infantry,
+    Ranged,
+    Riders,
+    Tank,
+    Master
+}
