@@ -141,8 +141,8 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
 
     IEnumerator BeginAfterDeathState()
     {
-        // Let EnemyAIController consume Died and enter its Death animation.
-        yield return null;
+        // Chờ ngắn để frame chết và collider ổn định
+        yield return new WaitForSeconds(0.05f);
 
         if (playing || bossHealth == null || !bossHealth.IsDead)
         {
@@ -162,14 +162,6 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
             yield break;
         }
 
-        Animator animator = finalBoss.GetComponentInChildren<Animator>(true);
-        if (animator != null)
-        {
-            animator.ResetTrigger("Hit");
-            animator.ResetTrigger("Stagger");
-            animator.SetTrigger("Die");
-        }
-
         player = FindPlayer();
         BeginVictoryPresentation(markDefeated: false);
     }
@@ -179,6 +171,21 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
         LockGameplay();
         bossAi?.PauseForCinematic();
         if (bossAi != null) bossAi.enabled = false;
+
+        // Ép Boss chạy trọn vẹn animation Death, không bị kẹt hay đơ ở pose trước
+        Animator bossAnimator = finalBoss != null ? finalBoss.GetComponentInChildren<Animator>(true) : null;
+        if (bossAnimator != null)
+        {
+            bossAnimator.ResetTrigger("Attack");
+            bossAnimator.ResetTrigger("Hit");
+            bossAnimator.ResetTrigger("Stagger");
+            bossAnimator.ResetTrigger("Summon");
+            bossAnimator.ResetTrigger("PowerUp");
+            bossAnimator.SetBool("IsDead", true);
+            bossAnimator.SetTrigger("Die");
+            bossAnimator.CrossFadeInFixedTime("Death", 0.05f, 0);
+        }
+
         BossHUDController hud = FindFirstObjectByType<BossHUDController>(FindObjectsInactive.Include);
         hud?.ClearBoss();
         if (markDefeated)
@@ -186,6 +193,7 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
             GameDataManager.Instance?.MarkFinalBossDefeated();
         }
 
+        SetupDynamicVictoryCameras();
         EnableShotCameraAt(0d);
         playing = true;
         director.time = 0d;
@@ -194,6 +202,66 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
         Debug.Log(previewMode
             ? "[FinalBossVictory] Bắt đầu preview TL_Boss_Victory."
             : "[FinalBossVictory] Bắt đầu TL_Boss_Victory.", this);
+    }
+
+    void SetupDynamicVictoryCameras()
+    {
+        if (cameraCues == null || cameraCues.Length == 0) return;
+
+        Vector3 bossPos = finalBoss != null ? finalBoss.transform.position : transform.position;
+        Vector3 bossFwd = finalBoss != null ? Vector3.ProjectOnPlane(finalBoss.transform.forward, Vector3.up).normalized : Vector3.forward;
+        if (bossFwd.sqrMagnitude < 0.001f) bossFwd = Vector3.forward;
+        Vector3 bossRight = Vector3.Cross(Vector3.up, bossFwd).normalized;
+
+        Vector3 playerPos = player != null ? player.position : bossPos + bossFwd * 5f;
+        Vector3 playerToBoss = Vector3.ProjectOnPlane(bossPos - playerPos, Vector3.up).normalized;
+        if (playerToBoss.sqrMagnitude < 0.001f) playerToBoss = -bossFwd;
+        Vector3 playerRight = Vector3.Cross(Vector3.up, playerToBoss).normalized;
+
+        // Shot 1 (0 -> 5s): Quay cận cảnh Boss gục ngã và ngã xuống đất
+        if (cameraCues.Length > 0)
+        {
+            cameraCues[0].startPosition = bossPos + bossFwd * 3.8f + bossRight * 2.2f + Vector3.up * 2.2f;
+            cameraCues[0].endPosition = bossPos + bossFwd * 2.8f + bossRight * 1.5f + Vector3.up * 1.5f;
+            if (cameraCues[0].lookTarget != null)
+            {
+                cameraCues[0].lookTarget.position = bossPos + Vector3.up * 1.0f;
+            }
+        }
+
+        // Shot 2 (5 -> 9s): Quay người chơi chiến thắng nhìn về phía Boss
+        if (cameraCues.Length > 1)
+        {
+            cameraCues[1].startPosition = playerPos - playerToBoss * 3.2f - playerRight * 1.6f + Vector3.up * 2.0f;
+            cameraCues[1].endPosition = playerPos - playerToBoss * 2.4f - playerRight * 1.0f + Vector3.up * 1.5f;
+            if (cameraCues[1].lookTarget != null)
+            {
+                cameraCues[1].lookTarget.position = playerPos + Vector3.up * 1.4f;
+            }
+        }
+
+        // Shot 3 (9 -> 14s): Góc cao toàn cảnh đấu trường và tháp năng lượng tắt
+        if (cameraCues.Length > 2)
+        {
+            Vector3 midpoint = Vector3.Lerp(playerPos, bossPos, 0.5f);
+            cameraCues[2].startPosition = midpoint - playerToBoss * 12f + playerRight * 8f + Vector3.up * 8.5f;
+            cameraCues[2].endPosition = midpoint - playerToBoss * 10f + playerRight * 6f + Vector3.up * 7.0f;
+            if (cameraCues[2].lookTarget != null)
+            {
+                cameraCues[2].lookTarget.position = midpoint + Vector3.up * 2.5f;
+            }
+        }
+
+        // Shot 4 (14 -> 21s): Cận cảnh người chơi đứng hiên ngang, hiện chữ và fade đen
+        if (cameraCues.Length > 3)
+        {
+            cameraCues[3].startPosition = playerPos - playerToBoss * 2.6f + playerRight * 1.4f + Vector3.up * 1.6f;
+            cameraCues[3].endPosition = playerPos - playerToBoss * 3.4f + playerRight * 1.8f + Vector3.up * 1.9f;
+            if (cameraCues[3].lookTarget != null)
+            {
+                cameraCues[3].lookTarget.position = playerPos + Vector3.up * 1.4f;
+            }
+        }
     }
 
     void LockGameplay()
@@ -219,12 +287,12 @@ public sealed class FinalBossVictoryCutscene : MonoBehaviour
     void ApplyPresentation(double time)
     {
         UpdateCameras(time);
-        if (player != null && finalBoss != null && time >= 7d)
+        if (player != null && finalBoss != null && time >= 0.2d)
         {
             Vector3 direction = Vector3.ProjectOnPlane(finalBoss.transform.position - player.position, Vector3.up);
             if (direction.sqrMagnitude > 0.001f)
             {
-                player.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+                player.rotation = Quaternion.Slerp(player.rotation, Quaternion.LookRotation(direction.normalized, Vector3.up), Time.unscaledDeltaTime * 4f);
             }
         }
 
