@@ -30,7 +30,7 @@ public static class SpawnLoadoutSetup
         HeroWeaponCompatibilityConfig compatibility = GetOrCreateAsset<HeroWeaponCompatibilityConfig>(CompatibilityPath);
         ConfigureCompatibility(compatibility);
         SpawnLoadoutCatalog catalog = GetOrCreateAsset<SpawnLoadoutCatalog>(CatalogPath);
-        ConfigureCatalog(catalog, LoadAllCharacters(), weapon, compatibility);
+        ConfigureCatalog(catalog, LoadAllCharacters(), LoadAllWeapons(), compatibility);
         ConfigureHero(hero);
 
         TMP_FontAsset font = FindStyleFont();
@@ -115,7 +115,20 @@ public static class SpawnLoadoutSetup
         return characters;
     }
 
-    static void ConfigureCatalog(SpawnLoadoutCatalog catalog, CharacterData[] characters, WeaponData weapon, HeroWeaponCompatibilityConfig compatibility)
+    static WeaponData[] LoadAllWeapons()
+    {
+        string[] guids = AssetDatabase.FindAssets("t:WeaponData", new[] { "Assets/_Project/ScriptableObjects/Weapons" });
+        List<WeaponData> list = new List<WeaponData>();
+        for (int i = 0; i < guids.Length; i++)
+        {
+            WeaponData w = AssetDatabase.LoadAssetAtPath<WeaponData>(AssetDatabase.GUIDToAssetPath(guids[i]));
+            if (w != null) list.Add(w);
+        }
+        list.Sort((left, right) => string.Compare(left != null ? left.weaponId : string.Empty, right != null ? right.weaponId : string.Empty, System.StringComparison.Ordinal));
+        return list.ToArray();
+    }
+
+    static void ConfigureCatalog(SpawnLoadoutCatalog catalog, CharacterData[] characters, WeaponData[] weaponsList, HeroWeaponCompatibilityConfig compatibility)
     {
         SerializedObject so = new SerializedObject(catalog);
         SerializedProperty heroes = so.FindProperty("heroes");
@@ -123,8 +136,9 @@ public static class SpawnLoadoutSetup
         for (int i = 0; i < heroes.arraySize; i++)
             heroes.GetArrayElementAtIndex(i).objectReferenceValue = characters[i];
         SerializedProperty weapons = so.FindProperty("weapons");
-        weapons.arraySize = 1;
-        weapons.GetArrayElementAtIndex(0).objectReferenceValue = weapon;
+        weapons.arraySize = weaponsList != null ? weaponsList.Length : 0;
+        for (int i = 0; i < weapons.arraySize; i++)
+            weapons.GetArrayElementAtIndex(i).objectReferenceValue = weaponsList[i];
         so.FindProperty("compatibility").objectReferenceValue = compatibility;
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(catalog);

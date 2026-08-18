@@ -31,6 +31,8 @@ public class WeaponData : ScriptableObject
     public Vector3 localScale = Vector3.one;
     [Tooltip("Dùng weapon đã có sẵn trong Hero prefab thay vì tạo thêm một bản sao.")]
     public bool useBuiltInVisual;
+    [Tooltip("Góc xoay riêng khi hiển thị trong Store/Loadout preview. Nếu để Vector3.zero, hệ thống sẽ tự động căn chỉnh đứng thẳng.")]
+    public Vector3 previewEulerAngles;
 
     public float GetBasicAttackBonusPercent(int upgradeLevel)
     {

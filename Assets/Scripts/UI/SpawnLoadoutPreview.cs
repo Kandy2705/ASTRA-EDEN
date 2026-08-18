@@ -11,6 +11,7 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
     [SerializeField] private int textureSize = 768;
     [SerializeField] private Vector3 heroLocalPosition = Vector3.zero;
     [SerializeField] private Vector3 heroLocalEuler = new Vector3(0f, 180f, 0f);
+    [SerializeField] private Vector3 weaponLocalEuler = new Vector3(-90f, 0f, 0f);
     [Header("Framing")]
     [SerializeField, Min(0f)] private float previewCenterHeight = 1.15f;
     [SerializeField, Range(0.1f, 0.95f)] private float viewportFill = 0.78f;
@@ -44,7 +45,7 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
     private void LateUpdate()
     {
         if (!autoRotate || isDragging || previewHero == null) return;
-        previewHero.transform.Rotate(0f, autoRotateDegreesPerSecond * Time.unscaledDeltaTime, 0f, Space.Self);
+        previewHero.transform.Rotate(Vector3.up, autoRotateDegreesPerSecond * Time.unscaledDeltaTime, Space.World);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -55,7 +56,7 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
     public void OnDrag(PointerEventData eventData)
     {
         if (!isDragging || previewHero == null) return;
-        previewHero.transform.Rotate(0f, -eventData.delta.x * dragDegreesPerPixel, 0f, Space.Self);
+        previewHero.transform.Rotate(Vector3.up, -eventData.delta.x * dragDegreesPerPixel, Space.World);
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -100,14 +101,67 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
         previewHero.name = $"Preview_{weapon.weaponId}";
         previewHero.tag = "Untagged";
         previewHero.transform.localPosition = heroLocalPosition;
-        previewHero.transform.localRotation = Quaternion.Euler(heroLocalEuler);
         previewHero.transform.localScale = weapon.localScale == Vector3.zero ? Vector3.one : weapon.localScale;
+
+        if (weapon.previewEulerAngles != Vector3.zero)
+        {
+            previewHero.transform.localRotation = Quaternion.Euler(weapon.previewEulerAngles);
+        }
+        else
+        {
+            AutoOrientUpright(previewHero);
+        }
+
         previewHero.SetActive(false);
         StripGameplayImmediately(previewHero);
         SetLayerRecursive(previewHero, previewRoot.gameObject.layer);
         FramePreview(previewHero);
         previewHero.SetActive(true);
         previewRoot.gameObject.SetActive(wasActive || gameObject.activeInHierarchy);
+    }
+
+    private static void AutoOrientUpright(GameObject obj)
+    {
+        if (obj == null) return;
+        obj.transform.localRotation = Quaternion.identity;
+
+        Renderer[] renderers = obj.GetComponentsInChildren<Renderer>(true);
+        if (renderers.Length == 0) return;
+
+        bool hasBounds = false;
+        Bounds bounds = default;
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer r = renderers[i];
+            if (r == null || r is TrailRenderer || r is ParticleSystemRenderer) continue;
+            if (!hasBounds)
+            {
+                bounds = r.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(r.bounds);
+            }
+        }
+        if (!hasBounds) return;
+
+        Vector3 size = bounds.size;
+        if (size.z > size.y && size.z >= size.x)
+        {
+            // Trục dài nhất là Z -> xoay X -90 để dựng đứng theo trục Y
+            obj.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+        }
+        else if (size.x > size.y && size.x > size.z)
+        {
+            // Trục dài nhất là X -> xoay Z 90 để dựng đứng theo trục Y
+            obj.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+        }
+        else
+        {
+            // Trục dài nhất đã là Y -> giữ nguyên góc đứng thẳng
+            obj.transform.localRotation = Quaternion.identity;
+        }
     }
 
     private void FramePreview(GameObject hero)
@@ -291,10 +345,31 @@ public sealed class SpawnLoadoutPreview : MonoBehaviour, IBeginDragHandler, IDra
 
     private static void ConfigurePreviewWeapon(GameObject hero, WeaponData weapon)
     {
+        if (hero == null) return;
+        bool useBuiltIn = weapon != null && weapon.useBuiltInVisual;
+
+        Transform[] allChildren = hero.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < allChildren.Length; i++)
+        {
+            Transform t = allChildren[i];
+            if (t != null && (t.name == "MagicSword_Iron" || t.name.StartsWith("MagicSword") || t.name.StartsWith("PreviewWeapon_")))
+            {
+                if (t.name.StartsWith("PreviewWeapon_"))
+                {
+                    DestroyImmediate(t.gameObject);
+                }
+                else
+                {
+                    t.gameObject.SetActive(useBuiltIn);
+                }
+            }
+        }
+
         if (weapon == null || weapon.useBuiltInVisual || weapon.prefab == null) return;
         Transform socket = FindSocket(hero.transform, weapon.socket);
         if (socket == null) return;
         GameObject instance = Instantiate(weapon.prefab, socket, false);
+        instance.name = $"PreviewWeapon_{weapon.weaponId}";
         instance.transform.localPosition = weapon.localPosition;
         instance.transform.localRotation = Quaternion.Euler(weapon.localEulerAngles);
         instance.transform.localScale = weapon.localScale == Vector3.zero ? Vector3.one : weapon.localScale;

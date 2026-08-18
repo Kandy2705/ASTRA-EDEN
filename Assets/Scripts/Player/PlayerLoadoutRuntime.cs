@@ -254,15 +254,28 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
             spawnedWeapon = null;
         }
 
+        EnsureBuiltInVisualReference();
         bool canUseBuiltInVisual = runtimeVisual == null && weapon.useBuiltInVisual;
         if (builtInWeaponVisual != null)
         {
             builtInWeaponVisual.SetActive(canUseBuiltInVisual);
         }
 
+        Transform socket = ResolveSocket(weapon.socket);
+        if (socket != null)
+        {
+            for (int i = 0; i < socket.childCount; i++)
+            {
+                Transform child = socket.GetChild(i);
+                if (child != null && (child.name == "MagicSword_Iron" || child.name.StartsWith("MagicSword")))
+                {
+                    child.gameObject.SetActive(canUseBuiltInVisual);
+                }
+            }
+        }
+
         if (!canUseBuiltInVisual)
         {
-            Transform socket = ResolveSocket(weapon.socket);
             if (weapon.prefab == null || socket == null) return false;
 
             spawnedWeapon = Instantiate(weapon.prefab, socket, false);
@@ -274,6 +287,42 @@ public sealed class PlayerLoadoutRuntime : MonoBehaviour
 
         equippedWeapon = weapon;
         return true;
+    }
+
+    private void EnsureBuiltInVisualReference()
+    {
+        if (builtInWeaponVisual != null) return;
+        Transform socket = rightHandSocket != null ? rightHandSocket : ResolveSocket(WeaponSocket.RightHand);
+        if (socket != null)
+        {
+            Transform found = socket.Find("MagicSword_Iron");
+            if (found == null)
+            {
+                for (int i = 0; i < socket.childCount; i++)
+                {
+                    Transform child = socket.GetChild(i);
+                    if (child.name.StartsWith("MagicSword") || child.name.Contains("Sword"))
+                    {
+                        found = child;
+                        break;
+                    }
+                }
+            }
+            if (found != null) builtInWeaponVisual = found.gameObject;
+        }
+
+        if (builtInWeaponVisual == null)
+        {
+            Transform[] all = GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i].name == "MagicSword_Iron" || all[i].name.StartsWith("MagicSword"))
+                {
+                    builtInWeaponVisual = all[i].gameObject;
+                    break;
+                }
+            }
+        }
     }
 
     private bool TryApplyVisualOnlyHero(

@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEditor;
@@ -91,7 +92,7 @@ public static class StoreSystemSetup
         WeaponShopEntryDefinition weaponEntry = GetOrCreate<WeaponShopEntryDefinition>(WeaponEntryPath);
         StoreCatalogData catalog = GetOrCreate<StoreCatalogData>(CatalogPath);
         ConfigureEntry(weaponEntry, weapon, 25000);
-        ConfigureCatalog(catalog, characterEntries, weaponEntry);
+        ConfigureCatalog(catalog, characterEntries, LoadAllWeaponEntries());
         ConfigureSpawnLoadoutHeroes(characters);
 
         ConfigureTabsOnly(FeaturedPath);
@@ -118,8 +119,7 @@ public static class StoreSystemSetup
         CharacterData[] characters = LoadAllCharacters();
         CharacterShopEntryDefinition[] entries = GetOrCreateCharacterEntries(characters);
         StoreCatalogData catalog = GetOrCreate<StoreCatalogData>(CatalogPath);
-        WeaponShopEntryDefinition weapon = AssetDatabase.LoadAssetAtPath<WeaponShopEntryDefinition>(WeaponEntryPath);
-        ConfigureCatalog(catalog, entries, weapon);
+        ConfigureCatalog(catalog, entries, LoadAllWeaponEntries());
         ConfigureSpawnLoadoutHeroes(characters);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -177,8 +177,20 @@ public static class StoreSystemSetup
         EditorUtility.SetDirty(entry);
     }
 
+    private static WeaponShopEntryDefinition[] LoadAllWeaponEntries()
+    {
+        string[] guids = AssetDatabase.FindAssets("t:WeaponShopEntryDefinition", new[] { CatalogFolder });
+        List<WeaponShopEntryDefinition> list = new List<WeaponShopEntryDefinition>();
+        for (int i = 0; i < guids.Length; i++)
+        {
+            WeaponShopEntryDefinition entry = AssetDatabase.LoadAssetAtPath<WeaponShopEntryDefinition>(AssetDatabase.GUIDToAssetPath(guids[i]));
+            if (entry != null) list.Add(entry);
+        }
+        return list.ToArray();
+    }
+
     private static void ConfigureCatalog(StoreCatalogData catalog,
-        CharacterShopEntryDefinition[] characterEntries, WeaponShopEntryDefinition weapon)
+        CharacterShopEntryDefinition[] characterEntries, WeaponShopEntryDefinition[] weaponEntries)
     {
         SerializedObject so = new SerializedObject(catalog);
         SerializedProperty characters = so.FindProperty("characters");
@@ -186,8 +198,9 @@ public static class StoreSystemSetup
         for (int i = 0; i < characters.arraySize; i++)
             characters.GetArrayElementAtIndex(i).objectReferenceValue = characterEntries[i];
         SerializedProperty weapons = so.FindProperty("weapons");
-        weapons.arraySize = weapon != null ? 1 : 0;
-        if (weapon != null) weapons.GetArrayElementAtIndex(0).objectReferenceValue = weapon;
+        weapons.arraySize = weaponEntries != null ? weaponEntries.Length : 0;
+        for (int i = 0; i < weapons.arraySize; i++)
+            weapons.GetArrayElementAtIndex(i).objectReferenceValue = weaponEntries[i];
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(catalog);
     }
@@ -444,7 +457,10 @@ public static class StoreSystemSetup
         Image bg = panel.AddComponent<Image>();
         bg.sprite = sprite;
         bg.color = new Color(0.02f, 0.04f, 0.055f, 0.99f);
-        panel.AddComponent<CanvasGroup>();
+        CanvasGroup cg = panel.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+        cg.interactable = false;
+        cg.blocksRaycasts = false;
         panel.AddComponent<PopupTween>();
         TMP_Text message = MakeText("Message", panel.transform, font, 30, TextAlignmentOptions.Center, new Vector2(0.08f, 0.38f), new Vector2(0.92f, 0.9f));
         Button confirm = MakeButton("Confirm", panel.transform, font, sprite, new Vector2(0.08f, 0.08f), new Vector2(0.48f, 0.32f), "CONFIRM");

@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e4f533f333c94a8f8b40d05e702dcd96, type: 3}
-  m_Name: SO_Weapon_SeekerSword
+  m_Name: SO_Weapon_AnimatedSword
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  weaponId: weapon_seeker_sword_01
-  displayName: Seeker Iron Sword
+  weaponId: weapon_animated_sword_01
+  displayName: Dragon Slayer Blade
   weaponType: 0
-  icon: {fileID: 21300000, guid: 2edbc4e4646f8e44e8e69dec7158f4f6, type: 3}
-  prefab: {fileID: 1014989259798498, guid: 8fc40ebf5a41b30428929f5ba3697759, type: 3}
-  basicAttackDamageBonusPercent: 0.1
-  skillDamageBonusPercent: 0.35
+  icon: {fileID: 21300000, guid: ddb967ea4c39e82489eba64252b0ae2f, type: 3}
+  prefab: {fileID: 8126783849945876746, guid: 669dcc7110b374af1aeb68ab16770370, type: 3}
+  basicAttackDamageBonusPercent: 0.2
+  skillDamageBonusPercent: 0.45
   basicAttackBonusByUpgrade:
     serializedVersion: 2
     m_Curve:
@@ -33,7 +33,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 10
-      value: 0
+      value: 0.35
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -57,7 +57,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 10
-      value: 0
+      value: 0.5
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -67,11 +67,12 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  attackSpeedBonus: 0
-  critRateBonus: 0
-  critDamageBonus: 0
+  attackSpeedBonus: 0.08
+  critRateBonus: 0.1
+  critDamageBonus: 0.25
   socket: 0
-  localPosition: {x: 0.0601, y: -0.0072, z: 0.0087}
-  localEulerAngles: {x: 0, y: 0, z: 0}
-  localScale: {x: 0.4, y: 0.4, z: 0.4}
-  useBuiltInVisual: 1
+  localPosition: {x: 0.015, y: -0.036, z: -0.046}
+  localEulerAngles: {x: 42.213, y: 57.136, z: 18.178}
+  localScale: {x: 1, y: 1, z: 1}
+  useBuiltInVisual: 0
+  previewEulerAngles: {x: 0, y: 0, z: 0}
