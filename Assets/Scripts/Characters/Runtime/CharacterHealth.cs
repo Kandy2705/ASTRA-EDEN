@@ -67,11 +67,12 @@ public class CharacterHealth : MonoBehaviour
 
     private void OnDisable()
     {
-        if (boundHeroData != null)
-        {
-            boundHeroData.HeroProgressChanged -= HandleHeroProgressChanged;
-            boundHeroData = null;
-        }
+        UnbindHeroProgression();
+    }
+
+    private void OnDestroy()
+    {
+        UnbindHeroProgression();
     }
 
     public void Initialize()
@@ -306,8 +307,27 @@ public class CharacterHealth : MonoBehaviour
         }
     }
 
+    private void UnbindHeroProgression()
+    {
+        if (boundHeroData != null)
+        {
+            boundHeroData.HeroProgressChanged -= HandleHeroProgressChanged;
+            boundHeroData = null;
+        }
+        else if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.HeroProgressChanged -= HandleHeroProgressChanged;
+        }
+    }
+
     private void HandleHeroProgressChanged()
     {
+        if (this == null || gameObject == null)
+        {
+            UnbindHeroProgression();
+            return;
+        }
+
         ApplyHeroProgressionStats(restoreGainedCapacity: true);
     }
 
@@ -412,7 +432,8 @@ public class CharacterHealth : MonoBehaviour
 
     private bool IsPlayerHealth()
     {
-        return CompareTag("Player") || transform.root.CompareTag("Player");
+        if (this == null || gameObject == null) return false;
+        return CompareTag("Player") || (transform != null && transform.root != null && transform.root.CompareTag("Player"));
     }
 
     private void RestoreFromGameData()

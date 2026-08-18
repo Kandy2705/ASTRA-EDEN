@@ -538,6 +538,14 @@ public class PlayerInventoryService : MonoBehaviour
         Debug.Log($"[AncientMap] Restored '{document.itemId}' into inventory.", this);
     }
 
+    public void ResetInventoryForNewGame()
+    {
+        items.Clear();
+        unresolvedSavedItems.Clear();
+        hasLoadedFromSave = true;
+        OnInventoryChanged?.Invoke();
+    }
+
     private InventoryItemStack FindStack(ItemData itemData)
     {
         if (itemData == null)

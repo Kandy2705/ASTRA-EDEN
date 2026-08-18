@@ -80,6 +80,10 @@ public class MainMenuController : MonoBehaviour
         {
             GameDataManager.Instance.DeleteSaveData();
         }
+        else
+        {
+            GameDataManager.ResetAllPlayerPrefs();
+        }
 
         IntroSequenceFlow.ResetIntroForDemo();
         IntroSequenceFlow.BeginIntroSequence();
@@ -104,6 +108,10 @@ public class MainMenuController : MonoBehaviour
         if (GameDataManager.Instance != null)
         {
             GameDataManager.Instance.DeleteSaveData();
+        }
+        else
+        {
+            GameDataManager.ResetAllPlayerPrefs();
         }
 
         if (deleteConfirmPanel != null)

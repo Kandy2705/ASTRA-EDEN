@@ -1274,52 +1274,26 @@ public class GameDataManager : MonoBehaviour
         MarkPlayerPrefsDirty();
     }
 
-    public void DeleteSaveData()
+    public static void ResetAllPlayerPrefs()
     {
-        currency = 0;
-        ClearPlayerStats();
-
-        scenePositions.Clear();
-        SyncPosToLists();
-
         PlayerPrefs.DeleteKey(HasSaveKey);
         PlayerPrefs.DeleteKey(LastSceneKey);
-
         PlayerPrefs.DeleteKey(LastPosXKey);
         PlayerPrefs.DeleteKey(LastPosYKey);
         PlayerPrefs.DeleteKey(LastPosZKey);
-
         PlayerPrefs.DeleteKey(LastRotYKey);
         PlayerPrefs.DeleteKey(ContinueFlagKey);
-
         PlayerPrefs.DeleteKey(ScenePositionsJsonKey);
-
-        DeleteInventoryData();
-        clearedZones.Clear();
+        PlayerPrefs.DeleteKey(InventoryJsonKey);
         PlayerPrefs.DeleteKey(ZoneProgressJsonKey);
-
         PlayerPrefs.DeleteKey("ASTRA_CURRENCY");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_HP");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_STAMINA");
         PlayerPrefs.DeleteKey("ASTRA_PLAYER_ENERGY");
         PlayerPrefs.DeleteKey(GameTimeSecondsKey);
-        gameTimeSeconds = -1f;
         PlayerPrefs.DeleteKey(PlayerLevelKey);
         PlayerPrefs.DeleteKey(PlayerExperienceKey);
         PlayerPrefs.DeleteKey(HeroProgressJsonKey);
-        playerLevel = 1;
-        playerExperience = 0;
-        availableHeroUpgradePoints = 0;
-        ownedHeroIds.Clear();
-        ownedHeroIds.Add(DefaultHeroId);
-        heroProgress.Clear();
-        GetOrCreateHeroProgress(DefaultHeroId);
-        ownedWeaponIds.Clear();
-        ownedWeaponIds.Add(DefaultWeaponId);
-        weaponProgress.Clear();
-        GetOrCreateWeaponProgress(DefaultWeaponId);
-        currentHeroId = DefaultHeroId;
-        currentWeaponId = DefaultWeaponId;
         PlayerPrefs.DeleteKey(CurrentObjectiveKey);
         PlayerPrefs.DeleteKey(AncientNoteCollectedKey);
         PlayerPrefs.DeleteKey(AncientNote2CollectedKey);
@@ -1329,6 +1303,21 @@ public class GameDataManager : MonoBehaviour
         PlayerPrefs.DeleteKey(AncientMapGuidanceUnlockedKey);
         PlayerPrefs.DeleteKey(AncientMap2UsedKey);
         PlayerPrefs.DeleteKey(AncientMap2GuidanceUnlockedKey);
+        PlayerPrefs.DeleteKey(FinalBossEncounterSeenKey);
+        PlayerPrefs.DeleteKey(FinalBossDefeatedKey);
+        PlayerPrefs.Save();
+    }
+
+    public void DeleteSaveData()
+    {
+        currency = 0;
+        playerHP = -1f;
+        playerStamina = -1f;
+        playerEnergy = -1f;
+        gameTimeSeconds = -1f;
+        playerLevel = 1;
+        playerExperience = 0;
+        availableHeroUpgradePoints = 0;
         currentObjective = string.Empty;
         ancientNoteCollected = false;
         ancientNote2Collected = false;
@@ -1341,9 +1330,30 @@ public class GameDataManager : MonoBehaviour
         finalBossEncounterSeen = false;
         finalBossDefeated = false;
 
-        MarkPlayerPrefsDirty();
-        FlushPlayerPrefs();
+        ownedHeroIds.Clear();
+        ownedHeroIds.Add(DefaultHeroId);
+        heroProgress.Clear();
+        GetOrCreateHeroProgress(DefaultHeroId);
+        ownedWeaponIds.Clear();
+        ownedWeaponIds.Add(DefaultWeaponId);
+        weaponProgress.Clear();
+        GetOrCreateWeaponProgress(DefaultWeaponId);
+        currentHeroId = DefaultHeroId;
+        currentWeaponId = DefaultWeaponId;
 
+        scenePositions.Clear();
+        SyncPosToLists();
+        clearedZones.Clear();
+
+        PlayerInventoryService playerInventory = PlayerInventoryService.FindForPlayer();
+        if (playerInventory != null)
+        {
+            playerInventory.ResetInventoryForNewGame();
+        }
+
+        ResetAllPlayerPrefs();
+        playerPrefsDirty = false;
+        playerPrefsFlushTimer = 0f;
     }
 
     private void SavePersistentData()

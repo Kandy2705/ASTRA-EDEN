@@ -94,6 +94,11 @@ public sealed class HeroScreenController : MonoBehaviour
         UnbindData();
     }
 
+    private void OnDestroy()
+    {
+        UnbindData();
+    }
+
     private void CacheView()
     {
         if (cached)
@@ -134,18 +139,27 @@ public sealed class HeroScreenController : MonoBehaviour
 
     private void UnbindData()
     {
-        if (data == null)
+        if (data != null)
         {
-            return;
+            data.HeroProgressChanged -= HandleProgressChanged;
+            data.HeroOwnershipChanged -= HandleOwnershipChanged;
+            data = null;
         }
-
-        data.HeroProgressChanged -= HandleProgressChanged;
-        data.HeroOwnershipChanged -= HandleOwnershipChanged;
-        data = null;
+        else if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.HeroProgressChanged -= HandleProgressChanged;
+            GameDataManager.Instance.HeroOwnershipChanged -= HandleOwnershipChanged;
+        }
     }
 
     private void HandleProgressChanged()
     {
+        if (this == null || gameObject == null)
+        {
+            UnbindData();
+            return;
+        }
+
         if (!suppressProgressRefresh)
         {
             RefreshSelectedHero();
@@ -154,6 +168,12 @@ public sealed class HeroScreenController : MonoBehaviour
 
     private void HandleOwnershipChanged()
     {
+        if (this == null || gameObject == null)
+        {
+            UnbindData();
+            return;
+        }
+
         RefreshHeroGrid();
         RefreshSelectedHero();
     }
